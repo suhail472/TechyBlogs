@@ -749,7 +749,5 @@ export default function BlogEditor({ id }) {
         </form>
       )}
     </div>
-  );m>
-    </div>
   );
 }

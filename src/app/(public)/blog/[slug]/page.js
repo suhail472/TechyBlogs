@@ -21,12 +21,16 @@ export async function generateMetadata({ params }) {
     title: `${blog.title} | TeachyBlogs`,
     description: blog.metaDescription || blog.excerpt,
     keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : 'web development, coding tutorial'),
+    alternates: {
+      canonical: `https://teachyblogs.com/blog/${slug}`,
+    },
     openGraph: {
       title: `${blog.title} | TeachyBlogs`,
       description: blog.metaDescription || blog.excerpt,
       url: `https://teachyblogs.com/blog/${slug}`,
       type: 'article',
       publishedTime: blog.publishedAt || blog.createdAt,
+      modifiedTime: blog.updatedAt || blog.publishedAt || blog.createdAt,
       authors: [blog.author || 'Suheel Hilal'],
       images: [
         {
@@ -99,11 +103,25 @@ export default async function SingleBlogPage({ params }) {
     "description": blog.excerpt,
     "image": blog.image,
     "datePublished": blog.publishedAt || blog.createdAt,
+    "dateModified": blog.updatedAt || blog.publishedAt || blog.createdAt,
     "author": {
       "@type": "Person",
       "name": blog.author || "Suheel Hilal",
       "url": "https://www.suhailhilal.in"
-    }
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "TeachyBlogs",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://teachyblogs.com/favicon.ico"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://teachyblogs.com/blog/${slug}`
+    },
+    "keywords": blog.keywords || (blog.tags ? blog.tags.join(', ') : '')
   };
 
   let faqSchema = null;
