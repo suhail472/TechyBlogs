@@ -2,13 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import Admin from './models/admin.model.js';
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
-}
+// MONGODB_URI is fetched inside connectToDatabase to avoid top-level evaluation errors during build.
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -59,6 +53,14 @@ async function seedAdmin() {
 }
 
 async function connectToDatabase() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+
+  if (!MONGODB_URI) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+
   if (cached.conn) {
     return cached.conn;
   }
