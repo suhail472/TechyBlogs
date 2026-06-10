@@ -462,144 +462,141 @@ export default function ReaderSettings({ content }) {
           </h3>
         </div>
 
-        <div className="space-y-4">
-          {/* TTS Audio Controls */}
-          <div>
-            <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
-              Audio Reader
-            </span>
-            <div className="flex items-center gap-2">
-              {/* Play / Resume */}
-              <button
-                type="button"
-                onClick={handlePlay}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                  isPlaying && !isPaused
-                    ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 scale-105'
-                    : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
-                }`}
-                title="Play Reading"
-              >
-                <Play className="w-4 h-4 fill-current ml-0.5" />
-              </button>
-
-              {/* Pause */}
-              <button
-                type="button"
-                onClick={handlePause}
-                disabled={!isPlaying}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  isPaused
-                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 scale-105'
-                    : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
-                }`}
-                title="Pause Reading"
-              >
-                <Pause className="w-4 h-4" />
-              </button>
-
-              {/* Stop */}
-              <button
-                type="button"
-                onClick={handleStop}
-                disabled={!isPlaying}
-                className="w-10 h-10 rounded-xl flex items-center justify-center border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-550 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Stop Reading"
-              >
-                <Square className="w-4 h-4 fill-current" />
-              </button>
-
-              {/* Pulsating Voice Waveform Indicator */}
-              {isPlaying && !isPaused && (
-                <div className="flex items-end gap-0.5 h-5 px-3 ml-2 pb-0.5">
-                  <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-1" />
-                  <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-2" />
-                  <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-3" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Voice Selector */}
-          {englishVoices.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+          {/* Left Column: Audio controls */}
+          <div className="space-y-4">
+            {/* TTS Audio Controls */}
             <div>
-              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-350 mb-2 ml-1">
-                Select Voice
+              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
+                Audio Reader
               </span>
-              <select
-                value={selectedVoiceName}
-                onChange={(e) => handleVoiceChange(e.target.value)}
-                className="w-full px-3.5 py-3 rounded-xl border text-[11px] font-bold outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white border-zinc-200 text-zinc-800 dark:bg-[#1e293b] dark:border-white/[0.08] dark:text-white cursor-pointer"
-              >
-                {englishVoices.map((voice) => (
-                  <option key={voice.name} value={voice.name} className="bg-white dark:bg-[#1e293b] text-zinc-800 dark:text-white">
-                    {voice.name.replace('Microsoft', 'MS').replace('English (United States)', 'US').replace('English (United Kingdom)', 'UK')}
-                  </option>
+              <div className="flex items-center gap-2">
+                {/* Play / Resume */}
+                <button
+                  type="button"
+                  onClick={handlePlay}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    isPlaying && !isPaused
+                      ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 scale-105'
+                      : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
+                  }`}
+                  title="Play Reading"
+                >
+                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                </button>
+
+                {/* Pause */}
+                <button
+                  type="button"
+                  onClick={handlePause}
+                  disabled={!isPlaying}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                    isPaused
+                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 scale-105'
+                      : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
+                  }`}
+                  title="Pause Reading"
+                >
+                  <Pause className="w-4 h-4" />
+                </button>
+
+                {/* Stop */}
+                <button
+                  type="button"
+                  onClick={handleStop}
+                  disabled={!isPlaying}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-550 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="Stop Reading"
+                >
+                  <Square className="w-4 h-4 fill-current" />
+                </button>
+
+                {/* Pulsating Voice Waveform Indicator */}
+                {isPlaying && !isPaused && (
+                  <div className="flex items-end gap-0.5 h-5 px-3 ml-2 pb-0.5">
+                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-1" />
+                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-2" />
+                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-3" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Voice Selector */}
+            {englishVoices.length > 0 && (
+              <div>
+                <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-350 mb-2 ml-1">
+                  Select Voice
+                </span>
+                <select
+                  value={selectedVoiceName}
+                  onChange={(e) => handleVoiceChange(e.target.value)}
+                  className="w-full px-3.5 py-3 rounded-xl border text-[11px] font-bold outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white border-zinc-200 text-zinc-800 dark:bg-[#1e293b] dark:border-white/[0.08] dark:text-white cursor-pointer"
+                >
+                  {englishVoices.map((voice) => (
+                    <option key={voice.name} value={voice.name} className="bg-white dark:bg-[#1e293b] text-zinc-800 dark:text-white">
+                      {voice.name.replace('Microsoft', 'MS').replace('English (United States)', 'US').replace('English (United Kingdom)', 'UK')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Reading Speed controls */}
+            <div>
+              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
+                Reading Speed
+              </span>
+              <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
+                {speedOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleSpeedChange(opt)}
+                    className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
+                      speed === opt
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
+                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
+                    }`}
+                  >
+                    {opt}x
+                  </button>
                 ))}
-              </select>
-            </div>
-          )}
-
-          {/* Reading Speed controls */}
-          <div>
-            <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
-              Reading Speed
-            </span>
-            <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
-              {speedOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => handleSpeedChange(opt)}
-                  className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
-                    speed === opt
-                      ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
-                  }`}
-                >
-                  {opt}x
-                </button>
-              ))}
+              </div>
             </div>
           </div>
 
-          {/* Screen Night Light controls */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 ml-1">
-                Night Light
-              </span>
-              {warmth !== 'Off' && (
-                <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
-              )}
-            </div>
-            <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
-              {warmthOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => handleWarmthChange(opt)}
-                  className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
-                    warmth === opt
-                      ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/10'
-                      : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Typography Customizer Section */}
-          <div className="border-t border-zinc-100 dark:border-white/[0.04] pt-4 mt-2">
-            <div className="flex items-center gap-2 mb-3">
-              <Type className="w-3.5 h-3.5 text-indigo-500" />
-              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 ml-0.5">
-                Typography
-              </span>
+          {/* Right Column: Visual controls & Typography */}
+          <div className="space-y-4">
+            {/* Screen Night Light controls */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 ml-1">
+                  Night Light
+                </span>
+                {warmth !== 'Off' && (
+                  <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
+                )}
+              </div>
+              <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
+                {warmthOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleWarmthChange(opt)}
+                    className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
+                      warmth === opt
+                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/10'
+                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
             </div>
 
+            {/* Typography Customizer Section */}
             <div className="space-y-3">
               {/* Font Family Select */}
               <div>

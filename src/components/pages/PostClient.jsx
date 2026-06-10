@@ -468,6 +468,10 @@ export default function PostClient({ blog, relatedPosts = [] }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           {/* Main prose */}
           <div className="lg:col-span-8">
+            <div className="mb-10">
+              <ReaderSettings content={blog.content} />
+            </div>
+            
             <div 
               ref={contentRef}
               className={`prose max-w-none prose-zinc dark:prose-invert prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-code:text-blue-600 dark:prose-code:text-blue-400 ${typography.fontFamily} ${typography.fontSize} ${typography.lineHeight}`}
@@ -648,9 +652,8 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               </AnimatePresence>
             </div>
 
-            {/* Reader Settings & Table of Contents */}
+            {/* Table of Contents */}
             <div className="lg:sticky lg:top-24 space-y-6">
-              <ReaderSettings content={blog.content} />
               <TableOfContents headings={headings} />
 
               {/* Newsletter panel */}

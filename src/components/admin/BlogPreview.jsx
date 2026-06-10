@@ -357,6 +357,10 @@ export default function BlogPreview({ formData }) {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Main prose */}
           <div className="lg:col-span-8">
+            <div className="mb-10">
+              <ReaderSettings content={formData.content} />
+            </div>
+
             {htmlContent.trim() ? (
               <div 
                 className={`prose max-w-none prose-zinc dark:prose-invert prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-code:text-blue-600 dark:prose-code:text-blue-400 ${typography.fontFamily} ${typography.fontSize} ${typography.lineHeight}`}
@@ -466,9 +470,8 @@ export default function BlogPreview({ formData }) {
               </button>
             </div>
 
-            {/* Reader Settings & Table of Contents */}
-            <div className="space-y-6">
-              <ReaderSettings content={formData.content} />
+            {/* Table of Contents */}
+            <div className="lg:sticky lg:top-24 space-y-6">
               <TableOfContents headings={headings} />
             </div>
           </aside>
