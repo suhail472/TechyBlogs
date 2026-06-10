@@ -178,7 +178,7 @@ export function parseMarkdown(markdownInput) {
     ) {
       return trimmed;
     }
-    return `<p class="leading-relaxed mb-4 text-zinc-605 dark:text-zinc-300 text-lg font-medium">${trimmed}</p>`;
+    return `<p class="leading-relaxed mb-4 text-zinc-605 dark:text-zinc-300 font-medium">${trimmed}</p>`;
   });
 
   let result = paragraphs.join('\n');
