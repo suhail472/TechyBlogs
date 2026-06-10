@@ -648,10 +648,10 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               </AnimatePresence>
             </div>
 
-            {/* Table of Contents & Reader Settings */}
+            {/* Reader Settings & Table of Contents */}
             <div className="lg:sticky lg:top-24 space-y-6">
-              <TableOfContents headings={headings} />
               <ReaderSettings content={blog.content} />
+              <TableOfContents headings={headings} />
 
               {/* Newsletter panel */}
               <div className="mt-6 p-6 rounded-2xl premium-card transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/5 relative overflow-hidden">

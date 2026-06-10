@@ -466,10 +466,10 @@ export default function BlogPreview({ formData }) {
               </button>
             </div>
 
-            {/* Table of Contents & Reader Settings */}
+            {/* Reader Settings & Table of Contents */}
             <div className="space-y-6">
-              <TableOfContents headings={headings} />
               <ReaderSettings content={formData.content} />
+              <TableOfContents headings={headings} />
             </div>
           </aside>
         </div>
