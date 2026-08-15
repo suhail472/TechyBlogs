@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Calendar, Clock, Share2, Heart, Mail, ChevronDown, Bookmark, Eye, Play, RefreshCw, X } from 'lucide-react';
+import { ChevronLeft, Calendar, Clock, Share2, Heart, Mail, ChevronDown, Bookmark, Eye, Play, RefreshCw, X, Flame } from 'lucide-react';
 import TopLoader from '@/components/shared/TopLoader';
 import TableOfContents from '@/components/shared/TableOfContents';
 import ReaderSettings from '@/components/shared/ReaderSettings';
