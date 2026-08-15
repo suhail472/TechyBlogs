@@ -11,8 +11,6 @@ import {
   Bookmark,
   Globe,
   ChevronDown,
-  Check,
-  MapPin,
   Flame,
   Layers,
   Sparkles,
@@ -21,9 +19,9 @@ import ThemeToggle from '../shared/ThemeToggle';
 import { taxonomyAPI } from '@/services/api';
 
 const EDITIONS = [
-  { id: 'global', name: 'Global Edition', label: 'Global', path: '/', badge: '🌍' },
-  { id: 'kashmir', name: 'Kashmir Edition', label: 'Kashmir', path: '/edition/kashmir', badge: '🏔️' },
-  { id: 'india', name: 'India Edition', label: 'India', path: '/edition/india', badge: '🇮🇳' },
+  { id: 'global', name: 'Global Edition', path: '/' },
+  { id: 'kashmir', name: 'Kashmir Edition', path: '/edition/kashmir' },
+  { id: 'india', name: 'India Edition', path: '/edition/india' },
 ];
 
 export default function Navbar() {
@@ -35,7 +33,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -76,8 +74,7 @@ export default function Navbar() {
           { name: 'News', slug: 'news' },
           { name: 'Education', slug: 'education' },
           { name: 'Business', slug: 'business' },
-          { name: 'Travel & Culture', slug: 'travel' },
-          { name: 'Lifestyle', slug: 'lifestyle' },
+          { name: 'Travel', slug: 'travel' },
         ]);
       }
     };
@@ -93,74 +90,52 @@ export default function Navbar() {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
   };
 
-  // Determine current active edition
   const currentEdition =
     EDITIONS.find((e) => e.path !== '/' && pathname.startsWith(e.path)) || EDITIONS[0];
 
   return (
     <header className="fixed top-0 z-50 w-full transition-all duration-300">
-      {/* Top Edition & Utility Masthead Bar */}
-      <div className="bg-zinc-950 text-white text-[11px] font-bold py-2 px-6 border-b border-white/10 relative z-50">
+      {/* Top Edition & Utility Bar */}
+      <div className="bg-zinc-950 text-white text-[11px] font-bold py-1.5 px-6 border-b border-white/10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {/* Edition Switcher Dropdown */}
+            {/* Edition Switcher */}
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                onClick={() => setEditionDropdownOpen((prev) => !prev)}
-                className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white transition-all uppercase tracking-wider text-[11px] cursor-pointer"
-                aria-expanded={editionDropdownOpen}
-                aria-haspopup="true"
+                onClick={() => setEditionDropdownOpen(!editionDropdownOpen)}
+                className="flex items-center gap-1.5 hover:text-red-400 transition-colors uppercase tracking-wider text-[10px] cursor-pointer"
               >
-                <span className="text-sm">{currentEdition.badge}</span>
-                <span className="font-extrabold">{currentEdition.name}</span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-zinc-400 transition-transform duration-200 ${
-                    editionDropdownOpen ? 'rotate-180 text-white' : ''
-                  }`}
-                />
+                <Globe className="w-3.5 h-3.5 text-red-500" />
+                <span>{currentEdition.name.toUpperCase()}</span>
+                <ChevronDown className="w-3 h-3" />
               </button>
 
               <AnimatePresence>
                 {editionDropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
-                    transition={{ duration: 0.15, ease: 'easeOut' }}
-                    className="absolute top-full left-0 mt-2 w-56 bg-zinc-900/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl p-2 z-[100] text-xs font-semibold"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute top-full left-0 mt-1.5 w-48 bg-zinc-900 border border-white/15 rounded-xl shadow-2xl p-1.5 z-50 text-xs font-semibold"
                   >
-                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-zinc-400 font-bold border-b border-white/10 mb-1">
-                      Select Regional Edition
-                    </div>
-                    {EDITIONS.map((ed) => {
-                      const isSelected = ed.id === currentEdition.id;
-                      return (
-                        <Link
-                          key={ed.id}
-                          href={ed.path}
-                          onClick={() => setEditionDropdownOpen(false)}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${
-                            isSelected
-                              ? 'bg-red-600/20 text-red-400 border border-red-500/30 font-bold'
-                              : 'text-zinc-300 hover:text-white hover:bg-white/10'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <span className="text-base">{ed.badge}</span>
-                            <span>{ed.name}</span>
-                          </span>
-                          {isSelected && <Check className="w-4 h-4 text-red-400" />}
-                        </Link>
-                      );
-                    })}
+                    {EDITIONS.map((ed) => (
+                      <Link
+                        key={ed.id}
+                        href={ed.path}
+                        onClick={() => setEditionDropdownOpen(false)}
+                        className="block px-3 py-2 rounded-lg hover:bg-white/10 text-zinc-300 hover:text-white transition-colors"
+                      >
+                        {ed.name}
+                      </Link>
+                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            <span className="hidden sm:inline-block text-zinc-600">|</span>
-            <span className="hidden sm:inline-block text-zinc-400 font-medium">
+            <span className="hidden sm:inline-block text-zinc-500">|</span>
+            <span className="hidden sm:inline-block text-zinc-400">
               Independent digital publishing & journalism
             </span>
           </div>
@@ -170,26 +145,22 @@ export default function Navbar() {
               href="/saved"
               className="flex items-center gap-1.5 hover:text-white transition-colors text-zinc-300"
             >
-              <Bookmark className="w-3.5 h-3.5 text-zinc-400" />
+              <Bookmark className="w-3.5 h-3.5" />
               <span>Bookmarks {savedCount > 0 && `(${savedCount})`}</span>
             </Link>
-            <Link
-              href="/feed.xml"
-              target="_blank"
-              className="hover:text-amber-400 text-zinc-400 hidden sm:inline-block"
-            >
+            <Link href="/feed.xml" target="_blank" className="hover:text-amber-400 text-zinc-400">
               RSS Feed
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Main Navigation Bar */}
+      {/* Main Navbar */}
       <nav
         className={`w-full transition-all duration-300 ${
           scrolled
-            ? 'bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md shadow-lg shadow-zinc-950/5 dark:shadow-black/20 border-b border-zinc-200/80 dark:border-white/10'
-            : 'bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md border-b border-zinc-200/60 dark:border-white/5'
+            ? 'bg-white/90 dark:bg-[#0b0f19]/90 backdrop-blur-md shadow-lg shadow-zinc-950/5 dark:shadow-black/20 border-b border-zinc-200/80 dark:border-white/10'
+            : 'bg-white/70 dark:bg-[#0b0f19]/70 backdrop-blur-md border-b border-zinc-200/60 dark:border-white/5'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
@@ -228,7 +199,7 @@ export default function Navbar() {
 
             <div className="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1.5" />
 
-            {sections.slice(0, 5).map((sec) => (
+            {sections.map((sec) => (
               <Link
                 key={sec.slug}
                 href={`/section/${sec.slug}`}
@@ -245,24 +216,22 @@ export default function Navbar() {
 
           {/* Utility Tools */}
           <div className="flex items-center gap-2.5">
-            {/* Search Trigger Button */}
-            <Link
-              href="/search"
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2 text-xs font-bold"
+            {/* Search Trigger */}
+            <button
+              onClick={openSearch}
+              className="p-2.5 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2"
               aria-label="Search articles"
             >
               <Search className="w-4 h-4" />
-              <span className="hidden sm:inline-block font-sans text-zinc-400">Search</span>
-            </Link>
+              <span className="hidden sm:inline-block text-xs font-medium text-zinc-400">Search ⌘K</span>
+            </button>
 
             <ThemeToggle />
 
             {/* Mobile Menu Toggle */}
             <button
-              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
-              aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -276,31 +245,8 @@ export default function Navbar() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/10 px-6 py-4 overflow-hidden space-y-4 text-sm font-bold"
+              className="lg:hidden bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/10 px-6 py-4 overflow-hidden space-y-3 text-sm font-bold"
             >
-              <div className="pb-3 border-b border-zinc-100 dark:border-white/5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block mb-2">
-                  Regional Editions
-                </span>
-                <div className="grid grid-cols-3 gap-2">
-                  {EDITIONS.map((ed) => (
-                    <Link
-                      key={ed.id}
-                      href={ed.path}
-                      onClick={() => setIsOpen(false)}
-                      className={`p-2 rounded-xl text-center text-xs font-bold border ${
-                        currentEdition.id === ed.id
-                          ? 'bg-red-600 text-white border-red-600'
-                          : 'bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300'
-                      }`}
-                    >
-                      <div className="text-base mb-0.5">{ed.badge}</div>
-                      {ed.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
@@ -316,29 +262,24 @@ export default function Navbar() {
                 All Stories & Archives
               </Link>
               <Link
-                href="/search"
+                href="/edition/kashmir"
                 onClick={() => setIsOpen(false)}
-                className="block py-2 text-zinc-700 dark:text-zinc-300"
+                className="block py-2 text-red-600 dark:text-red-400"
               >
-                Faceted Search
+                Kashmir Edition
               </Link>
-
               <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">
-                  Verticals & Sections
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  {sections.map((sec) => (
-                    <Link
-                      key={sec.slug}
-                      href={`/section/${sec.slug}`}
-                      onClick={() => setIsOpen(false)}
-                      className="block p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 text-xs hover:text-red-600"
-                    >
-                      {sec.name}
-                    </Link>
-                  ))}
-                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Verticals</span>
+                {sections.map((sec) => (
+                  <Link
+                    key={sec.slug}
+                    href={`/section/${sec.slug}`}
+                    onClick={() => setIsOpen(false)}
+                    className="block py-1.5 text-zinc-600 dark:text-zinc-400 text-xs"
+                  >
+                    {sec.name}
+                  </Link>
+                ))}
               </div>
             </motion.div>
           )}
