@@ -1,29 +1,12 @@
-import { Inter, Plus_Jakarta_Sans, Lora } from "next/font/google";
 import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import ToastContainer from "@/components/shared/ToastContainer";
 import BackToTop from "@/components/shared/BackToTop";
 import "./globals.css";
 
-const fontSans = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const fontDisplay = Plus_Jakarta_Sans({
-  variable: "--font-display",
-  subsets: ["latin"],
-});
-
-const fontSerif = Lora({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
-});
-
 export const metadata = {
   metadataBase: new URL('https://teachyblogs.com'),
-  title: "TeachyBlogs - Professional Web Development & Coding Blog",
-  description: "Discover modern web design patterns, tutorials, frameworks, and insights into the future of software engineering.",
+  title: "TeachyBlogs - Modern Digital Publishing Platform & Journal",
+  description: "Independent reporting, technical guides, product reviews, and regional news across Technology, Education, Kashmir, and Culture.",
   icons: {
     icon: '/favicon.ico',
   },
@@ -45,6 +28,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
         <script dangerouslySetInnerHTML={{ __html: `
           try {
             const storage = localStorage.getItem('theme-storage');
@@ -62,7 +51,7 @@ export default function RootLayout({ children }) {
         `}} />
       </head>
       <body
-        className={`${fontSans.variable} ${fontDisplay.variable} ${fontSerif.variable} antialiased min-h-screen transition-colors duration-300 bg-zinc-50 dark:bg-[#0b0f19] text-zinc-900 dark:text-zinc-100 relative overflow-x-hidden`}
+        className="antialiased min-h-screen transition-colors duration-300 bg-zinc-50 dark:bg-[#0b0f19] text-zinc-900 dark:text-zinc-100 relative overflow-x-hidden"
         suppressHydrationWarning
       >
         <ThemeInitializer />
@@ -81,4 +70,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-

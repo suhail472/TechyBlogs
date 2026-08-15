@@ -61,7 +61,14 @@ const Post = mongoose.models.Post || mongoose.model('Post', postSchema);
 
 async function main() {
   console.log('--- STARTING IN-MEMORY LOCAL DATABASE & TEST SUITE ---');
-  const mongod = await MongoMemoryServer.create();
+  const mongod = await MongoMemoryServer.create({
+    instance: {
+      dbName: 'teachyblogs',
+    },
+    spawn: {
+      timeout: 60000,
+    },
+  });
   const uri = mongod.getUri();
   console.log('MongoDB running at:', uri);
 

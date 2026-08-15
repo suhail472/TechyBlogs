@@ -14,6 +14,9 @@ async function startLocalMongo() {
         port: 27017,
         dbName: 'teachyblogs',
       },
+      spawn: {
+        timeout: 60000,
+      },
     });
 
     const uri = mongod.getUri();
