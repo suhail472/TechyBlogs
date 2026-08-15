@@ -9,17 +9,21 @@ import { notFound } from 'next/navigation';
 const SITE_URL = 'https://teachyblogs.com';
 
 async function getAuthor(slug) {
-  await connectToDatabase();
-  const author = await Admin.findOne({ $or: [{ slug }, { username: slug }] }).select('name slug username avatar bio expertise website socialLinks role').lean();
-  if (!author) return null;
-  const posts = await Post.find({ status: { $in: ['published', 'updated'] }, $or: [{ primaryAuthor: author._id }, { author: author.name }, { 'authors.authorId': author._id }] }).sort({ publishedAt: -1 }).limit(30).lean();
-  return { author: JSON.parse(JSON.stringify(author)), posts: JSON.parse(JSON.stringify(posts)) };
+  try {
+    await connectToDatabase();
+    const author = await Admin.findOne({ $or: [{ slug }, { username: slug }] }).select('name slug username avatar bio expertise website socialLinks role').lean();
+    if (!author) return null;
+    const posts = await Post.find({ status: { $in: ['published', 'updated'] }, $or: [{ primaryAuthor: author._id }, { author: author.name }, { 'authors.authorId': author._id }] }).sort({ publishedAt: -1 }).limit(30).lean();
+    return { author: JSON.parse(JSON.stringify(author)), posts: JSON.parse(JSON.stringify(posts)) };
+  } catch (err) {
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const result = await getAuthor(slug);
-  if (!result) return { title: 'Author not found | TeachyBlogs', robots: { index: false } };
+  if (!result) return { title: 'Author | TeachyBlogs', robots: { index: false } };
   const { author } = result;
   return { title: `${author.name} | TeachyBlogs`, description: author.bio || `Read the latest work from ${author.name} on TeachyBlogs.`, alternates: { canonical: `${SITE_URL}/author/${slug}` } };
 }

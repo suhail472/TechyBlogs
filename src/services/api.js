@@ -99,6 +99,7 @@ export const postAPI = {
     if (options.limit) queryParams.append('limit', options.limit);
     if (options.sortBy) queryParams.append('sortBy', options.sortBy);
     if (options.sortOrder) queryParams.append('sortOrder', options.sortOrder);
+    if (options.contentType) queryParams.append('contentType', options.contentType);
 
     const endpoint = `/posts${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const response = await apiCall(endpoint, {
@@ -173,4 +174,74 @@ export const postAPI = {
   },
 };
 
-export default { authAPI, postAPI };
+// Taxonomy API
+export const taxonomyAPI = {
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = `/taxonomy${query ? '?' + query : ''}`;
+    return apiCall(endpoint, { method: 'GET' });
+  },
+  create: async (data) => {
+    return apiCall('/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  update: async (id, data) => {
+    return apiCall(`/taxonomy/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+  delete: async (id) => {
+    return apiCall(`/taxonomy/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Author API
+export const authorAPI = {
+  getAll: async () => {
+    return apiCall('/authors', { method: 'GET' });
+  },
+  create: async (data) => {
+    return apiCall('/authors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  update: async (id, data) => {
+    return apiCall(`/authors/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Editorial Workflow API
+export const workflowAPI = {
+  transition: async (postId, nextStatus, note = '', scheduledAt = null) => {
+    return apiCall(`/posts/${postId}/workflow`, {
+      method: 'POST',
+      body: JSON.stringify({ nextStatus, note, scheduledAt }),
+    });
+  },
+};
+
+// Search & Discovery API
+export const searchAPI = {
+  search: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/search${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+};
+
+// Editorial Calendar API
+export const calendarAPI = {
+  getEvents: async (month, year) => {
+    return apiCall(`/admin/calendar-events?month=${month}&year=${year}`, { method: 'GET' });
+  },
+};
+
+export default { authAPI, postAPI, taxonomyAPI, authorAPI, workflowAPI, searchAPI, calendarAPI };

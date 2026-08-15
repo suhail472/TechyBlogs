@@ -5,19 +5,24 @@ import Post from '@/lib/models/post.model';
 const SITE_URL = 'https://teachyblogs.com';
 
 export async function GET() {
-  await connectToDatabase();
+  let posts = [];
+  try {
+    await connectToDatabase();
 
-  const posts = await Post.find({ status: 'published' })
-    .sort({ publishedAt: -1 })
-    .select('title slug excerpt author publishedAt image')
-    .lean();
+    posts = await Post.find({ status: 'published' })
+      .sort({ publishedAt: -1 })
+      .select('title slug excerpt author publishedAt image')
+      .lean();
+  } catch (err) {
+    console.warn('Feed XML generation using empty fallback:', err.message);
+  }
 
   const rssItems = posts
     .map((post) => {
       const pubDate = post.publishedAt
         ? new Date(post.publishedAt).toUTCString()
         : new Date().toUTCString();
-      const safeTitle = escapeXml(post.title);
+      const safeTitle = escapeXml(post.title || '');
       const safeExcerpt = escapeXml(post.excerpt || '');
 
       return `
@@ -36,9 +41,9 @@ export async function GET() {
   const rssFeed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>TeachyBlogs - Web Development &amp; Coding Blog</title>
+    <title>TeachyBlogs - Web Development &amp; Digital Publishing Platform</title>
     <link>${SITE_URL}</link>
-    <description>Discover modern web design patterns, tutorials, frameworks, and insights into the future of software engineering by Suheel Hilal.</description>
+    <description>Modern digital publishing platform covering Technology, Regional News, Education, Travel, and Analysis.</description>
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml" />
@@ -60,7 +65,7 @@ export async function GET() {
 }
 
 function escapeXml(str) {
-  return str
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')

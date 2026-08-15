@@ -406,9 +406,18 @@ export default function PostClient({ blog, relatedPosts = [] }) {
         </Link>
         
         <div className="space-y-6">
-          <div className="flex gap-1.5">
+          {/* Content Type & Badges */}
+          <div className="flex flex-wrap items-center gap-2">
+            {blog.breaking && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.18em] bg-red-600 text-white px-3 py-1 rounded-full animate-pulse shadow-md shadow-red-600/20">
+                <Flame className="w-3.5 h-3.5" /> Breaking News
+              </span>
+            )}
+            <span className="text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+              {blog.contentType || 'Article'}
+            </span>
             {(blog.categories || []).map(cat => (
-              <span key={cat} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 dark:bg-indigo-500/10 px-3 py-1.5 rounded-full border border-indigo-500/10 dark:border-indigo-500/15">
+              <span key={cat} className="text-[9px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-200 dark:border-white/10">
                 {cat}
               </span>
             ))}
@@ -418,22 +427,31 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             {blog.title}
           </h1>
 
-          {/* Metadata */}
-          <div className="flex flex-wrap items-center justify-between gap-6 pt-4 border-t border-zinc-200/80 dark:border-white/[0.06]">
+          {/* Subtitle / Dek */}
+          {blog.subtitle && (
+            <p className="text-lg md:text-xl font-medium text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl">
+              {blog.subtitle}
+            </p>
+          )}
+
+          {/* Metadata & Author Profile */}
+          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-zinc-200/80 dark:border-white/[0.06]">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-black text-xs font-display shadow-md shadow-blue-500/15">
+              <div className="w-11 h-11 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-black text-sm font-display shadow-md">
                 {blog.author ? blog.author.split(' ').map(n=>n[0]).join('') : 'SH'}
               </div>
               <div>
                 <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{blog.author || 'Suheel Hilal'}</p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">Writer</p>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                  {blog.primaryAuthor?.role || 'Staff Writer'} · TeachyBlogs Editorial
+                </p>
               </div>
             </div>
             
             <div className="flex items-center gap-5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
               <div className="flex items-center gap-1.5" suppressHydrationWarning>
                 <Calendar className="w-4 h-4 text-zinc-400" />
-                {blog.date || new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {blog.date || new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
               <div className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-zinc-400" />
@@ -472,11 +490,105 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               <ReaderSettings content={blog.content} />
             </div>
             
+            {/* Tutorial & Guide Meta Bar */}
+            {(blog.contentType === 'tutorial' || blog.contentType === 'guide') && blog.contentMetadata?.tutorialMetadata && (
+              <div className="mb-8 p-5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 grid sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">Difficulty Level</span>
+                  <span className="font-bold text-zinc-800 dark:text-zinc-200">{blog.contentMetadata.tutorialMetadata.difficulty || 'All Levels'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">Estimated Time</span>
+                  <span className="font-bold text-zinc-800 dark:text-zinc-200">{blog.contentMetadata.tutorialMetadata.estimatedTime || `${readingTime} min read`}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">Prerequisites</span>
+                  <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                    {blog.contentMetadata.tutorialMetadata.prerequisites?.join(', ') || 'None required'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* News & Reporting Note */}
+            {blog.contentType === 'news' && blog.editorNote && (
+              <div className="mb-8 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300">
+                <span className="font-black uppercase tracking-wider text-[10px] block mb-1">Editor's Note</span>
+                <p className="leading-relaxed">{blog.editorNote}</p>
+              </div>
+            )}
+
             <div 
               ref={contentRef}
               className={`prose max-w-none prose-zinc dark:prose-invert prose-headings:text-zinc-900 dark:prose-headings:text-zinc-100 prose-p:text-zinc-700 dark:prose-p:text-zinc-300 prose-strong:text-zinc-900 dark:prose-strong:text-zinc-100 prose-code:text-blue-600 dark:prose-code:text-blue-400 ${typography.fontFamily} ${typography.fontSize} ${typography.lineHeight}`}
               dangerouslySetInnerHTML={{ __html: htmlContent }}
             />
+
+            {/* Review Scorecard */}
+            {blog.contentType === 'review' && blog.contentMetadata?.reviewMetadata && (
+              <div className="mt-12 p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-white/10">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 dark:text-red-400">Verdict & Rating</span>
+                    <h3 className="text-xl font-bold font-display mt-1">Review Assessment</h3>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl font-black font-display text-zinc-900 dark:text-white">
+                      {blog.contentMetadata.reviewMetadata.rating || 4.5}
+                    </span>
+                    <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">/ 5.0</span>
+                  </div>
+                </div>
+
+                {blog.contentMetadata.reviewMetadata.verdict && (
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                    "{blog.contentMetadata.reviewMetadata.verdict}"
+                  </p>
+                )}
+
+                <div className="grid sm:grid-cols-2 gap-6 pt-2">
+                  {blog.contentMetadata.reviewMetadata.pros?.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-600 mb-3">Highlights & Pros</h4>
+                      <ul className="space-y-2">
+                        {blog.contentMetadata.reviewMetadata.pros.map((p, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                            <span className="text-emerald-500 font-bold">+</span>
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {blog.contentMetadata.reviewMetadata.cons?.length > 0 && (
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-600 mb-3">Drawbacks & Cons</h4>
+                      <ul className="space-y-2">
+                        {blog.contentMetadata.reviewMetadata.cons.map((c, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                            <span className="text-rose-500 font-bold">−</span>
+                            <span>{c}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Source & Transparency Citation */}
+            {blog.source?.name && (
+              <div className="mt-8 p-4 rounded-2xl bg-zinc-100 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/5 text-xs text-zinc-500 dark:text-zinc-400 flex items-center justify-between gap-4">
+                <span><strong>Editorial Source:</strong> {blog.source.name}</span>
+                {blog.source.url && (
+                  <a href={blog.source.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    View Primary Document ↗
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Social Share Modal Block Below Content */}
             <div className="mt-12 p-6 rounded-2xl border border-zinc-250/30 dark:border-white/[0.04] bg-zinc-50 dark:bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-4">

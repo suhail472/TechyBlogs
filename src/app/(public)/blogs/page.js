@@ -3,40 +3,45 @@ import Post from '@/lib/models/post.model';
 import BlogsClient from '@/components/pages/BlogsClient';
 
 export const metadata = {
-  title: 'Blog Archive | TeachyBlogs - Web Dev Tutorials & Design Patterns',
-  description: 'Browse all articles and design guides at TeachyBlogs. Read advanced guides on Next.js, React state management, and Tailwind layouts.',
-  keywords: 'Web Development Blog, CSS layout tips, Next.js lessons, developer writing, portfolio articles, coding guides',
+  title: 'All Stories & Archives | TeachyBlogs',
+  description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TeachyBlogs.',
+  keywords: 'Web Development Blog, News, Education, Tech Reviews, Kashmir Guides, Coding Tutorials',
   alternates: {
     canonical: 'https://teachyblogs.com/blogs',
   },
   openGraph: {
-    title: 'Blog Archive | TeachyBlogs - Web Dev Tutorials & Design Patterns',
-    description: 'Browse all articles and design guides at TeachyBlogs. Read advanced guides on Next.js, React state management, and Tailwind layouts.',
+    title: 'All Stories & Archives | TeachyBlogs',
+    description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TeachyBlogs.',
     url: 'https://teachyblogs.com/blogs',
     type: 'website',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Blog Archive | TeachyBlogs',
-    description: 'Browse all technical articles from Suheel Hilal.',
-  }
 };
 
 export default async function BlogsPage(props) {
   const searchParams = await props.searchParams;
   const category = searchParams?.category || 'All';
   
-  await connectToDatabase();
-  const posts = await Post.find({ status: 'published' }).sort({ publishedAt: -1 }).lean();
-  
-  // Serialize Mongo _id and Dates to prevent Next.js dynamic routing serialization issues
-  const serializedPosts = JSON.parse(JSON.stringify(posts));
+  let serializedPosts = [];
+
+  try {
+    await connectToDatabase();
+    const posts = await Post.find({ status: 'published' })
+      .sort({ publishedAt: -1 })
+      .populate('primarySection', 'name slug')
+      .populate('editions', 'name slug')
+      .populate('primaryAuthor', 'name slug avatar')
+      .lean();
+    
+    serializedPosts = JSON.parse(JSON.stringify(posts));
+  } catch (err) {
+    console.warn('Database query during blogs archive failed:', err.message);
+  }
   
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": "Blog Archive - TeachyBlogs",
-    "description": "Explore all technical essays, tutorials, and web development insights written by Suheel Hilal.",
+    "name": "Story Archives - TeachyBlogs",
+    "description": "Explore all essays, tutorials, and regional insights published on TeachyBlogs.",
     "url": "https://teachyblogs.com/blogs"
   };
 

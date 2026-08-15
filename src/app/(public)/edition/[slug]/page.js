@@ -8,12 +8,17 @@ const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function getEdition(slug) {
-  await connectToDatabase();
-  const item = await Taxonomy.findOne({ kind: 'edition', slug, active: true }).lean();
-  const name = item?.name || displayName(slug);
-  const query = { status: { $in: ['published', 'updated'] }, $or: [{ editions: item?._id }, { categories: new RegExp(`^${escapeRegex(name)}$`, 'i') }] };
-  const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(24).lean();
-  return { item: item || { name, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
+  const name = displayName(slug);
+  try {
+    await connectToDatabase();
+    const item = await Taxonomy.findOne({ kind: 'edition', slug, active: true }).lean();
+    const resolvedName = item?.name || name;
+    const query = { status: { $in: ['published', 'updated'] }, $or: [{ editions: item?._id }, { categories: new RegExp(`^${escapeRegex(resolvedName)}$`, 'i') }] };
+    const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(24).lean();
+    return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
+  } catch (err) {
+    return { item: { name, slug, seo: { indexable: false } }, posts: [] };
+  }
 }
 
 export async function generateMetadata({ params }) {

@@ -3,14 +3,27 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, PlusCircle, LogOut, Home as HomeIcon, Menu, X, MessageSquare, Mail, BarChart3 } from 'lucide-react';
+import {
+  LayoutDashboard,
+  PlusCircle,
+  LogOut,
+  Home as HomeIcon,
+  Menu,
+  X,
+  MessageSquare,
+  Mail,
+  BarChart3,
+  Layers,
+  Users,
+  Calendar,
+  Sparkles,
+} from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
 import TopLoader from '@/components/shared/TopLoader';
-
 import { getCookie } from '@/lib/cookies';
 
 export default function AdminLayout({ children }) {
-  const { isAuthenticated, getMe, logout } = useAuthStore();
+  const { isAuthenticated, user, getMe, logout } = useAuthStore();
   const pathname = usePathname();
   const router = useRouter();
   const [verifying, setVerifying] = useState(true);
@@ -35,10 +48,8 @@ export default function AdminLayout({ children }) {
     fetchPendingComments();
   }, [isAuthPage, verifying]);
 
-
   useEffect(() => {
     const verify = async () => {
-      // If we are on an auth page, skip active check redirects
       if (isAuthPage) {
         setVerifying(false);
         return;
@@ -47,15 +58,13 @@ export default function AdminLayout({ children }) {
       const token = getCookie('token');
       if (!token) {
         router.push('/admin/login');
-        // Do NOT call setVerifying(false) to prevent layout flash during redirect transition
         return;
       }
 
       setVerifying(true);
-      const user = await getMe();
-      if (!user) {
+      const authedUser = await getMe();
+      if (!authedUser) {
         router.push('/admin/login');
-        // Do NOT call setVerifying(false)
         return;
       }
       setVerifying(false);
@@ -66,125 +75,165 @@ export default function AdminLayout({ children }) {
 
   if (verifying && !isAuthPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-900">
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
-          <span className="text-slate-500 font-bold text-sm">Authenticating admin session...</span>
+          <span className="text-zinc-500 font-bold text-sm">Authenticating editorial session...</span>
         </div>
       </div>
     );
   }
 
-  // If it's a login or forgot page, just render the child card without sidebar
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-    { icon: PlusCircle, label: 'Create Post', path: '/admin/create' },
-    { icon: MessageSquare, label: 'Comments', path: '/admin/comments' },
-    { icon: Mail, label: 'Subscribers', path: '/admin/subscribers' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-    { icon: HomeIcon, label: 'Back to Site', path: '/' },
+  const menuSections = [
+    {
+      title: 'Editorial',
+      items: [
+        { icon: LayoutDashboard, label: 'Workspace', path: '/admin' },
+        { icon: PlusCircle, label: 'New Story', path: '/admin/create' },
+        { icon: Calendar, label: 'Calendar', path: '/admin/calendar' },
+      ],
+    },
+    {
+      title: 'Organization',
+      items: [
+        { icon: Layers, label: 'Taxonomy', path: '/admin/taxonomy' },
+        { icon: Users, label: 'Authors & Team', path: '/admin/authors' },
+      ],
+    },
+    {
+      title: 'Audience & Growth',
+      items: [
+        {
+          icon: MessageSquare,
+          label: 'Comments',
+          path: '/admin/comments',
+          badge: pendingCommentsCount > 0 ? pendingCommentsCount : null,
+        },
+        { icon: Mail, label: 'Subscribers', path: '/admin/subscribers' },
+        { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+      ],
+    },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-50 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100 relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 relative overflow-x-hidden">
       <TopLoader />
 
       {/* Mobile Top Bar */}
-      <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-white dark:bg-zinc-950 border-b border-zinc-200/80 dark:border-zinc-800/50 sticky top-0 z-20 w-full backdrop-blur-xl bg-white/90 dark:bg-zinc-950/80">
-        <Link href="/" className="text-xl font-bold tracking-tight font-display text-zinc-900 dark:text-white">
-          Techy<span className="font-extrabold text-blue-500">Blogs</span>
+      <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-white/10 sticky top-0 z-20 w-full backdrop-blur-xl">
+        <Link href="/admin" className="text-xl font-black tracking-tight font-display text-zinc-900 dark:text-white flex items-center gap-2">
+          <span className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">TB</span>
+          <span>Editorial <span className="text-blue-500 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 bg-blue-500/10 rounded-full">CMS</span></span>
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800/80 text-zinc-650 dark:text-zinc-355 hover:bg-zinc-55 dark:hover:bg-zinc-900 transition-colors"
-          aria-label="Toggle Sidebar"
+          className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+          aria-label="Toggle Navigation"
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </header>
 
-      {/* Sidebar Mobile Backdrop */}
-      {sidebarOpen && (
-        <div 
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-20 lg:hidden transition-opacity duration-300"
-        />
-      )}
-
       {/* Sidebar Navigation */}
-      <aside className={`w-64 border-r fixed inset-y-0 left-0 z-30 transition-all duration-300 ease-in-out bg-white border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800/50 lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-8 border-b dark:border-zinc-800/50 border-zinc-100 flex items-center justify-between">
-          <div>
-            <Link href="/" className="text-2xl font-black tracking-tight mb-2 block font-display">
-              Techy<span className="text-blue-500">Blogs</span>
-            </Link>
-            <span className="inline-block text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 bg-blue-500/10 text-blue-500 rounded-md">
-              Admin Management
-            </span>
-          </div>
-          <button 
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-400 dark:text-zinc-550"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <nav className="mt-8 px-4 space-y-2">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.path;
-            const isComments = item.label === 'Comments';
-            return (
-              <Link
-                key={item.label}
-                href={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center justify-between px-4 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-zinc-550 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800/50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  {item.label}
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-zinc-900/95 border-r border-zinc-200/80 dark:border-white/10 p-6 flex flex-col justify-between transition-transform duration-300 backdrop-blur-xl lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:static'
+        }`}
+      >
+        <div className="flex flex-col h-full overflow-y-auto pr-1">
+          {/* Logo & Role */}
+          <div className="mb-8 hidden lg:block">
+            <Link href="/admin" className="text-xl font-black tracking-tight font-display text-zinc-900 dark:text-white flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-lg shadow-blue-500/20">
+                TB
+              </span>
+              <div>
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="font-bold">TeachyBlogs</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">CMS</span>
                 </div>
-                {isComments && pendingCommentsCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white animate-pulse">
-                    {pendingCommentsCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+                <p className="text-[11px] text-zinc-400 mt-1 font-medium">Publishing Newsroom</p>
+              </div>
+            </Link>
+          </div>
 
-        <div className="absolute bottom-8 left-0 w-full px-4">
-          <button 
-            onClick={async () => {
-              setSidebarOpen(false);
-              await logout();
-              router.push('/');
-            }}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider text-red-500 hover:bg-red-500/10 transition-all duration-300"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            Sign Out
-          </button>
+          {/* Navigation Groups */}
+          <div className="space-y-6 flex-1">
+            {menuSections.map((section) => (
+              <div key={section.title}>
+                <p className="text-[10px] uppercase font-black tracking-[0.18em] text-zinc-400 dark:text-zinc-500 mb-2 px-3">
+                  {section.title}
+                </p>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.path;
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        href={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                              isActive
+                                ? 'bg-white text-blue-600'
+                                : 'bg-rose-500 text-white animate-pulse'
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* User Profile & Back to Site */}
+          <div className="pt-6 mt-6 border-t border-zinc-200/80 dark:border-white/10 space-y-2">
+            <Link
+              href="/"
+              target="_blank"
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white transition-all"
+            >
+              <HomeIcon className="w-4 h-4" />
+              <span>Public Live Site</span>
+            </Link>
+
+            <button
+              onClick={() => {
+                logout();
+                router.push('/admin/login');
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main Panel Content */}
-      <main className="flex-1 lg:ml-64 p-6 sm:p-8 md:p-12 overflow-y-auto max-w-full">
-        <div className="container mx-auto max-w-5xl">
-          {children}
-        </div>
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
+        {children}
       </main>
     </div>
   );
