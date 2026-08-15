@@ -41,7 +41,7 @@ const BlogCard = ({ blog }) => {
             </div>
             <div className="flex items-center gap-1.5 text-zinc-450 dark:text-zinc-500 font-bold shrink-0">
               <span suppressHydrationWarning>
-                {blog.date || new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {blog.date || (blog.publishedAt || blog.createdAt ? new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently')}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">

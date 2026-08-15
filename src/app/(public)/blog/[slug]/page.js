@@ -2,59 +2,62 @@ import connectToDatabase from '@/lib/db';
 import Post from '@/lib/models/post.model';
 import PostClient from '@/components/pages/PostClient';
 import { notFound } from 'next/navigation';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
+  let blog = null;
   try {
     await connectToDatabase();
-    const blog = await Post.findOne({ slug, status: 'published' }).lean();
-
-    if (!blog) {
-      return {
-        title: 'Story Not Found | TeachyBlogs',
-        description: 'The requested story could not be found.',
-      };
-    }
-
-    return {
-      title: `${blog.title} | TeachyBlogs`,
-      description: blog.metaDescription || blog.excerpt,
-      keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'),
-      alternates: {
-        canonical: `https://teachyblogs.com/blog/${slug}`,
-      },
-      openGraph: {
-        title: `${blog.title} | TeachyBlogs`,
-        description: blog.metaDescription || blog.excerpt,
-        url: `https://teachyblogs.com/blog/${slug}`,
-        type: 'article',
-        publishedTime: blog.publishedAt || blog.createdAt,
-        modifiedTime: blog.updatedAt || blog.publishedAt || blog.createdAt,
-        authors: [blog.author || 'Suheel Hilal'],
-        images: [
-          {
-            url: blog.image || 'https://teachyblogs.com/favicon.ico',
-            alt: blog.title,
-            width: 1200,
-            height: 630,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: blog.title,
-        description: blog.metaDescription || blog.excerpt,
-        images: [blog.image || 'https://teachyblogs.com/favicon.ico'],
-      },
-    };
+    blog = await Post.findOne({ slug, status: 'published' }).lean();
   } catch (err) {
+    // ignore
+  }
+
+  if (!blog) {
+    blog = DEFAULT_STORIES.find((s) => s.slug === slug);
+  }
+
+  if (!blog) {
     return {
-      title: 'Story | TeachyBlogs',
-      description: 'TeachyBlogs digital publication.',
+      title: 'Story Not Found | TeachyBlogs',
+      description: 'The requested story could not be found.',
     };
   }
+
+  return {
+    title: `${blog.title} | TeachyBlogs`,
+    description: blog.metaDescription || blog.excerpt,
+    keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'),
+    alternates: {
+      canonical: `https://teachyblogs.com/blog/${slug}`,
+    },
+    openGraph: {
+      title: `${blog.title} | TeachyBlogs`,
+      description: blog.metaDescription || blog.excerpt,
+      url: `https://teachyblogs.com/blog/${slug}`,
+      type: 'article',
+      publishedTime: blog.publishedAt || blog.createdAt,
+      modifiedTime: blog.updatedAt || blog.publishedAt || blog.createdAt,
+      authors: [blog.author || 'Suheel Hilal'],
+      images: [
+        {
+          url: blog.image || 'https://teachyblogs.com/favicon.ico',
+          alt: blog.title,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: blog.title,
+      description: blog.metaDescription || blog.excerpt,
+      images: [blog.image || 'https://teachyblogs.com/favicon.ico'],
+    },
+  };
 }
 
 export default async function SingleBlogPage({ params }) {
@@ -97,6 +100,14 @@ export default async function SingleBlogPage({ params }) {
     }
   } catch (err) {
     console.warn('Failed to load article from DB:', err.message);
+  }
+
+  // Fallback to default stories if DB is empty or disconnected
+  if (!blog) {
+    blog = DEFAULT_STORIES.find((s) => s.slug === slug);
+    if (blog) {
+      allRelated = DEFAULT_STORIES.filter((s) => s.slug !== slug).slice(0, 3);
+    }
   }
 
   if (!blog) {
@@ -162,6 +173,7 @@ export default async function SingleBlogPage({ params }) {
 
   return (
     <>
+      {/* Google SEO JSON-LD Structured Data Scripts */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
