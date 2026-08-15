@@ -4,20 +4,21 @@ import typography from '@tailwindcss/typography';
 export default {
   content: [
     './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
         primary: {
-          dark: '#020617', // deep dark slate slate-950
-          light: '#f8fafc', // slate-50
-          accent: '#3b82f6', // primary blue-500
+          dark: '#0f172a',
+          light: '#ffffff',
+          accent: '#38bdf8',
         },
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
     },
   },
@@ -25,4 +26,3 @@ export default {
     typography,
   ],
 };
-

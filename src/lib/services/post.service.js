@@ -28,11 +28,13 @@ class PostService {
       limit = 10,
       sortBy = 'publishedAt',
       sortOrder = 'desc',
+      contentType,
     } = filters;
 
-    const query = { status };
+    const query = status === 'all' ? {} : { status };
     if (category) query.categories = category;
     if (tag) query.tags = tag;
+    if (contentType) query.contentType = contentType;
 
     const skip = (page - 1) * limit;
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };

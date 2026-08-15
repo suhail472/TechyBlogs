@@ -1,6 +1,6 @@
 import connectToDatabase from '@/lib/db';
 import Post from '@/lib/models/post.model';
-import HomeClient from '@/components/pages/HomeClient';
+import EditorialHome from '@/components/pages/EditorialHome';
 
 export const metadata = {
   title: 'TeachyBlogs - Professional Web Development & Coding Blog',
@@ -52,7 +52,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
       />
-      <HomeClient initialBlogs={serializedPosts} />
+      <EditorialHome posts={serializedPosts} />
     </>
   );
 }

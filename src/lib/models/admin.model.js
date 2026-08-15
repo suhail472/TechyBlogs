@@ -23,8 +23,8 @@ const adminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'superadmin'],
-      default: 'admin',
+      enum: ['contributor', 'author', 'editor', 'moderator', 'admin', 'superadmin'],
+      default: 'author',
     },
     isActive: {
       type: Boolean,
@@ -37,6 +37,13 @@ const adminSchema = new mongoose.Schema(
       type: String,
       select: true,
     },
+    username: { type: String, trim: true, lowercase: true, sparse: true, unique: true },
+    slug: { type: String, trim: true, lowercase: true, sparse: true, unique: true },
+    avatar: { type: String, default: '' },
+    bio: { type: String, default: '', maxlength: 1000 },
+    expertise: { type: [String], default: [] },
+    website: { type: String, default: '' },
+    socialLinks: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   {
     timestamps: true,

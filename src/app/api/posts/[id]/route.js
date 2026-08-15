@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import postService from '@/lib/services/post.service';
 import { verifyAuth } from '@/lib/middlewares/auth';
+import { editorialService } from '@/lib/services/editorial.service';
 
 export async function GET(req, { params }) {
   try {
@@ -18,10 +19,10 @@ export async function GET(req, { params }) {
 export async function PUT(req, { params }) {
   try {
     await connectToDatabase();
-    await verifyAuth(req);
+    const user = await verifyAuth(req);
     const { id } = await params;
     const body = await req.json();
-    const result = await postService.updatePost(id, body);
+    const result = await editorialService.update(id, body, user);
     return NextResponse.json({ success: true, message: 'Post updated successfully', data: result }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });

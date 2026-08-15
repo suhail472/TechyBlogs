@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   const fetchBlogs = async () => {
     try {
-      const response = await postAPI.getAllPosts();
+      const response = await postAPI.getAllPosts({ status: 'all', limit: 50 });
       if (response.posts) {
         setBlogs(response.posts);
         
