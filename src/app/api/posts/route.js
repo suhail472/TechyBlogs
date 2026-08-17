@@ -5,6 +5,8 @@ import { verifyAuth } from '@/lib/middlewares/auth';
 import { editorialService } from '@/lib/services/editorial.service';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);

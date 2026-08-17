@@ -3,6 +3,8 @@ import connectToDatabase from '@/lib/db';
 import commentService from '@/lib/services/comment.service';
 import { verifyAuth } from '@/lib/middlewares/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     await connectToDatabase();
@@ -23,7 +25,7 @@ export async function GET(req) {
     const result = await commentService.getAllComments({ status, page, limit });
     return NextResponse.json({ success: true, ...result }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }
 }
 
@@ -31,8 +33,8 @@ export async function POST(req) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const comment = await commentService.createComment(body);
-    return NextResponse.json({ success: true, message: 'Comment submitted successfully, awaiting approval', data: comment }, { status: 201 });
+    const result = await commentService.createComment(body);
+    return NextResponse.json({ success: true, message: 'Comment submitted for review', data: result }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }

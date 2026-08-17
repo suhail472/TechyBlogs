@@ -5,6 +5,8 @@ import Taxonomy from '@/lib/models/taxonomy.model';
 import Admin from '@/lib/models/admin.model';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
