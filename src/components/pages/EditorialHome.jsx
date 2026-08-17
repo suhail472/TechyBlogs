@@ -183,7 +183,7 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 5. Technology & AI Systems Desk (Content-Aware Layout) */}
+        {/* 5. Technology & AI Systems Desk */}
         {techLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
@@ -226,40 +226,43 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 6. Kashmir Regional Bureau Spotlight (High-Contrast Presentation) */}
+        {/* 6. Kashmir Regional Bureau Section (Seamlessly Matching Site Theme) */}
         {kashmirLayout.shouldRender && (
-          <section className="my-12 rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 relative overflow-hidden border border-white/15 shadow-2xl">
-            <div className="flex flex-wrap items-end justify-between gap-4 mb-8 pb-6 border-b border-white/15">
-              <div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-400 mb-2">
-                  <MapPin className="w-3.5 h-3.5" /> Regional Bureau Spotlight
-                </span>
-                <h2 className="font-display text-3xl sm:text-4xl font-black tracking-tight text-white">
-                  Kashmir Edition Dispatch
-                </h2>
-                <p className="text-xs sm:text-sm text-zinc-300 mt-1 font-sans">
-                  Srinagar Smart City, higher education notifications, Dal Lake heritage, and valley economics.
-                </p>
+          <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
+            <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white grid place-items-center text-xs font-black shadow-md shadow-emerald-500/20">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="font-display text-2xl font-black text-zinc-900 dark:text-white">
+                    Kashmir Regional Bureau
+                  </h2>
+                  <p className="text-xs text-zinc-500 font-medium">Srinagar Smart City, higher education notifications, Dal Lake heritage, and valley economics</p>
+                </div>
               </div>
               <Link
                 href="/kashmir"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-zinc-950 text-xs font-black uppercase tracking-wider hover:bg-zinc-200 transition-colors shadow-lg"
+                className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 hover:gap-2 transition-all"
               >
                 Open Kashmir Bureau <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {kashmirLayout.mode === 'single-spotlight' ? (
-              <EditorialCard blog={kashmirLayout.lead} variant="spotlight-single" isDarkSection={true} />
-            ) : (
-              <div className={`grid gap-6 ${kashmirStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+            {kashmirLayout.mode === 'single-spotlight' && (
+              <EditorialCard blog={kashmirLayout.lead} variant="spotlight-single" />
+            )}
+            {kashmirLayout.mode === 'balanced-pair' && (
+              <div className="grid md:grid-cols-2 gap-6">
                 {[kashmirLayout.lead, ...kashmirLayout.secondary].map((post) => (
-                  <EditorialCard
-                    key={String(post._id || post.slug)}
-                    blog={post}
-                    variant="featured"
-                    isDarkSection={true}
-                  />
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
+                ))}
+              </div>
+            )}
+            {(kashmirLayout.mode === 'triad' || kashmirLayout.mode === 'lead-and-rail' || kashmirLayout.mode === 'ensemble') && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[kashmirLayout.lead, ...kashmirLayout.secondary].map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
                 ))}
               </div>
             )}
@@ -309,7 +312,7 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 8. Gear Lab & Product Reviews (Adaptive Density) */}
+        {/* 8. Gear Lab & Product Reviews */}
         {reviewLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
