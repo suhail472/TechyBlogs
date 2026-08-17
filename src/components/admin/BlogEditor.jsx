@@ -443,6 +443,14 @@ export default function BlogEditor({ id }) {
   // Central Publication Readiness Evaluation
   const readiness = useMemo(() => getPublicationReadiness(formData), [formData]);
 
+  // Timer Cleanup on Unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      if (maxIntervalTimerRef.current) clearTimeout(maxIntervalTimerRef.current);
+    };
+  }, []);
+
   // Online / Offline Listeners
   useEffect(() => {
     const handleOnline = () => {
@@ -800,11 +808,20 @@ export default function BlogEditor({ id }) {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Word & Character count calculations
+  // Word & Character count calculations (Accurate Markdown Parsing)
   const { wordCount, charCount, readingTime } = useMemo(() => {
     const raw = formData.content || '';
-    const cleanText = raw.replace(/[#*`~\[\]()>-]/g, ' ').replace(/\s+/g, ' ').trim();
-    const words = cleanText ? cleanText.split(' ').filter(Boolean).length : 0;
+    // Strip markdown formatting symbols and code blocks from word calculation
+    const cleanText = raw
+      .replace(/```[\s\S]*?```/g, ' ') // code blocks
+      .replace(/\$\$[\s\S]*?\$\$/g, ' ') // math blocks
+      .replace(/:::[a-z]+[\s\S]*?:::/g, ' ') // callouts & quizzes
+      .replace(/!\[.*?\]\(.*?\)/g, ' ') // images
+      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1') // links
+      .replace(/[#*`~\[\]()>-]/g, ' ') // formatting markers
+      .replace(/\s+/g, ' ')
+      .trim();
+    const words = cleanText ? cleanText.split(/\s+/).filter(Boolean).length : 0;
     const chars = raw.length;
     const readMin = getReadingTime(raw);
     return { wordCount: words, charCount: chars, readingTime: readMin };
@@ -1166,7 +1183,16 @@ export default function BlogEditor({ id }) {
               <button
                 type="button"
                 onClick={() => {
-                  setFormData(recoveryDraft.formData);
+                  setFormData((prev) => ({
+                    ...prev,
+                    ...recoveryDraft.formData,
+                    faqs: (recoveryDraft.formData?.faqs || []).map((f, i) => ({
+                      id: f.id || f._id || generateFaqId(),
+                      question: f.question || '',
+                      answer: f.answer || '',
+                      order: f.order ?? i,
+                    })),
+                  }));
                   setRecoveryDraft(null);
                   setHasUnsavedChanges(true);
                   addToast('Local draft restored', 'info');
@@ -1501,6 +1527,7 @@ export default function BlogEditor({ id }) {
                 <button
                   onClick={() => setInspectorOpen(false)}
                   className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-white"
+                  title="Close Inspector"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2253,6 +2280,7 @@ export default function BlogEditor({ id }) {
             onClick={() => setShortcutsModalOpen(true)}
             className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
             title="Keyboard Shortcuts Cheat Sheet (Ctrl+/)"
+            aria-label="Keyboard Shortcuts Cheat Sheet"
           >
             <Keyboard className="w-3 h-3" />
             <span>Ctrl + /</span>
@@ -2263,7 +2291,7 @@ export default function BlogEditor({ id }) {
       {/* 5. MODAL: KEYBOARD SHORTCUTS CHEAT SHEET */}
       <AnimatePresence>
         {shortcutsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="shortcuts-dialog-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2273,11 +2301,11 @@ export default function BlogEditor({ id }) {
               <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <Keyboard className="w-4 h-4 text-red-600" />
-                  <h3 className="font-display font-bold text-sm text-zinc-900 dark:text-white">
+                  <h3 id="shortcuts-dialog-title" className="font-display font-bold text-sm text-zinc-900 dark:text-white">
                     Editorial Workstation Keyboard Shortcuts
                   </h3>
                 </div>
-                <button onClick={() => setShortcutsModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                <button onClick={() => setShortcutsModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white" aria-label="Close shortcuts dialog">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2326,7 +2354,7 @@ export default function BlogEditor({ id }) {
       {/* 6. MODAL: INSERT IMAGE */}
       <AnimatePresence>
         {activeModal === 'image' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="image-modal-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2336,11 +2364,11 @@ export default function BlogEditor({ id }) {
               <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <ImageIcon className="w-4 h-4 text-red-600" />
-                  <h3 className="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                  <h3 id="image-modal-title" className="font-display text-sm font-bold text-zinc-900 dark:text-white">
                     Insert Image in Story
                   </h3>
                 </div>
-                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white" aria-label="Close image modal">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2394,7 +2422,7 @@ export default function BlogEditor({ id }) {
       {/* 7. MODAL: INSERT LINK */}
       <AnimatePresence>
         {activeModal === 'link' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="link-modal-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2404,11 +2432,11 @@ export default function BlogEditor({ id }) {
               <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
                 <div className="flex items-center gap-2">
                   <Link2 className="w-4 h-4 text-blue-500" />
-                  <h3 className="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                  <h3 id="link-modal-title" className="font-display text-sm font-bold text-zinc-900 dark:text-white">
                     Insert Hyperlink
                   </h3>
                 </div>
-                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white" aria-label="Close link modal">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -2462,7 +2490,7 @@ export default function BlogEditor({ id }) {
       {/* 8. PUBLICATION READINESS / GATE PANEL MODAL */}
       <AnimatePresence>
         {readinessModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="readiness-modal-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2475,7 +2503,7 @@ export default function BlogEditor({ id }) {
                     {readiness.canPublish ? <CheckCircle2 className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h3 className="font-display text-base font-bold text-zinc-900 dark:text-white">
+                    <h3 id="readiness-modal-title" className="font-display text-base font-bold text-zinc-900 dark:text-white">
                       {readiness.canPublish ? 'Article Ready for Publication' : "Article Isn't Ready to Publish"}
                     </h3>
                     <p className="text-xs text-zinc-500">
@@ -2488,6 +2516,7 @@ export default function BlogEditor({ id }) {
                 <button
                   onClick={() => setReadinessModalOpen(false)}
                   className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-white"
+                  aria-label="Close publication readiness modal"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -2613,7 +2642,7 @@ export default function BlogEditor({ id }) {
       {/* 9. PUBLISH CONFIRMATION MODAL (When Valid) */}
       <AnimatePresence>
         {publishModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="publish-modal-title">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2624,7 +2653,7 @@ export default function BlogEditor({ id }) {
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-600">
                   Ready to Publish
                 </span>
-                <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
+                <h3 id="publish-modal-title" className="font-display text-xl font-bold text-zinc-900 dark:text-white">
                   Publish Story to TeachyBlogs?
                 </h3>
                 <p className="text-xs text-zinc-500 leading-relaxed font-sans">

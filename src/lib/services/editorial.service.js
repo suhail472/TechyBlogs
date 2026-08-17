@@ -4,12 +4,12 @@ const EDITORIAL_ROLES = new Set(['editor', 'admin', 'superadmin']);
 const MODERATION_ROLES = new Set(['moderator', 'admin', 'superadmin']);
 
 const transitions = {
-  draft: ['in_review', 'archived'],
-  in_review: ['approved', 'rejected', 'draft'],
+  draft: ['in_review', 'archived', 'published'],
+  in_review: ['approved', 'rejected', 'draft', 'published'],
   approved: ['scheduled', 'published', 'draft'],
   scheduled: ['published', 'draft', 'archived'],
-  published: ['updated', 'archived'],
-  updated: ['published', 'archived'],
+  published: ['updated', 'archived', 'draft'],
+  updated: ['published', 'archived', 'draft'],
   rejected: ['draft', 'archived'],
   archived: ['draft'],
 };
@@ -34,24 +34,78 @@ export function serialiseActor(user) {
   return { id: String(user?._id || ''), name: user?.name || 'Anonymous', role: user?.role || 'contributor' };
 }
 
+/**
+ * Server-Side Publication Integrity Validation
+ * Guarantees that invalid articles can NEVER be published even if frontend is bypassed.
+ */
+export function validatePublicationIntegrity(post) {
+  const issues = [];
+  if (!post.title || !post.title.trim()) {
+    issues.push('Story headline is required for publication');
+  }
+  if (!post.content || !post.content.trim()) {
+    issues.push('Article markdown body is required for publication');
+  }
+  if (!post.author || !post.author.trim()) {
+    issues.push('Author byline is required for publication');
+  }
+  if (!post.primarySection && (!post.categories || post.categories.length === 0)) {
+    issues.push('Primary editorial desk/section is required for publication');
+  }
+  if (!post.contentType) {
+    issues.push('Content classification type is required for publication');
+  }
+  if (!post.image || !post.image.trim()) {
+    issues.push('Featured cover image is required for publication');
+  }
+  if (!post.slug || !post.slug.trim()) {
+    issues.push('Valid URL slug is required for publication');
+  }
+  const metaDesc = (post.seo?.description || post.metaDescription || post.excerpt || post.subtitle || '').trim();
+  if (!metaDesc) {
+    issues.push('SEO meta description is required for publication');
+  }
+  if (post.faqs && post.faqs.length > 0) {
+    post.faqs.forEach((faq, idx) => {
+      const q = (faq.question || '').trim();
+      const a = (faq.answer || '').trim();
+      if (!q || !a) {
+        issues.push(`FAQ #${idx + 1} must have both question and answer`);
+      }
+    });
+  }
+  return {
+    isValid: issues.length === 0,
+    issues,
+  };
+}
+
 class EditorialService {
   async create(data, user) {
     const requestedStatus = data.status || 'draft';
-    const status = EDITORIAL_ROLES.has(user.role) ? requestedStatus : 'draft';
+    const isEditor = EDITORIAL_ROLES.has(user?.role);
+    const status = isEditor ? requestedStatus : 'draft';
+
+    if (['published', 'updated', 'scheduled'].includes(status)) {
+      const validation = validatePublicationIntegrity(data);
+      if (!validation.isValid) {
+        throw new Error(`Cannot publish article due to integrity issues: ${validation.issues.join('; ')}`);
+      }
+    }
 
     const post = await Post.create({
       ...data,
       status,
-      author: data.author || user.name,
-      primaryAuthor: data.primaryAuthor || user._id,
-      authors: data.authors?.length ? data.authors : [{ authorId: user._id, name: user.name, role: 'writer' }],
-      publishedAt: ['published', 'updated'].includes(status) ? new Date() : data.publishedAt,
+      author: data.author || user?.name || 'Editorial Bureau',
+      primaryAuthor: data.primaryAuthor || user?._id,
+      authors: data.authors?.length ? data.authors : [{ authorId: user?._id, name: user?.name || 'Editorial Bureau', role: 'writer' }],
+      publishedAt: ['published', 'updated'].includes(status) ? (data.publishedAt || new Date()) : data.publishedAt,
       editorialHistory: [{ action: 'created', by: serialiseActor(user), at: new Date() }],
       revisions: [
         {
           version: 1,
           title: data.title,
-          excerpt: data.excerpt || '',
+          excerpt: data.excerpt || data.subtitle || '',
           content: data.content,
           changedBy: serialiseActor(user),
           changeSummary: 'Initial creation',
@@ -70,9 +124,32 @@ class EditorialService {
       throw new Error('A post with this slug already exists');
     }
 
+    const isEditor = EDITORIAL_ROLES.has(user?.role);
     const blocked = ['status', 'publishedAt', 'scheduledAt', 'changeSummary', 'isAutosave'];
+
     for (const [key, value] of Object.entries(data)) {
       if (!blocked.includes(key)) post[key] = value;
+    }
+
+    // Handle status transitions if editor requested
+    if (data.status && isEditor) {
+      if (['published', 'updated'].includes(data.status)) {
+        const validation = validatePublicationIntegrity(post);
+        if (!validation.isValid) {
+          throw new Error(`Cannot publish article due to integrity issues: ${validation.issues.join('; ')}`);
+        }
+        post.status = 'published';
+        post.publishedAt = post.publishedAt || data.publishedAt || new Date();
+      } else if (data.status === 'scheduled') {
+        const validation = validatePublicationIntegrity(post);
+        if (!validation.isValid) {
+          throw new Error(`Cannot schedule article due to integrity issues: ${validation.issues.join('; ')}`);
+        }
+        post.status = 'scheduled';
+        post.scheduledAt = data.scheduledAt ? new Date(data.scheduledAt) : post.scheduledAt;
+      } else {
+        post.status = data.status;
+      }
     }
 
     // Only record a formal version milestone if NOT a background autosave
@@ -80,10 +157,10 @@ class EditorialService {
       const revision = {
         version: (post.revisions?.length || 0) + 1,
         title: post.title,
-        excerpt: post.excerpt,
+        excerpt: post.excerpt || post.subtitle || '',
         content: post.content,
         changedBy: serialiseActor(user),
-        changeSummary: data.changeSummary || 'Content updated',
+        changeSummary: data.changeSummary || (data.status === 'published' ? 'Published story' : 'Content updated'),
         createdAt: new Date(),
       };
 
@@ -92,7 +169,7 @@ class EditorialService {
       }
       post.revisions.push(revision);
       post.editorialHistory.push({
-        action: 'edited',
+        action: data.status === 'published' ? 'published' : 'edited',
         by: serialiseActor(user),
         summary: data.changeSummary || '',
         at: new Date(),
@@ -111,11 +188,18 @@ class EditorialService {
     }
     if (!canEditPost(post, user)) throw new Error('You cannot change this content');
     const requiresEditor = ['approved', 'scheduled', 'published', 'archived'].includes(nextStatus);
-    if (requiresEditor && !EDITORIAL_ROLES.has(user.role)) {
+    if (requiresEditor && !EDITORIAL_ROLES.has(user?.role)) {
       throw new Error('An editor is required for this editorial action');
     }
     if (nextStatus === 'scheduled' && (!scheduledAt || new Date(scheduledAt) <= new Date())) {
       throw new Error('Scheduled publishing requires a future date and time');
+    }
+
+    if (['published', 'updated', 'scheduled'].includes(nextStatus)) {
+      const validation = validatePublicationIntegrity(post);
+      if (!validation.isValid) {
+        throw new Error(`Cannot publish article due to integrity issues: ${validation.issues.join('; ')}`);
+      }
     }
 
     post.status = nextStatus === 'updated' ? 'published' : nextStatus;
