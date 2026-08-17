@@ -3,6 +3,12 @@ import Admin from '../models/admin.model.js';
 import Taxonomy from '../models/taxonomy.model.js';
 import { validatePublicationIntegrity, canEditPost, serialiseActor } from './editorial.service.js';
 
+const EDITORIAL_ROLES = new Set(['editor', 'admin', 'superadmin']);
+
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 class CalendarService {
   /**
    * Get high-level newsroom calendar metrics
@@ -72,22 +78,24 @@ class CalendarService {
   }
 
   /**
-   * Get calendar story feed with multi-dimensional filtering
+   * Get calendar story feed with multi-dimensional filtering, ReDoS protection, and bounded pagination
    */
   async getCalendarFeed(params = {}) {
-    const { start, end, desk, bureau, author, status, priority, search } = params;
+    const { start, end, desk, bureau, author, status, priority, search, limit } = params;
     const query = {};
 
     // 1. Date Range Filter
     if (start && end) {
       const startDate = new Date(start);
       const endDate = new Date(end);
-      query.$or = [
-        { scheduledAt: { $gte: startDate, $lte: endDate } },
-        { publishedAt: { $gte: startDate, $lte: endDate } },
-        { deadline: { $gte: startDate, $lte: endDate } },
-        { createdAt: { $gte: startDate, $lte: endDate } },
-      ];
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+        query.$or = [
+          { scheduledAt: { $gte: startDate, $lte: endDate } },
+          { publishedAt: { $gte: startDate, $lte: endDate } },
+          { deadline: { $gte: startDate, $lte: endDate } },
+          { createdAt: { $gte: startDate, $lte: endDate } },
+        ];
+      }
     }
 
     // 2. Filters
@@ -125,14 +133,17 @@ class CalendarService {
       }
     }
 
+    // ReDoS-safe sanitized search
     if (search && search.trim()) {
-      const q = search.trim();
+      const safeSearch = escapeRegex(search.trim().slice(0, 100));
       query.$or = [
-        { title: { $regex: q, $options: 'i' } },
-        { slug: { $regex: q, $options: 'i' } },
-        { author: { $regex: q, $options: 'i' } },
+        { title: { $regex: safeSearch, $options: 'i' } },
+        { slug: { $regex: safeSearch, $options: 'i' } },
+        { author: { $regex: safeSearch, $options: 'i' } },
       ];
     }
+
+    const maxLimit = Math.min(parseInt(limit, 10) || 250, 500);
 
     const posts = await Post.find(query)
       .select(
@@ -142,6 +153,7 @@ class CalendarService {
       .populate('primarySection', 'name slug')
       .populate('primaryRegion', 'name slug isHub')
       .sort({ scheduledAt: 1, deadline: 1, publishedAt: -1 })
+      .limit(maxLimit)
       .lean();
 
     const conflicts = this.detectConflicts(posts);
@@ -154,15 +166,15 @@ class CalendarService {
   }
 
   /**
-   * Schedule Story with strict publication gate check and audit logging
+   * Schedule Story with strict publication gate check, editorial authorization, and audit logging
    */
   async scheduleStory(postId, payload, user) {
+    if (!EDITORIAL_ROLES.has(user?.role)) {
+      throw new Error('Editorial authorization required to schedule stories for publication');
+    }
+
     const post = await Post.findById(postId);
     if (!post) throw new Error('Story not found');
-
-    if (!canEditPost(post, user)) {
-      throw new Error('Unauthorized to schedule this story');
-    }
 
     const { scheduledAt, timezone, embargoAt, deadline, priority } = payload;
     if (!scheduledAt) {
@@ -178,6 +190,16 @@ class CalendarService {
       throw new Error('Scheduled time must be in the future. To publish now, use the Publish action.');
     }
 
+    if (embargoAt) {
+      const embargoDate = new Date(embargoAt);
+      if (isNaN(embargoDate.getTime())) {
+        throw new Error('Invalid embargo date format');
+      }
+      if (embargoDate > scheduledDate) {
+        throw new Error('Embargo date cannot be set after the scheduled publication time');
+      }
+    }
+
     // Strict publication gate verification
     const validation = validatePublicationIntegrity(post);
     if (!validation.isValid) {
@@ -189,10 +211,10 @@ class CalendarService {
 
     post.status = 'scheduled';
     post.scheduledAt = scheduledDate;
-    if (timezone) post.publishedTimezone = timezone;
+    if (timezone) post.publishedTimezone = String(timezone).slice(0, 50);
     if (embargoAt) post.embargoAt = new Date(embargoAt);
     if (deadline) post.deadline = new Date(deadline);
-    if (priority) post.priority = priority;
+    if (priority && ['low', 'normal', 'high', 'urgent'].includes(priority)) post.priority = priority;
 
     post.editorialHistory.push({
       action: 'scheduled',
@@ -214,15 +236,15 @@ class CalendarService {
   }
 
   /**
-   * Reschedule Story
+   * Reschedule Story with authorization and audit logging
    */
   async rescheduleStory(postId, newScheduledAt, user) {
+    if (!EDITORIAL_ROLES.has(user?.role)) {
+      throw new Error('Editorial authorization required to reschedule stories');
+    }
+
     const post = await Post.findById(postId);
     if (!post) throw new Error('Story not found');
-
-    if (!canEditPost(post, user)) {
-      throw new Error('Unauthorized to reschedule this story');
-    }
 
     const scheduledDate = new Date(newScheduledAt);
     if (isNaN(scheduledDate.getTime())) {
@@ -265,8 +287,10 @@ class CalendarService {
 
     if (payload.deadline !== undefined) post.deadline = payload.deadline ? new Date(payload.deadline) : null;
     if (payload.embargoAt !== undefined) post.embargoAt = payload.embargoAt ? new Date(payload.embargoAt) : null;
-    if (payload.priority) post.priority = payload.priority;
-    if (payload.editorialNotes !== undefined) post.editorialNotes = payload.editorialNotes;
+    if (payload.priority && ['low', 'normal', 'high', 'urgent'].includes(payload.priority)) {
+      post.priority = payload.priority;
+    }
+    if (payload.editorialNotes !== undefined) post.editorialNotes = String(payload.editorialNotes).slice(0, 2000);
 
     await post.save();
 
