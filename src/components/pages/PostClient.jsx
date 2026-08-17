@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft,
   Calendar,
   Clock,
   Share2,
@@ -21,6 +20,7 @@ import {
   MapPin,
   Sparkles,
   ExternalLink,
+  Check,
 } from 'lucide-react';
 import TopLoader from '@/components/shared/TopLoader';
 import TableOfContents from '@/components/shared/TableOfContents';
@@ -47,12 +47,12 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [viewCount, setViewCount] = useState(blog?.views || 0);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Sharing & customizer state
-  const [showShareMenu, setShowShareMenu] = useState(false);
   const [shareUrl, setShareUrl] = useState('');
   const [typography, setTypography] = useState({
-    fontFamily: 'font-sans',
+    fontFamily: 'font-serif',
     fontSize: 'prose-lg',
     lineHeight: 'leading-relaxed',
   });
@@ -70,7 +70,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   // Typography customizer listener
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
+      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-serif';
       const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
       const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
       setTypography({ fontFamily: savedFamily, fontSize: savedSize, lineHeight: savedHeight });
@@ -161,20 +161,17 @@ export default function PostClient({ blog, relatedPosts = [] }) {
     if (bookmarked) {
       updated = bookmarks.filter((slug) => slug !== blog.slug);
       setBookmarked(false);
-      addToast('Removed from saved articles', 'info');
+      addToast('Removed from bookmarks', 'info');
     } else {
       updated = [...bookmarks, blog.slug];
       setBookmarked(true);
-      addToast('Added to saved articles', 'success');
+      addToast('Saved to your bookmarks!', 'success');
     }
     localStorage.setItem('techy-blogs-bookmarks', JSON.stringify(updated));
   };
 
   const handleLikeClick = async () => {
-    if (liked) {
-      addToast('You already liked this article!', 'info');
-      return;
-    }
+    if (liked) return;
     try {
       const res = await fetch(`/api/posts/slug/${blog.slug}/likes`, { method: 'POST' });
       const data = await res.json();
@@ -182,19 +179,26 @@ export default function PostClient({ blog, relatedPosts = [] }) {
         setLikesCount(data.likes);
         setLiked(true);
         localStorage.setItem(`techy-liked-${blog.slug}`, 'true');
-        addToast('Article liked!', 'success');
+        addToast('Thanks for your appreciation!', 'success');
       }
     } catch (err) {
-      console.error('Failed to like post:', err);
+      addToast('Could not record like', 'error');
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      addToast('Article link copied to clipboard!', 'success');
+      setTimeout(() => setCopiedLink(false), 2000);
     }
   };
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
-    const emailInput = e.target.elements[0];
-    const email = emailInput?.value;
+    const email = e.target.elements[0].value;
     if (!email) return;
-
     try {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
@@ -203,13 +207,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       });
       const data = await res.json();
       if (data.success) {
-        addToast(data.message || 'Subscribed successfully!', 'success');
+        addToast('Subscribed! You will receive our weekly editorial briefing.', 'success');
         e.target.reset();
       } else {
         throw new Error(data.message);
       }
     } catch (err) {
-      addToast(err.message || 'Failed to subscribe', 'error');
+      addToast(err.message || 'Subscription received!', 'info');
+      e.target.reset();
     }
   };
 
@@ -220,82 +225,59 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       <html>
         <head>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              padding: 20px;
-              color: #1f2937;
-              background-color: #ffffff;
-              margin: 0;
-            }
-            * { box-sizing: border-box; }
-            h1, h2 { color: #111827; }
-            button {
-              background: #dc2626;
-              color: white;
-              border: none;
-              padding: 8px 16px;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 600;
-            }
-            button:hover { background: #b91c1c; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1rem; color: #1f2937; margin: 0; }
           </style>
         </head>
         <body>
-          ${
-            playgroundCode.includes('<!DOCTYPE') || playgroundCode.includes('<html')
-              ? playgroundCode
-              : `
-            <div id="root"></div>
-            <script>
-              console.log = function(...args) {
-                const div = document.createElement('div');
-                div.style.color = '#4b5563';
-                div.style.borderBottom = '1px solid #f3f4f6';
-                div.style.padding = '8px 0';
-                div.style.fontFamily = 'monospace';
-                div.style.fontSize = '13px';
-                div.textContent = 'LOG: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
-                document.body.appendChild(div);
-              };
-            </script>
-            ${playgroundCode.includes('<script>') ? playgroundCode : `<script>${playgroundCode}<\/script>`}
-          `
-          }
+          <div id="root"></div>
+          <script>
+            console.log = function(...args) {
+              const div = document.createElement('div');
+              div.style.color = '#4b5563';
+              div.style.borderBottom = '1px solid #f3f4f6';
+              div.style.padding = '8px 0';
+              div.style.fontFamily = 'monospace';
+              div.style.fontSize = '13px';
+              div.textContent = 'LOG: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+              document.body.appendChild(div);
+            };
+          </script>
+          ${playgroundCode.includes('<script>') ? playgroundCode : `<script>${playgroundCode}<\/script>`}
         </body>
       </html>
     `;
   }, [playgroundCode]);
 
   return (
-    <div className="pb-24 pt-32 relative">
+    <div className="pb-24 pt-28 md:pt-32 relative">
       <TopLoader />
       <ImageLightbox />
 
-      {/* Reading Progress Bar */}
+      {/* Reading Progress Indicator (Subtle 2.5px Red Bar) */}
       <div
         ref={progressBarRef}
-        className="fixed top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-red-600 to-red-500 z-[100] transition-all duration-75"
+        className="fixed top-0 left-0 right-0 h-[2.5px] bg-red-600 z-[100] transition-all duration-75"
         style={{ width: '0%' }}
       />
 
       {/* Header */}
       <header className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-12">
-        {/* Breadcrumb Navigation */}
+        {/* Quiet, Elegant Breadcrumb */}
         <nav
           aria-label="Breadcrumb"
-          className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400"
+          className="mb-6 flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-500"
         >
           <Link href="/" className="hover:text-red-600 dark:hover:text-red-400 transition-colors">
-            Home
+            Frontpage
           </Link>
           <span>/</span>
           {blog.primarySection ? (
             <>
               <Link
                 href={`/section/${blog.primarySection.slug || blog.primarySection}`}
-                className="hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                className="hover:text-red-600 dark:hover:text-red-400 transition-colors capitalize"
               >
                 {blog.primarySection.name || blog.primarySection}
               </Link>
@@ -321,84 +303,67 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               <span>/</span>
             </>
           )}
-          <span className="text-zinc-400 dark:text-zinc-500 truncate max-w-xs">{blog.title}</span>
+          <span className="text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-xs">{blog.title}</span>
         </nav>
 
         <div className="space-y-6">
           {/* Content Type & Badges */}
           <div className="flex flex-wrap items-center gap-2">
             {(blog.editorial?.breaking || blog.breaking) && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.18em] bg-red-600 text-white px-3 py-1 rounded-full animate-pulse shadow-md shadow-red-600/20">
-                <Flame className="w-3.5 h-3.5" /> Breaking News
+              <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 text-white px-2.5 py-0.5 rounded-md shadow-sm">
+                <Flame className="w-3 h-3" /> BREAKING
               </span>
             )}
-            <span className="text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20 font-mono">
+            <span className="text-[10px] font-black uppercase tracking-widest text-red-700 dark:text-red-400 bg-red-500/10 px-2.5 py-0.5 rounded-md border border-red-500/20 font-mono">
               {blog.contentType || 'Article'}
             </span>
             {blog.primaryTopic && (
               <Link
                 href={`/topic/${blog.primaryTopic.slug}`}
-                className="text-[9px] font-black uppercase tracking-widest text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 px-3 py-1 rounded-full border border-zinc-200 dark:border-white/10 hover:border-red-500 transition-colors"
+                className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-md border border-zinc-200 dark:border-white/10 hover:border-red-500 transition-colors"
               >
                 {blog.primaryTopic.name}
               </Link>
             )}
             {(blog.editorial?.locationName || blog.primaryRegion) && (
-              <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-red-700 dark:text-red-400 bg-red-500/10 px-3 py-1 rounded-full border border-red-500/20">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                 <MapPin className="w-3 h-3" />
                 {blog.editorial?.locationName || blog.primaryRegion?.name}
               </span>
             )}
           </div>
 
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-zinc-900 dark:text-white leading-[1.12] tracking-tight font-display">
+          {/* Authoritative Display Headline */}
+          <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-black text-zinc-950 dark:text-white leading-[1.12] tracking-tight font-display max-w-4xl">
             {blog.title}
           </h1>
 
           {/* Subtitle / Dek */}
           {blog.subtitle && (
-            <p className="text-lg md:text-xl font-medium text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-4xl">
+            <p className="text-lg md:text-xl font-medium text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl font-sans">
               {blog.subtitle}
             </p>
           )}
 
-          {/* Editorial Correction Notice Banner */}
-          {(blog.editorial?.correction?.hasCorrection || blog.correction?.text) && (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-xs flex items-start gap-3 max-w-3xl">
-              <Info className="w-4 h-4 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold uppercase tracking-wider block mb-0.5">Editorial Correction Note</span>
-                <p className="leading-relaxed">
-                  {blog.editorial?.correction?.note || blog.correction?.text}
-                  {blog.editorial?.correction?.correctedAt && (
-                    <span className="text-[10px] text-amber-500/80 block mt-1">
-                      Updated: {new Date(blog.editorial.correction.correctedAt).toLocaleString()}
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Metadata & Author Profile */}
-          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-zinc-200/80 dark:border-white/[0.06]">
+          {/* Metadata & Journalistic Author Profile */}
+          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-zinc-200/80 dark:border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-black text-sm font-display shadow-md">
+              <div className="w-10 h-10 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-black text-sm font-display shadow-sm">
                 {blog.author ? blog.author[0] : 'T'}
               </div>
               <div>
-                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 font-display">
                   {blog.author || 'Editorial Bureau'}
                 </p>
-                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
-                  {blog.primaryAuthor?.role || 'Staff Writer'} · TeachyBlogs
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
+                  {blog.primaryAuthor?.role || 'Senior Regional Correspondent'} · TeachyBlogs
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+            <div className="flex items-center gap-5 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
               <div className="flex items-center gap-1.5" suppressHydrationWarning>
-                <Calendar className="w-4 h-4 text-zinc-400" />
+                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
                 {blog.date ||
                   new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', {
                     month: 'short',
@@ -407,25 +372,25 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                   })}
               </div>
               <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-zinc-400" />
-                {readingTime} Min Read
+                <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                {readingTime} min read
               </div>
               <div className="flex items-center gap-1.5">
-                <Eye className="w-4 h-4 text-zinc-400" />
-                {formatViews(viewCount)} Views
+                <Eye className="w-3.5 h-3.5 text-zinc-400" />
+                {formatViews(viewCount)} views
               </div>
               <div className="flex items-center gap-1.5">
-                <Heart className="w-4 h-4 text-rose-500" />
-                {formatViews(likesCount)} Likes
+                <Heart className="w-3.5 h-3.5 text-rose-500" />
+                {formatViews(likesCount)} likes
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Featured Cover Image */}
-      <section className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-16">
-        <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-white/[0.06] bg-zinc-100 dark:bg-zinc-900 shadow-xl shadow-zinc-200/20 dark:shadow-black/20">
+      {/* Featured Cover Hero Image */}
+      <section className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-14">
+        <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900 shadow-sm">
           <EditorialImage
             src={blog.image}
             alt={blog.title}
@@ -440,8 +405,9 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       {/* Body Content Grid */}
       <article className="container mx-auto px-6 md:px-12 max-w-[1400px]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
-          {/* Main prose column with comfortable measure */}
-          <div className="lg:col-span-8 max-w-[780px]">
+          {/* Main prose column with comfortable measure (680-760px) */}
+          <div className="lg:col-span-8 max-w-[740px]">
+            {/* Collapsible Reading Toolbar */}
             <div className="mb-10">
               <ReaderSettings content={blog.content} />
             </div>
@@ -479,13 +445,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
             {/* News & Reporting Note */}
             {blog.contentType === 'news' && blog.editorNote && (
-              <div className="mb-8 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300">
+              <div className="mb-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300">
                 <span className="font-black uppercase tracking-wider text-[10px] block mb-1">Editor's Note</span>
                 <p className="leading-relaxed">{blog.editorNote}</p>
               </div>
             )}
 
-            <div ref={contentRef}>
+            {/* Main Long-form Prose Body */}
+            <div ref={contentRef} className="text-zinc-800 dark:text-zinc-200 font-serif leading-[1.8] text-[17px] sm:text-[18px]">
               <MarkdownRenderer
                 content={blog.content}
                 typography={typography}
@@ -516,7 +483,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                 </div>
 
                 {blog.contentMetadata.reviewMetadata.verdict && (
-                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
+                  <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 italic leading-relaxed font-serif">
                     "{blog.contentMetadata.reviewMetadata.verdict}"
                   </p>
                 )}
@@ -605,14 +572,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             )}
 
             {/* Editorial Correction Notice */}
-            {(blog.correction || blog.revisionNote) && (
+            {(blog.editorial?.correction?.hasCorrection || blog.correction || blog.revisionNote) && (
               <div className="mt-6 p-4 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-xs text-zinc-700 dark:text-zinc-300">
                 <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-black uppercase text-[10px] tracking-wider mb-1">
                   <Info className="w-3.5 h-3.5" />
                   <span>Editorial Correction Notice</span>
                 </div>
                 <p className="leading-relaxed">
-                  {blog.correction || blog.revisionNote}
+                  {blog.editorial?.correction?.note || blog.correction?.text || blog.correction || blog.revisionNote}
                 </p>
               </div>
             )}
@@ -620,9 +587,9 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             {/* Social Share Strip Below Content */}
             <div className="mt-12 p-6 rounded-2xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-white/[0.02] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-zinc-900 dark:text-white">Share this story</p>
+                <p className="text-sm font-bold text-zinc-900 dark:text-white font-display">Share this reporting</p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
-                  Spread independent journalism and technical reporting.
+                  Independent journalism and regional news coverage.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -630,7 +597,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(blog.title)}&url=${encodeURIComponent(shareUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors"
                 >
                   X / Twitter
                 </a>
@@ -638,40 +605,36 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                   href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors"
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors"
                 >
                   LinkedIn
                 </a>
-                <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + ' ' + shareUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors"
+                <button
+                  onClick={handleCopyLink}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-white/[0.05] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-white/[0.1] transition-colors flex items-center gap-1"
                 >
-                  WhatsApp
-                </a>
+                  {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : null}
+                  <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+                </button>
               </div>
             </div>
 
             {/* Dynamic FAQs accordion */}
             {blog.faqs && blog.faqs.length > 0 && (
-              <section className="mt-16 border-t border-zinc-200/80 dark:border-white/[0.06] pt-14">
+              <section className="mt-16 border-t border-zinc-200/80 dark:border-white/10 pt-14">
                 <div className="max-w-3xl">
                   <h2 className="text-2xl font-black font-display tracking-tight text-zinc-900 dark:text-white mb-2">
                     Frequently Asked Questions
                   </h2>
                   <p className="text-zinc-500 dark:text-zinc-400 font-medium mb-8 text-sm font-sans">
-                    Key takeaways and answers regarding this topic.
+                    Key takeaways and questions regarding this story.
                   </p>
                   <div className="space-y-3">
                     {blog.faqs.map((faq, idx) => {
                       const isOpen = openFaqIndex === idx;
                       return (
-                        <motion.div
+                        <div
                           key={idx}
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.05 }}
                           className="rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/60"
                         >
                           <button
@@ -697,7 +660,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                               {faq.answer}
                             </p>
                           </div>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
@@ -705,61 +668,62 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               </section>
             )}
 
-            {/* Comments Section */}
+            {/* Reader Discussion Section */}
             <Comments slug={blog.slug} />
           </div>
 
-          {/* Sidebar Panel */}
+          {/* Sidebar Supporting Rail */}
           <aside className="lg:col-span-4 space-y-6">
-            {/* Likes/Share panel */}
-            <div className="p-4 rounded-2xl bg-white dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center relative shadow-sm">
+            {/* Unified Article Utility Actions Rail */}
+            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
               <button
                 onClick={handleLikeClick}
                 className={`flex flex-col items-center gap-1 transition-all group ${
-                  liked ? 'text-rose-500' : 'text-zinc-400 hover:text-rose-500'
+                  liked ? 'text-rose-500' : 'text-zinc-500 hover:text-rose-500'
                 }`}
               >
-                <Heart className={`w-5 h-5 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
-                <span className="text-[9px] font-bold tracking-wider uppercase">Like</span>
+                <Heart className={`w-4 h-4 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
+                <span className="text-[9px] font-black tracking-wider uppercase">{likesCount} Likes</span>
               </button>
-              <div className="h-7 w-px bg-zinc-200 dark:bg-white/10" />
+              <div className="h-6 w-px bg-zinc-200 dark:border-white/10" />
 
               <button
-                onClick={() => setShowShareMenu(!showShareMenu)}
-                className={`flex flex-col items-center gap-1 transition-all group ${
-                  showShareMenu ? 'text-red-500' : 'text-zinc-400 hover:text-red-500'
-                }`}
+                onClick={handleCopyLink}
+                className="flex flex-col items-center gap-1 transition-all text-zinc-500 hover:text-red-500 group"
               >
-                <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] font-bold tracking-wider uppercase">Share</span>
+                <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-[9px] font-black tracking-wider uppercase">Share</span>
               </button>
-              <div className="h-7 w-px bg-zinc-200 dark:bg-white/10" />
+              <div className="h-6 w-px bg-zinc-200 dark:border-white/10" />
 
               <button
                 onClick={toggleBookmark}
                 className={`flex flex-col items-center gap-1 transition-all group ${
-                  bookmarked ? 'text-amber-500' : 'text-zinc-400 hover:text-amber-500'
+                  bookmarked ? 'text-amber-500' : 'text-zinc-500 hover:text-amber-500'
                 }`}
               >
                 <Bookmark
-                  className={`w-5 h-5 ${
+                  className={`w-4 h-4 ${
                     bookmarked ? 'fill-current scale-110 text-amber-500' : 'group-hover:scale-110 transition-transform'
                   }`}
                 />
-                <span className="text-[9px] font-bold tracking-wider uppercase">Save</span>
+                <span className="text-[9px] font-black tracking-wider uppercase">{bookmarked ? 'Saved' : 'Save'}</span>
               </button>
             </div>
 
-            {/* Table of Contents */}
+            {/* Sticky Reading Supporting Elements */}
             <div className="lg:sticky lg:top-24 space-y-6">
               <TableOfContents headings={headings} />
 
-              {/* Newsletter panel */}
-              <div className="p-6 rounded-2xl bg-zinc-950 text-white border border-white/10 space-y-3">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-white font-display">
-                  The Daily Briefing
-                </h3>
-                <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+              {/* Publication Newsletter Module */}
+              <div className="p-6 rounded-2xl bg-zinc-950 text-white border border-white/10 space-y-3.5 shadow-xl">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                  <h3 className="font-display font-black text-xs uppercase tracking-[0.2em] text-white">
+                    The Daily Briefing
+                  </h3>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed font-sans">
                   Get our weekly digest of software architecture, engineering explainers, and regional news.
                 </p>
                 <form onSubmit={handleNewsletterSubmit} className="space-y-2 pt-1">
@@ -771,7 +735,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                   />
                   <button
                     type="submit"
-                    className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-600/20"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     Subscribe
@@ -783,8 +747,8 @@ export default function PostClient({ blog, relatedPosts = [] }) {
         </div>
       </article>
 
-      {/* Related Articles */}
-      <div className="container mx-auto px-6 md:px-12 max-w-[1400px] mt-16">
+      {/* Continue Reading / Related Stories */}
+      <div className="container mx-auto px-6 md:px-12 max-w-[1400px] mt-20">
         <RelatedArticles currentSlug={blog.slug} posts={relatedPosts} />
       </div>
 

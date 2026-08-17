@@ -1,37 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Volume2, Play, Pause, Square, Sun, Type } from 'lucide-react';
+import { Volume2, Play, Pause, Square, Sun, Type, Sliders, ChevronDown, Sparkles } from 'lucide-react';
 
 const getCleanTextForSpeech = (markdown) => {
   if (!markdown) return '';
-  
-  // 1. Strip code blocks completely
   let text = markdown.replace(/```[\s\S]*?```/g, '');
-  
-  // 2. Strip inline code tags
   text = text.replace(/`([^`]+)`/g, '$1');
-  
-  // 3. Strip images
   text = text.replace(/!\[.*?\]\(.*?\)/g, '');
-  
-  // 4. Strip links (keep link text, strip URL)
   text = text.replace(/\[(.*?)\]\(.*?\)/g, '$1');
-  
-  // 5. Convert headers to text ending with a period to inject a natural voice pause
   text = text.replace(/^(#{1,6})\s+(.*?)$/gm, '$2.');
-  
-  // 6. Strip list bullets and numbering
   text = text.replace(/^\s*[-*+]\s+/gm, '');
   text = text.replace(/^\s*\d+\.\s+/gm, '');
-  
-  // 7. Strip bold and italic markup
   text = text.replace(/\*\*([\s\S]*?)\*\*/g, '$1');
   text = text.replace(/\*([\s\S]*?)\*/g, '$1');
-  
-  // 8. Condense whitespaces
   text = text.replace(/\s+/g, ' ');
-  
   return text.trim();
 };
 
@@ -49,7 +32,6 @@ const chunkText = (text, maxLength = 180) => {
         chunks.push(currentChunk);
         currentChunk = '';
       }
-      
       const words = sentence.split(' ');
       for (const word of words) {
         if ((currentChunk + ' ' + word).length > maxLength) {
@@ -69,320 +51,156 @@ const chunkText = (text, maxLength = 180) => {
     }
   }
 
-  if (currentChunk) {
-    chunks.push(currentChunk.trim());
-  }
-
+  if (currentChunk) chunks.push(currentChunk.trim());
   return chunks;
 };
 
 const getPreferredVoice = (voiceList) => {
   if (!voiceList || voiceList.length === 0) return null;
-  
-  const englishVoices = voiceList.filter(v => v.lang.startsWith('en'));
+  const englishVoices = voiceList.filter((v) => v.lang.startsWith('en'));
   if (englishVoices.length === 0) return voiceList[0];
 
-  // Priority score calculation for each English voice
-  const scored = englishVoices.map(voice => {
+  const scored = englishVoices.map((voice) => {
     const name = voice.name.toLowerCase();
     let score = 0;
-
-    // Prioritize natural/neural voices
-    if (name.includes('natural') || name.includes('neural')) {
-      score += 100;
-    }
-    
-    // Prioritize Google voices (highly natural cloud-based voices)
-    if (name.includes('google')) {
-      score += 80;
-    }
-
-    // Prioritize premium Apple voices
-    if (name.includes('samantha') || name.includes('siri') || name.includes('daniel') || name.includes('karen')) {
-      score += 60;
-    }
-
-    // Prioritize US or UK english as they are usually the best synthesized
-    if (voice.lang === 'en-US' || voice.lang === 'en-GB' || voice.lang === 'en-UK') {
-      score += 10;
-    }
-
-    // Penalize known robotic male/default SAPI5 voices
-    if (name.includes('david') || name.includes('zira desktop') || name.includes('david desktop')) {
-      score -= 50;
-    }
-    
-    // Prioritize female over male if robotic
-    if (name.includes('zira') || name.includes('female') || name.includes('samantha') || name.includes('hazel')) {
-      score += 30;
-    }
-    if (name.includes('male') || name.includes('guy') || name.includes('george')) {
-      score -= 10;
-    }
-
+    if (name.includes('natural') || name.includes('neural')) score += 100;
+    if (name.includes('google')) score += 80;
+    if (name.includes('samantha') || name.includes('siri') || name.includes('daniel')) score += 60;
+    if (voice.lang === 'en-US' || voice.lang === 'en-GB') score += 10;
+    if (name.includes('david') || name.includes('zira desktop')) score -= 50;
     return { voice, score };
   });
 
-  // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
   return scored[0].voice;
 };
 
-const forceCancelSpeech = () => {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
-  try {
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
-    window.speechSynthesis.cancel();
-    window._activeUtterances = [];
-  } catch (err) {
-    console.error('Error canceling speech:', err);
-  }
-};
-
-export default function ReaderSettings({ content }) {
+export default function ReaderSettings({ content = '' }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [speed, setSpeed] = useState(1); // 0.8, 1, 1.2, 1.5, 2
-  const [warmth, setWarmth] = useState('Off'); // Off, Low, Medium, High
-  
-  // Typography states
-  const [fontFamily, setFontFamily] = useState('font-sans');
+  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [voices, setVoices] = useState([]);
+  const [selectedVoiceName, setSelectedVoiceName] = useState('');
+  const [warmth, setWarmth] = useState('Off');
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Typography state
+  const [fontFamily, setFontFamily] = useState('font-serif');
   const [fontSize, setFontSize] = useState('prose-lg');
   const [lineHeight, setLineHeight] = useState('leading-relaxed');
 
-  const [chunks, setChunks] = useState([]);
-  const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
-  const [voices, setVoices] = useState([]);
-  const [selectedVoiceName, setSelectedVoiceName] = useState('');
-  
-  const utteranceRef = useRef(null);
-  const isActiveRef = useRef(true);
+  const synthRef = useRef(null);
+  const chunksRef = useRef([]);
+  const isPlayingRef = useRef(false);
+  const isActiveRef = useRef(false);
 
-  // Dispatch custom typography change event helper
-  const dispatchTypeChange = useCallback((family, size, height) => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent('teachyblogs-typography-change', {
-          detail: { fontFamily: family, fontSize: size, lineHeight: height }
-        })
-      );
-    }
-  }, []);
-
-  // Load settings and voice preference on mount
   useEffect(() => {
-    isActiveRef.current = true;
-    
-    const savedWarmth = localStorage.getItem('teachyblogs-reader-warmth');
-    if (savedWarmth) setWarmth(savedWarmth);
-
-    const savedVoice = localStorage.getItem('teachyblogs-reader-voice');
-    if (savedVoice) setSelectedVoiceName(savedVoice);
-
-    const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
-    setFontFamily(savedFamily);
-
-    const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-    setFontSize(savedSize);
-
-    const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
-    setLineHeight(savedHeight);
-
-    // Initial sync delay to let parent mount first
-    setTimeout(() => {
-      dispatchTypeChange(savedFamily, savedSize, savedHeight);
-    }, 50);
-
-    return () => {
-      isActiveRef.current = false;
-      forceCancelSpeech();
-    };
-  }, [dispatchTypeChange]);
-
-  // Sync state whenever typography variables change
-  useEffect(() => {
-    dispatchTypeChange(fontFamily, fontSize, lineHeight);
-  }, [fontFamily, fontSize, lineHeight, dispatchTypeChange]);
-
-  // Fetch available voices asynchronously
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    const loadVoices = () => {
-      const vList = window.speechSynthesis.getVoices();
-      setVoices(vList);
-    };
-
-    loadVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  }, []);
-
-  // Set default premium voice once loaded
-  useEffect(() => {
-    if (voices.length === 0) return;
-
-    // Check if the current selectedVoiceName is valid (exists in the voices list)
-    const isValid = voices.some(v => v.name === selectedVoiceName);
-
-    if (!selectedVoiceName || !isValid) {
-      const preferred = getPreferredVoice(voices);
-      if (preferred) {
-        setSelectedVoiceName(preferred.name);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+      const loadVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        setVoices(availableVoices);
+        const preferred = getPreferredVoice(availableVoices);
+        if (preferred) setSelectedVoiceName(preferred.name);
+      };
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
       }
     }
-  }, [voices, selectedVoiceName]);
 
-  const handleWarmthChange = (level) => {
-    setWarmth(level);
-    localStorage.setItem('teachyblogs-reader-warmth', level);
-  };
+    if (typeof window !== 'undefined') {
+      const savedWarmth = localStorage.getItem('teachyblogs-reader-warmth') || 'Off';
+      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-serif';
+      const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
+      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
+      setWarmth(savedWarmth);
+      setFontFamily(savedFamily);
+      setFontSize(savedSize);
+      setLineHeight(savedHeight);
+    }
+  }, []);
 
-  const handleFontFamilyChange = (val) => {
-    setFontFamily(val);
-    localStorage.setItem('teachyblogs-font-family', val);
-  };
-
-  const handleFontSizeChange = (val) => {
-    setFontSize(val);
-    localStorage.setItem('teachyblogs-font-size', val);
-  };
-
-  const handleLineHeightChange = (val) => {
-    setLineHeight(val);
-    localStorage.setItem('teachyblogs-line-height', val);
-  };
-
-  // Reset and stop reading cleanly when content changes
   useEffect(() => {
-    isActiveRef.current = false;
-    forceCancelSpeech();
-    setIsPlaying(false);
-    setIsPaused(false);
-    setCurrentChunkIndex(0);
-    setChunks([]);
+    const rawText = getCleanTextForSpeech(content);
+    chunksRef.current = chunkText(rawText);
   }, [content]);
 
-  // Sequential play helper
-  const playChunk = useCallback((index, currentChunks = chunks, currentSpeed = speed, currentVoiceName = selectedVoiceName) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis || !isActiveRef.current) return;
-
-    if (index >= currentChunks.length) {
-      setIsPlaying(false);
-      setIsPaused(false);
-      setCurrentChunkIndex(0);
-      return;
+  const forceCancelSpeech = useCallback(() => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
     }
+  }, []);
 
-    setCurrentChunkIndex(index);
-
-    const chunk = currentChunks[index];
-    const utterance = new SpeechSynthesisUtterance(chunk);
-    utteranceRef.current = utterance;
-
-    // Prevent garbage collection in Chrome
-    if (typeof window !== 'undefined') {
-      window._activeUtterances = window._activeUtterances || [];
-      window._activeUtterances.push(utterance);
-      if (window._activeUtterances.length > 50) {
-        window._activeUtterances.shift();
-      }
-    }
-
-    // Get fresh voice references directly from speechSynthesis to avoid stale references
-    const freshVoices = window.speechSynthesis.getVoices();
-    let selectedVoice = freshVoices.find(v => v.name === currentVoiceName);
-    
-    // Fallback if voice not found (e.g. dynamic load latency)
-    if (!selectedVoice) {
-      selectedVoice = getPreferredVoice(freshVoices);
-    }
-
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
-    }
-
-    utterance.rate = currentSpeed;
-    utterance.volume = 1; // Explicitly set full volume
-    utterance.pitch = 1;  // Explicitly set normal pitch
-
-    utterance.onend = () => {
-      if (!isActiveRef.current) return;
-      setTimeout(() => {
-        if (!isActiveRef.current) return;
-        playChunk(index + 1, currentChunks, currentSpeed, currentVoiceName);
-      }, 250);
-    };
-
-    utterance.onerror = (e) => {
-      if (!isActiveRef.current) return;
-      console.error('Speech synthesis error, trying next sentence:', e);
-      if (e.error === 'interrupted') return;
-      playChunk(index + 1, currentChunks, currentSpeed, currentVoiceName);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, [chunks, speed, selectedVoiceName]);
-
-  const handlePlay = () => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    isActiveRef.current = true;
-
-    if (isPlaying) {
-      if (isPaused) {
-        window.speechSynthesis.resume();
+  const playChunk = useCallback(
+    (index, chunks, currentSpeed, voiceName) => {
+      if (!synthRef.current || index >= chunks.length || !isActiveRef.current) {
+        setIsPlaying(false);
         setIsPaused(false);
-      }
-    } else {
-      const currentVoices = window.speechSynthesis.getVoices();
-      if (currentVoices.length === 0) {
-        setTimeout(handlePlay, 100);
+        setCurrentChunkIndex(0);
+        isPlayingRef.current = false;
         return;
       }
 
-      // Ensure we have a valid selected voice
-      let voiceToUse = selectedVoiceName;
-      const isValid = currentVoices.some(v => v.name === voiceToUse);
-      if (!voiceToUse || !isValid) {
-        const preferred = getPreferredVoice(currentVoices);
-        if (preferred) {
-          voiceToUse = preferred.name;
-          setSelectedVoiceName(preferred.name);
-          localStorage.setItem('teachyblogs-reader-voice', preferred.name);
-        }
+      forceCancelSpeech();
+      const text = chunks[index];
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = currentSpeed;
+      utterance.pitch = 1.0;
+
+      if (voiceName) {
+        const matched = voices.find((v) => v.name === voiceName);
+        if (matched) utterance.voice = matched;
       }
 
-      forceCancelSpeech();
+      utterance.onend = () => {
+        if (!isActiveRef.current) return;
+        const nextIndex = index + 1;
+        setCurrentChunkIndex(nextIndex);
+        if (nextIndex < chunks.length) {
+          playChunk(nextIndex, chunks, currentSpeed, voiceName);
+        } else {
+          setIsPlaying(false);
+          setIsPaused(false);
+          setCurrentChunkIndex(0);
+          isPlayingRef.current = false;
+        }
+      };
 
-      const cleanText = getCleanTextForSpeech(content);
-      if (!cleanText) return;
+      utterance.onerror = (e) => {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+          setIsPlaying(false);
+          setIsPaused(false);
+          isPlayingRef.current = false;
+        }
+      };
 
-      const sentenceChunks = chunkText(cleanText);
-      if (sentenceChunks.length === 0) return;
-
-      setChunks(sentenceChunks);
+      setCurrentChunkIndex(index);
       setIsPlaying(true);
       setIsPaused(false);
-      
-      // Delay playing slightly to ensure cancel command finishes clearing the audio channel
-      setTimeout(() => {
-        if (!isActiveRef.current) return;
-        playChunk(0, sentenceChunks, speed, voiceToUse);
-      }, 150);
+      isPlayingRef.current = true;
+      synthRef.current.speak(utterance);
+    },
+    [voices, forceCancelSpeech]
+  );
+
+  const handlePlay = () => {
+    if (!synthRef.current) return;
+    isActiveRef.current = true;
+    if (isPaused) {
+      synthRef.current.resume();
+      setIsPaused(false);
+      setIsPlaying(true);
+    } else {
+      playChunk(currentChunkIndex, chunksRef.current, speed, selectedVoiceName);
     }
   };
 
   const handlePause = () => {
-    if (typeof window === 'undefined' || !window.speechSynthesis || !isPlaying) return;
-    
-    if (!isPaused) {
-      window.speechSynthesis.pause();
-      setIsPaused(true);
-    }
+    if (!synthRef.current || !isPlaying) return;
+    synthRef.current.pause();
+    setIsPaused(true);
   };
 
   const handleStop = () => {
@@ -391,6 +209,7 @@ export default function ReaderSettings({ content }) {
     setIsPlaying(false);
     setIsPaused(false);
     setCurrentChunkIndex(0);
+    isPlayingRef.current = false;
   };
 
   const handleSpeedChange = (newSpeed) => {
@@ -399,142 +218,180 @@ export default function ReaderSettings({ content }) {
       forceCancelSpeech();
       setTimeout(() => {
         if (!isActiveRef.current) return;
-        playChunk(currentChunkIndex, chunks, newSpeed, selectedVoiceName);
+        playChunk(currentChunkIndex, chunksRef.current, newSpeed, selectedVoiceName);
       }, 150);
     }
   };
 
   const handleVoiceChange = (voiceName) => {
     setSelectedVoiceName(voiceName);
-    localStorage.setItem('teachyblogs-reader-voice', voiceName);
     if (isPlaying && !isPaused) {
       forceCancelSpeech();
       setTimeout(() => {
         if (!isActiveRef.current) return;
-        playChunk(currentChunkIndex, chunks, speed, voiceName);
+        playChunk(currentChunkIndex, chunksRef.current, speed, voiceName);
       }, 150);
     }
+  };
+
+  const handleWarmthChange = (val) => {
+    setWarmth(val);
+    localStorage.setItem('teachyblogs-reader-warmth', val);
+  };
+
+  const broadcastTypography = (family, size, height) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('teachyblogs-typography-change', {
+          detail: { fontFamily: family, fontSize: size, lineHeight: height },
+        })
+      );
+    }
+  };
+
+  const handleFontFamilyChange = (val) => {
+    setFontFamily(val);
+    localStorage.setItem('teachyblogs-font-family', val);
+    broadcastTypography(val, fontSize, lineHeight);
+  };
+
+  const handleFontSizeChange = (val) => {
+    setFontSize(val);
+    localStorage.setItem('teachyblogs-font-size', val);
+    broadcastTypography(fontFamily, val, lineHeight);
+  };
+
+  const handleLineHeightChange = (val) => {
+    setLineHeight(val);
+    localStorage.setItem('teachyblogs-line-height', val);
+    broadcastTypography(fontFamily, fontSize, val);
   };
 
   const overlayStyle = {
     Off: null,
     Low: { backgroundColor: 'rgba(245, 158, 11, 0.03)', backdropFilter: 'sepia(0.08)' },
     Medium: { backgroundColor: 'rgba(245, 158, 11, 0.055)', backdropFilter: 'sepia(0.14)' },
-    High: { backgroundColor: 'rgba(245, 158, 11, 0.085)', backdropFilter: 'sepia(0.20)' }
+    High: { backgroundColor: 'rgba(245, 158, 11, 0.085)', backdropFilter: 'sepia(0.20)' },
   }[warmth];
 
   const speedOptions = [0.8, 1, 1.2, 1.5, 2];
   const warmthOptions = ['Off', 'Low', 'Medium', 'High'];
   const sizeOptions = [
-    { label: 'A-', value: 'prose-sm' },
+    { label: 'A−', value: 'prose-sm' },
     { label: 'A', value: 'prose-base' },
     { label: 'A+', value: 'prose-lg' },
-    { label: 'A++', value: 'prose-xl' }
+    { label: 'A++', value: 'prose-xl' },
   ];
   const heightOptions = [
-    { label: 'Normal', value: 'leading-normal' },
-    { label: 'Relaxed', value: 'leading-relaxed' },
-    { label: 'Loose', value: 'leading-loose' }
+    { label: 'Compact', value: 'leading-normal' },
+    { label: 'Comfortable', value: 'leading-relaxed' },
+    { label: 'Generous', value: 'leading-loose' },
   ];
-  
-  // Filter only English voices for the selection dropdown
-  const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+
+  const englishVoices = voices.filter((v) => v.lang.startsWith('en'));
 
   return (
     <>
-      {/* Full screen Ambient Night Light filter */}
+      {/* Night Light Ambient Layer */}
       {warmth !== 'Off' && (
-        <div 
+        <div
           className="fixed inset-0 pointer-events-none z-[99999] transition-all duration-300 mix-blend-multiply"
           style={overlayStyle}
         />
       )}
 
-      {/* Settings Panel UI */}
-      <div className="p-5 rounded-2xl glass-card transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 relative overflow-hidden">
-        {/* Gradient accent header line */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+      {/* Refined Reading Toolbar */}
+      <div className="rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 p-4 transition-all">
+        {/* Main Horizontal Action Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Audio Player Controls */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePlay}
+              className={`h-9 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm ${
+                isPlaying && !isPaused
+                  ? 'bg-red-600 text-white shadow-red-600/20 scale-102'
+                  : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-white/10 hover:border-red-500'
+              }`}
+              title="Listen to this article"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{isPlaying && !isPaused ? 'Playing' : isPaused ? 'Resume' : 'Listen'}</span>
+            </button>
 
-        <div className="flex items-center gap-2 mb-4">
-          <Volume2 className="w-4 h-4 text-indigo-500" />
-          <h3 className="font-bold text-sm uppercase tracking-wider text-zinc-900 dark:text-zinc-100 font-display">
-            Reader Settings
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {/* Left Column: Audio controls */}
-          <div className="space-y-4">
-            {/* TTS Audio Controls */}
-            <div>
-              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
-                Audio Reader
-              </span>
-              <div className="flex items-center gap-2">
-                {/* Play / Resume */}
-                <button
-                  type="button"
-                  onClick={handlePlay}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                    isPlaying && !isPaused
-                      ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 scale-105'
-                      : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
-                  }`}
-                  title="Play Reading"
-                >
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
-                </button>
-
-                {/* Pause */}
+            {isPlaying && (
+              <>
                 <button
                   type="button"
                   onClick={handlePause}
-                  disabled={!isPlaying}
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                    isPaused
-                      ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 scale-105'
-                      : 'border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/[0.04]'
-                  }`}
-                  title="Pause Reading"
+                  className="h-9 w-9 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  title="Pause audio"
                 >
-                  <Pause className="w-4 h-4" />
+                  <Pause className="w-3.5 h-3.5" />
                 </button>
-
-                {/* Stop */}
                 <button
                   type="button"
                   onClick={handleStop}
-                  disabled={!isPlaying}
-                  className="w-10 h-10 rounded-xl flex items-center justify-center border border-zinc-200 dark:border-white/[0.06] bg-white dark:bg-white/[0.02] text-zinc-550 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-white/[0.04] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="Stop Reading"
+                  className="h-9 w-9 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-700 dark:text-zinc-300 flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                  title="Stop audio"
                 >
-                  <Square className="w-4 h-4 fill-current" />
+                  <Square className="w-3.5 h-3.5 fill-current" />
                 </button>
+              </>
+            )}
 
-                {/* Pulsating Voice Waveform Indicator */}
-                {isPlaying && !isPaused && (
-                  <div className="flex items-end gap-0.5 h-5 px-3 ml-2 pb-0.5">
-                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-1" />
-                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-2" />
-                    <div className="w-0.5 bg-indigo-500 rounded-full animate-wave-3" />
-                  </div>
-                )}
-              </div>
+            {/* Speed Selector */}
+            <div className="hidden sm:flex items-center gap-1 bg-zinc-200/60 dark:bg-zinc-800 p-1 rounded-xl">
+              {speedOptions.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => handleSpeedChange(opt)}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all ${
+                    speed === opt
+                      ? 'bg-white dark:bg-zinc-900 text-red-600 dark:text-red-400 shadow-xs'
+                      : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                  }`}
+                >
+                  {opt}×
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Voice Selector */}
+          {/* Expand Settings Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`h-9 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border ${
+              isExpanded
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent shadow-sm'
+                : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:border-zinc-300'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Customize Reading</span>
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {/* Collapsible Reader Customization Panel */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-zinc-200/80 dark:border-white/10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5 text-xs">
+            {/* Voice Selection */}
             {englishVoices.length > 0 && (
               <div>
-                <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-350 mb-2 ml-1">
-                  Select Voice
-                </span>
+                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block mb-1.5">
+                  Audio Voice
+                </label>
                 <select
                   value={selectedVoiceName}
                   onChange={(e) => handleVoiceChange(e.target.value)}
-                  className="w-full px-3.5 py-3 rounded-xl border text-[11px] font-bold outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white border-zinc-200 text-zinc-800 dark:bg-[#1e293b] dark:border-white/[0.08] dark:text-white cursor-pointer"
+                  className="w-full px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-zinc-800 dark:text-zinc-200 outline-none focus:ring-2 focus:ring-red-500/20"
                 >
                   {englishVoices.map((voice) => (
-                    <option key={voice.name} value={voice.name} className="bg-white dark:bg-[#1e293b] text-zinc-800 dark:text-white">
+                    <option key={voice.name} value={voice.name}>
                       {voice.name.replace('Microsoft', 'MS').replace('English (United States)', 'US').replace('English (United Kingdom)', 'UK')}
                     </option>
                   ))}
@@ -542,52 +399,52 @@ export default function ReaderSettings({ content }) {
               </div>
             )}
 
-            {/* Reading Speed controls */}
+            {/* Typography Font Choice */}
             <div>
-              <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 mb-2 ml-1">
-                Reading Speed
-              </span>
-              <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
-                {speedOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => handleSpeedChange(opt)}
-                    className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
-                      speed === opt
-                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
-                    }`}
-                  >
-                    {opt}x
-                  </button>
-                ))}
+              <label className="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block mb-1.5">
+                Reading Typeface
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleFontFamilyChange('font-serif')}
+                  className={`py-1.5 px-3 rounded-xl text-xs font-serif font-bold border transition-all ${
+                    fontFamily === 'font-serif'
+                      ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10'
+                  }`}
+                >
+                  Lora Serif
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleFontFamilyChange('font-sans')}
+                  className={`py-1.5 px-3 rounded-xl text-xs font-sans font-bold border transition-all ${
+                    fontFamily === 'font-sans'
+                      ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10'
+                  }`}
+                >
+                  Manrope Sans
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Right Column: Visual controls & Typography */}
-          <div className="space-y-4">
-            {/* Screen Night Light controls */}
+            {/* Night Light Warmth */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="block text-[10px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-300 ml-1">
-                  Night Light
-                </span>
-                {warmth !== 'Off' && (
-                  <Sun className="w-3.5 h-3.5 text-amber-500 animate-spin-slow" />
-                )}
-              </div>
-              <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
+              <label className="text-[10px] font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block mb-1.5">
+                Night Light Warmth
+              </label>
+              <div className="grid grid-cols-4 gap-1">
                 {warmthOptions.map((opt) => (
                   <button
                     key={opt}
                     type="button"
                     onClick={() => handleWarmthChange(opt)}
-                    className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
+                    className={`py-1.5 text-[10px] font-bold rounded-xl border transition-all ${
                       warmth === opt
-                        ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/10'
-                        : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-250'
+                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs'
+                        : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/10'
                     }`}
                   >
                     {opt}
@@ -596,39 +453,20 @@ export default function ReaderSettings({ content }) {
               </div>
             </div>
 
-            {/* Typography Customizer Section */}
-            <div className="space-y-3">
-              {/* Font Family Select */}
-              <div>
-                <span className="block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5 ml-1">
-                  Font Family
-                </span>
-                <select
-                  value={fontFamily}
-                  onChange={(e) => handleFontFamilyChange(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border text-[10px] font-bold outline-none transition-all bg-white border-zinc-200 text-zinc-800 dark:bg-[#1e293b] dark:border-white/[0.08] dark:text-white cursor-pointer"
-                >
-                  <option value="font-sans">Sans-Serif (Standard)</option>
-                  <option value="font-serif">Serif (Reading)</option>
-                  <option value="font-dyslexic">Dyslexic Friendly</option>
-                </select>
-              </div>
-
-              {/* Font Size Pills */}
-              <div>
-                <span className="block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5 ml-1">
-                  Font Size
-                </span>
-                <div className="grid grid-cols-4 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
+            {/* Font Size & Line Height */}
+            <div className="sm:col-span-2 lg:col-span-3 pt-2 border-t border-zinc-200/60 dark:border-white/5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Scale:</span>
+                <div className="flex gap-1">
                   {sizeOptions.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
                       onClick={() => handleFontSizeChange(opt.value)}
-                      className={`py-1 text-[10px] font-extrabold rounded-lg transition-all ${
+                      className={`px-3 py-1 text-xs font-bold rounded-lg border transition-all ${
                         fontSize === opt.value
-                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/10'
-                          : 'text-zinc-550 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                          ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/10'
                       }`}
                     >
                       {opt.label}
@@ -637,21 +475,18 @@ export default function ReaderSettings({ content }) {
                 </div>
               </div>
 
-              {/* Line Height Spacing Pills */}
-              <div>
-                <span className="block text-[9px] font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-1.5 ml-1">
-                  Line Spacing
-                </span>
-                <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-zinc-100/60 dark:bg-white/[0.03] border border-zinc-200/50 dark:border-white/[0.04]">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-500">Spacing:</span>
+                <div className="flex gap-1">
                   {heightOptions.map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
                       onClick={() => handleLineHeightChange(opt.value)}
-                      className={`py-1 text-[9px] font-extrabold rounded-lg transition-all ${
+                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all ${
                         lineHeight === opt.value
-                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/10'
-                          : 'text-zinc-550 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                          ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent'
+                          : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-white/10'
                       }`}
                     >
                       {opt.label}
@@ -661,7 +496,7 @@ export default function ReaderSettings({ content }) {
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, User, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, User, Loader2 } from 'lucide-react';
 import useToastStore from '@/store/useToastStore';
 
 export default function Comments({ slug }) {
@@ -10,6 +10,7 @@ export default function Comments({ slug }) {
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
   const [text, setText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { addToast } = useToastStore();
 
   useEffect(() => {
@@ -39,6 +40,7 @@ export default function Comments({ slug }) {
     e.preventDefault();
     if (!name.trim() || !text.trim()) return;
 
+    setSubmitting(true);
     try {
       const res = await fetch('/api/comments', {
         method: 'POST',
@@ -47,7 +49,7 @@ export default function Comments({ slug }) {
       });
       const data = await res.json();
       if (data.success) {
-        addToast('Comment submitted! It will appear once approved by an admin.', 'success');
+        addToast('Comment submitted! It will appear once approved by an editor.', 'success');
         if (typeof window !== 'undefined') {
           localStorage.setItem('techy-commenter-name', name.trim());
         }
@@ -56,12 +58,14 @@ export default function Comments({ slug }) {
         throw new Error(data.message);
       }
     } catch (err) {
-      console.error('Failed to post comment:', err);
       addToast(err.message || 'Failed to submit comment', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const formatDate = (iso) => {
+    if (!iso) return 'Recently';
     const date = new Date(iso);
     const now = new Date();
     const diff = Math.floor((now - date) / 1000);
@@ -72,97 +76,89 @@ export default function Comments({ slug }) {
   };
 
   return (
-    <section className="mt-16 border-t border-zinc-200/80 dark:border-white/[0.06] pt-16">
+    <section className="mt-16 border-t border-zinc-200/80 dark:border-white/10 pt-14">
       <div className="max-w-3xl">
-        <div className="flex items-center gap-2.5 mb-8">
-          <MessageCircle className="w-5 h-5 text-blue-500" />
-          <h2 className="text-2xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
-            Discussion ({comments.length})
-          </h2>
+        <div className="flex items-center justify-between mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-red-600 dark:text-red-400" />
+            <h2 className="font-display font-black text-2xl text-zinc-900 dark:text-white">
+              Reader Discussion ({comments.length})
+            </h2>
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 font-mono">
+            Civil Discourse
+          </span>
         </div>
 
         {/* Comment Form */}
-        <form onSubmit={handleSubmit} className="mb-10 p-6 rounded-2xl premium-card relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-1">Your Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
-                className="w-full p-3 rounded-xl text-xs border outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white/80 border-zinc-200/80 text-zinc-900 placeholder-zinc-400 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-white dark:placeholder-zinc-500"
-                required
-              />
-            </div>
-          </div>
-          <div className="space-y-1.5 mb-4">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-1">Comment</label>
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Share your thoughts on this article..."
-              rows="3"
-              className="w-full p-3 rounded-xl text-xs border outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white/80 border-zinc-200/80 text-zinc-900 placeholder-zinc-400 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-white dark:placeholder-zinc-500 resize-none"
+        <form onSubmit={handleSubmit} className="mb-10 p-6 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Your Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Dr. A. Rahman"
+              className="w-full p-3 rounded-xl text-xs border outline-none bg-white dark:bg-zinc-800 border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-red-500/20"
               required
             />
           </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Your Perspective</label>
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Share thoughtful feedback, regional context, or technical corrections..."
+              rows={4}
+              className="w-full p-3 rounded-xl text-xs border outline-none bg-white dark:bg-zinc-800 border-zinc-200 dark:border-white/10 text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-red-500/20 resize-none font-sans leading-relaxed"
+              required
+            />
+          </div>
+
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/15 hover:shadow-lg hover:-translate-y-0.5 font-display"
+            disabled={submitting}
+            className="px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center gap-2 shadow-sm shadow-red-600/20 disabled:opacity-50"
           >
-            <Send className="w-3.5 h-3.5" />
-            Post Comment
+            {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            <span>Post to Discussion</span>
           </button>
         </form>
 
-        {/* Comments List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-6 text-zinc-400">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
-              <p className="text-xs font-bold">Loading comments...</p>
-            </div>
-          ) : (
-            <AnimatePresence>
-              {comments.map((comment) => (
-                <motion.div
-                  key={comment._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="p-5 rounded-2xl premium-card group"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm">
-                        {comment.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{comment.name}</p>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium" suppressHydrationWarning>
-                          {formatDate(comment.createdAt || comment.timestamp)}
-                        </p>
-                      </div>
+        {/* Comments Feed */}
+        {loading ? (
+          <div className="py-8 text-center text-xs text-zinc-400 flex items-center justify-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Loading reader comments...</span>
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="p-8 rounded-2xl border border-dashed border-zinc-200 dark:border-white/10 text-center text-xs text-zinc-400">
+            Be the first to join the conversation on this story.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {comments.map((comment, idx) => (
+              <div
+                key={comment._id || idx}
+                className="p-5 rounded-2xl bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 space-y-2"
+              >
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold font-display text-[10px] grid place-items-center">
+                      {comment.name ? comment.name[0] : 'U'}
                     </div>
+                    <span className="font-bold text-zinc-900 dark:text-white">{comment.name}</span>
                   </div>
-                  <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
-                    {comment.text}
-                  </p>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
-
-          {!loading && comments.length === 0 && (
-            <div className="text-center py-12 text-zinc-400 dark:text-zinc-500">
-              <MessageCircle className="w-8 h-8 mx-auto mb-3 opacity-40" />
-              <p className="text-sm font-bold">No comments yet</p>
-              <p className="text-xs font-medium mt-1">Be the first to share your thoughts!</p>
-            </div>
-          )}
-        </div>
+                  <span className="text-[11px] text-zinc-400">{formatDate(comment.createdAt)}</span>
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans pl-8">
+                  {comment.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

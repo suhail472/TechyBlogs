@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { List, ChevronRight } from 'lucide-react';
+import { List, ChevronDown } from 'lucide-react';
 
 export default function TableOfContents({ headings = [] }) {
   const [activeId, setActiveId] = useState('');
   const [isExpanded, setIsExpanded] = useState(true);
   const observerRef = useRef(null);
 
-  // Set up IntersectionObserver for active heading tracking
   useEffect(() => {
     if (headings.length === 0) return;
 
@@ -16,14 +15,13 @@ export default function TableOfContents({ headings = [] }) {
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
-        // Find the first heading that is intersecting
-        const visible = entries.filter(e => e.isIntersecting);
+        const visible = entries.filter((e) => e.isIntersecting);
         if (visible.length > 0) {
           setActiveId(visible[0].target.id);
         }
       },
       {
-        rootMargin: '-80px 0px -60% 0px',
+        rootMargin: '-90px 0px -65% 0px',
         threshold: 0.1,
       }
     );
@@ -65,46 +63,52 @@ export default function TableOfContents({ headings = [] }) {
   if (headings.length === 0) return null;
 
   return (
-    <div className="p-5 rounded-2xl glass-card transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5 relative overflow-hidden">
-      {/* Gradient accent */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-
+    <div className="rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 p-5 transition-all">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between mb-3 group"
+        className="w-full flex items-center justify-between text-left group"
       >
         <div className="flex items-center gap-2">
-          <List className="w-4 h-4 text-blue-500" />
-          <h3 className="font-bold text-sm uppercase tracking-wider text-zinc-900 dark:text-zinc-100 font-display">
+          <List className="w-4 h-4 text-red-600 dark:text-red-400" />
+          <h3 className="font-display font-black text-xs uppercase tracking-[0.2em] text-zinc-900 dark:text-white">
             On This Page
           </h3>
         </div>
-        <ChevronRight
-          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+        <ChevronDown
+          className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
         />
       </button>
 
-      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <nav className="space-y-0.5 border-l-2 border-zinc-200/50 dark:border-white/[0.06]">
-          {headings.map((heading) => (
-            <button
-              key={heading.id}
-              onClick={() => scrollToHeading(heading.id)}
-              className={`block w-full text-left text-xs font-medium py-1.5 transition-all duration-200 border-l-2 -ml-[2px] ${
-                heading.level === 1
-                  ? 'pl-3'
-                  : heading.level === 2
-                  ? 'pl-3'
-                  : 'pl-6'
-              } ${
-                activeId === heading.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-bold bg-blue-500/5'
-                  : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:border-zinc-300 dark:hover:border-zinc-600'
-              }`}
-            >
-              <span className="line-clamp-1">{heading.text}</span>
-            </button>
-          ))}
+      <div
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isExpanded ? 'max-h-[500px] opacity-100 mt-4 pt-3 border-t border-zinc-200/60 dark:border-white/5' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <nav className="space-y-1.5">
+          {headings.map((heading, idx) => {
+            const formattedRank = idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`;
+            const isActive = activeId === heading.id;
+            return (
+              <button
+                key={heading.id}
+                onClick={() => scrollToHeading(heading.id)}
+                className={`flex items-start gap-2.5 w-full text-left text-xs transition-colors py-1 ${
+                  isActive
+                    ? 'text-red-600 dark:text-red-400 font-bold'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white font-medium'
+                }`}
+              >
+                <span
+                  className={`font-mono text-[11px] shrink-0 pt-0.5 ${
+                    isActive ? 'text-red-600 dark:text-red-400 font-bold' : 'text-zinc-400 dark:text-zinc-500'
+                  }`}
+                >
+                  {formattedRank}
+                </span>
+                <span className="line-clamp-2 leading-snug">{heading.text}</span>
+              </button>
+            );
+          })}
         </nav>
       </div>
     </div>
