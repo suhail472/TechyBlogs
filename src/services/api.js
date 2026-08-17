@@ -327,6 +327,9 @@ export const calendarAPI = {
       method: 'POST',
       body: JSON.stringify({ action: 'update_planning', postId, data }),
     });
+  },
+};
+
 // Community Comments Moderation API
 export const commentAPI = {
   getMetrics: async () => {
