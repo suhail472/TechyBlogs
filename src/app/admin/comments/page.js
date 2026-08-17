@@ -554,6 +554,20 @@ export default function CommentsModerationPage() {
                       <span>Spam</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleModerate(comment._id, comment.isPinned ? 'unpin' : 'pin')}
+                    disabled={actionLoading}
+                    className={`p-1.5 rounded-xl border transition-colors ${
+                      comment.isPinned
+                        ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+                        : 'border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400'
+                    }`}
+                    title={comment.isPinned ? 'Unpin Response' : 'Pin Editorial Response'}
+                  >
+                    <Pin className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             </div>
