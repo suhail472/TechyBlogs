@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -14,50 +15,127 @@ import {
   Linkedin,
   Loader2,
   XCircle,
+  Search,
+  CheckCircle2,
+  Building2,
+  ExternalLink,
+  Trash2,
+  SlidersHorizontal,
+  Sparkles,
+  MapPin,
+  FileText,
+  BadgeCheck,
+  Eye,
+  X,
+  Check,
+  ArrowRight,
+  TrendingUp,
+  Award,
 } from 'lucide-react';
 import { authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
 import AdminHeader from '@/components/admin/AdminHeader';
 import EmptyState from '@/components/admin/EmptyState';
 
-const ROLES = [
-  { id: 'contributor', label: 'Contributor', desc: 'Can create and submit drafts' },
-  { id: 'author', label: 'Author', desc: 'Can write and manage own published stories' },
-  { id: 'editor', label: 'Editor', desc: 'Can edit, review, schedule, and approve any story' },
-  { id: 'moderator', label: 'Moderator', desc: 'Can moderate reader comments and reports' },
-  { id: 'admin', label: 'Administrator', desc: 'Full editorial and user management' },
-  { id: 'superadmin', label: 'Super Admin', desc: 'Complete root system access' },
+const BUREAUS = [
+  { id: 'all', label: 'All Bureaus' },
+  { id: 'Global Newsroom', label: 'Global Newsroom' },
+  { id: 'Kashmir Regional Bureau', label: 'Kashmir Regional Bureau' },
+  { id: 'India Edition', label: 'India Edition' },
 ];
 
-export default function AuthorsPage() {
+const EDITORIAL_ROLES = [
+  { id: 'all', label: 'All Roles' },
+  { id: 'editor_in_chief', label: 'Editor-in-Chief' },
+  { id: 'managing_editor', label: 'Managing Editor' },
+  { id: 'section_editor', label: 'Section Editor' },
+  { id: 'bureau_chief', label: 'Bureau Chief' },
+  { id: 'senior_correspondent', label: 'Senior Correspondent' },
+  { id: 'staff_writer', label: 'Staff Writer' },
+  { id: 'columnist', label: 'Columnist' },
+  { id: 'guest_writer', label: 'Guest Contributor' },
+];
+
+const DESKS = [
+  'Technology',
+  'Artificial Intelligence',
+  'Education',
+  'Science',
+  'Business',
+  'Travel',
+  'Culture',
+  'Kashmir',
+  'India',
+  'World',
+];
+
+export default function AuthorsManagementPage() {
   const [authors, setAuthors] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedBureau, setSelectedBureau] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedDesk, setSelectedDesk] = useState('all');
+
+  const { addToast } = useToastStore();
+
+  // Modals state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAuthor, setEditingAuthor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const { addToast } = useToastStore();
+  const [isSlugManual, setIsSlugManual] = useState(false);
 
+  // Delete & Deactivate Modal State
+  const [deleteModal, setDeleteModal] = useState({ open: false, author: null });
+
+  // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     username: '',
     slug: '',
     role: 'author',
+    editorialRole: 'staff_writer',
+    title: 'Staff Correspondent',
+    bureau: 'Global Newsroom',
+    primaryDesk: 'Technology',
+    status: 'active',
+    verified: true,
+    featured: false,
     avatar: '',
     bio: '',
     expertise: '',
     website: '',
     socialLinks: { twitter: '', github: '', linkedin: '' },
+    seo: { title: '', description: '' },
   });
 
-  useEffect(() => {
-    fetchAuthors();
+  // Fetch Overview Stats
+  const fetchOverview = useCallback(async () => {
+    try {
+      const res = await authorAPI.getRosterOverview();
+      if (res.success) {
+        setOverview(res);
+      }
+    } catch (err) {
+      console.warn('Failed to load roster overview:', err);
+    }
   }, []);
 
-  const fetchAuthors = async () => {
+  // Fetch Authors Roster
+  const fetchAuthors = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await authorAPI.getAll();
+      const filters = {};
+      if (selectedBureau !== 'all') filters.bureau = selectedBureau;
+      if (selectedStatus !== 'all') filters.status = selectedStatus;
+      if (selectedRole !== 'all') filters.role = selectedRole;
+      if (selectedDesk !== 'all') filters.desk = selectedDesk;
+      if (searchQuery.trim()) filters.search = searchQuery.trim();
+
+      const res = await authorAPI.getAll(filters);
       if (res.success) {
         setAuthors(res.data || []);
       }
@@ -66,17 +144,30 @@ export default function AuthorsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedBureau, selectedStatus, selectedRole, selectedDesk, searchQuery]);
 
+  useEffect(() => {
+    fetchOverview();
+    fetchAuthors();
+  }, [fetchOverview, fetchAuthors]);
+
+  // Open Create / Edit Modal
   const handleOpenModal = (author = null) => {
     if (author) {
       setEditingAuthor(author);
       setFormData({
-        name: author.name,
-        email: author.email,
+        name: author.name || '',
+        email: author.email || '',
         username: author.username || '',
         slug: author.slug || '',
         role: author.role || 'author',
+        editorialRole: author.editorialRole || 'staff_writer',
+        title: author.title || 'Staff Correspondent',
+        bureau: author.bureau || 'Global Newsroom',
+        primaryDesk: author.primaryDesk || 'Technology',
+        status: author.status || 'active',
+        verified: author.verified ?? true,
+        featured: author.featured ?? false,
         avatar: author.avatar || '',
         bio: author.bio || '',
         expertise: (author.expertise || []).join(', '),
@@ -86,7 +177,12 @@ export default function AuthorsPage() {
           github: author.socialLinks?.github || '',
           linkedin: author.socialLinks?.linkedin || '',
         },
+        seo: {
+          title: author.seo?.title || '',
+          description: author.seo?.description || '',
+        },
       });
+      setIsSlugManual(true);
     } else {
       setEditingAuthor(null);
       setFormData({
@@ -95,20 +191,46 @@ export default function AuthorsPage() {
         username: '',
         slug: '',
         role: 'author',
+        editorialRole: 'staff_writer',
+        title: 'Staff Correspondent',
+        bureau: selectedBureau !== 'all' ? selectedBureau : 'Global Newsroom',
+        primaryDesk: 'Technology',
+        status: 'active',
+        verified: true,
+        featured: false,
         avatar: '',
         bio: '',
         expertise: '',
         website: '',
         socialLinks: { twitter: '', github: '', linkedin: '' },
+        seo: { title: '', description: '' },
       });
+      setIsSlugManual(false);
     }
     setModalOpen(true);
   };
 
+  // Name change with auto slug generator
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    setFormData((prev) => {
+      const next = { ...prev, name };
+      if (!isSlugManual || !prev.slug) {
+        next.slug = name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+      }
+      return next;
+    });
+  };
+
+  // Save / Update Author
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) {
-      addToast({ message: 'Name and Email are required', type: 'error' });
+      addToast('Name and email are required', 'error');
       return;
     }
 
@@ -116,113 +238,315 @@ export default function AuthorsPage() {
     try {
       const payload = {
         ...formData,
-        expertise: formData.expertise ? formData.expertise.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        expertise: formData.expertise
+          ? formData.expertise.split(',').map((s) => s.trim()).filter(Boolean)
+          : [],
       };
 
       if (editingAuthor) {
         await authorAPI.update(editingAuthor._id, payload);
-        addToast({ message: 'Author profile updated', type: 'success' });
+        addToast(`Updated byline profile for "${formData.name}"`, 'success');
       } else {
         await authorAPI.create(payload);
-        addToast({ message: 'New author created', type: 'success' });
+        addToast(`Created newsroom author "${formData.name}"`, 'success');
       }
+
       setModalOpen(false);
       fetchAuthors();
+      fetchOverview();
     } catch (err) {
-      addToast({ message: err.message || 'Operation failed', type: 'error' });
+      addToast(err.message || 'Failed to save author profile', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Execute Safe Delete / Deactivation
+  const handleExecuteDelete = async () => {
+    if (!deleteModal.author) return;
+    setSubmitting(true);
+    try {
+      const res = await authorAPI.delete(deleteModal.author._id);
+      addToast(res.message || 'Author status updated', 'info');
+      setDeleteModal({ open: false, author: null });
+      fetchAuthors();
+      fetchOverview();
+    } catch (err) {
+      addToast(err.message || 'Failed to manage author status', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8 pb-16 font-sans">
+      {/* 1. TOP COMMAND BAR */}
       <AdminHeader
-        title="Editorial Team & Staff Correspondents"
-        breadcrumb={[{ label: 'Staff Correspondents' }]}
+        title="Newsroom Authors & Bureau Roster"
+        breadcrumb={[{ label: 'Editorial People & Byline Operations' }]}
         actions={
           <button
+            type="button"
             onClick={() => handleOpenModal()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-red-600/20 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors shadow-sm shadow-red-600/20"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Correspondent</span>
+            <span>+ Add Correspondent</span>
           </button>
         }
       />
 
-      {/* Author Cards Grid */}
+      {/* 2. ROSTER PULSE STRIP */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Total Roster</span>
+          <p className="font-display text-2xl font-black text-zinc-900 dark:text-white">
+            {overview?.stats?.totalAuthors ?? authors.length}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Active Staff</span>
+          <p className="font-display text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            {overview?.stats?.activeStaff ?? authors.filter((a) => a.status === 'active').length}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Bureau Chiefs</span>
+          <p className="font-display text-2xl font-black text-purple-600 dark:text-purple-400">
+            {overview?.stats?.bureauChiefs ?? authors.filter((a) => a.editorialRole === 'bureau_chief').length}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Columnists</span>
+          <p className="font-display text-2xl font-black text-blue-600 dark:text-blue-400">
+            {overview?.stats?.columnists ?? authors.filter((a) => a.editorialRole === 'columnist').length}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Total Bylines</span>
+          <p className="font-display text-2xl font-black text-red-600 dark:text-red-400">
+            {overview?.stats?.totalBylines?.toLocaleString() ?? 0}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Reader Reach</span>
+          <p className="font-display text-2xl font-black text-amber-600 dark:text-amber-400">
+            {overview?.stats?.totalViews?.toLocaleString() ?? 0}
+          </p>
+        </div>
+      </section>
+
+      {/* 3. BUREAU NAVIGATION TABS & FILTERS */}
+      <section className="space-y-4">
+        {/* Bureau Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 border-b border-zinc-200/80 dark:border-white/10">
+          {BUREAUS.map((b) => {
+            const active = selectedBureau === b.id;
+            return (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setSelectedBureau(b.id)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+                  active
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>{b.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Filter Controls & Search */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Status Filter */}
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 text-xs font-bold outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active Staff</option>
+              <option value="on_leave">On Leave</option>
+              <option value="former">Former Staff</option>
+            </select>
+
+            {/* Role Filter */}
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 text-xs font-bold outline-none"
+            >
+              <option value="all">All Roles</option>
+              <option value="author">Author / Correspondent</option>
+              <option value="editor">Editor</option>
+              <option value="admin">Administrator</option>
+              <option value="contributor">Contributor</option>
+            </select>
+
+            {/* Desk Filter */}
+            <select
+              value={selectedDesk}
+              onChange={(e) => setSelectedDesk(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 text-xs font-bold outline-none"
+            >
+              <option value="all">All Primary Desks</option>
+              {DESKS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-full sm:w-64">
+            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search bylines, names, slugs..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl text-xs bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 outline-none focus:ring-2 focus:ring-red-500/20"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 4. ROSTER GRID / CARDS VIEW */}
       {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
-          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Loading correspondents...</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-44 bg-zinc-100 dark:bg-zinc-800/40 rounded-2xl animate-pulse" />
+          ))}
         </div>
       ) : authors.length === 0 ? (
         <EmptyState
-          icon={Users}
-          title="No staff correspondents registered"
-          description="Add writers, editors, and correspondents to assign bylines and publishing permissions."
-          actionLabel="Add Correspondent"
+          title="No newsroom authors found"
+          description="Create or invite journalists, correspondents, and editors to build the newsroom byline directory."
+          actionLabel="+ Add Correspondent"
           onAction={() => handleOpenModal()}
+          className="my-12"
         />
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {authors.map((author) => (
             <div
               key={author._id}
-              className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/10 p-6 flex flex-col justify-between hover:shadow-lg transition-all"
+              className="p-5 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-4 hover:border-zinc-300 dark:hover:border-white/20 transition-all group flex flex-col justify-between"
             >
-              <div>
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div className="flex items-center gap-3.5">
-                    <img
-                      src={author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name)}&background=3b82f6&color=fff`}
-                      alt={author.name}
-                      className="w-13 h-13 rounded-2xl object-cover border border-zinc-200 dark:border-white/10"
-                    />
-                    <div>
-                      <h3 className="font-bold text-base text-zinc-900 dark:text-white leading-tight">{author.name}</h3>
-                      <p className="text-xs text-zinc-400 mt-0.5">{author.email}</p>
+              <div className="space-y-3">
+                {/* Author Avatar & Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 flex items-center justify-center font-display font-black text-sm text-zinc-900 dark:text-white uppercase overflow-hidden shrink-0">
+                      {author.avatar ? (
+                        <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                      ) : (
+                        author.name.charAt(0)
+                      )}
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="font-display font-bold text-sm text-zinc-900 dark:text-white truncate">
+                          {author.name}
+                        </h4>
+                        {author.verified && (
+                          <BadgeCheck className="w-4 h-4 text-blue-500 shrink-0" title="Verified Byline" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-zinc-500 font-medium truncate">
+                        {author.title || 'Staff Correspondent'}
+                      </p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-mono">
-                    {author.role}
+
+                  {/* Status Badge */}
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      author.status === 'active'
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : author.status === 'on_leave'
+                        ? 'bg-amber-500/10 text-amber-600'
+                        : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
+                    }`}
+                  >
+                    {author.status === 'active' ? 'Active' : author.status === 'on_leave' ? 'On Leave' : 'Former'}
                   </span>
                 </div>
 
-                {author.bio ? (
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4 line-clamp-3">
-                    {author.bio}
-                  </p>
-                ) : (
-                  <p className="text-xs text-zinc-400 italic mb-4">No biography added yet.</p>
-                )}
-
-                {author.expertise?.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {author.expertise.map((exp, idx) => (
-                      <span key={idx} className="px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-md text-[10px] font-semibold">
-                        {exp}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="pt-4 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-bold">
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>{author.postCount || 0} stories published</span>
+                {/* Bureau & Desk Tags */}
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-red-500" />
+                    <span>{author.bureau || 'Global Newsroom'}</span>
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-medium flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-blue-500" />
+                    <span>{author.primaryDesk || 'Technology'}</span>
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                {/* Bio Excerpt */}
+                {author.bio && (
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                    {author.bio}
+                  </p>
+                )}
+
+                {/* Published & Draft Stats */}
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-100 dark:border-white/5 text-xs">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 font-mono block">Published Stories</span>
+                    <span className="font-bold text-zinc-900 dark:text-white font-mono">
+                      {author.postCount ?? 0}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-zinc-400 font-mono block">Lifetime Reads</span>
+                    <span className="font-bold text-zinc-900 dark:text-white font-mono">
+                      {author.totalViews?.toLocaleString() ?? 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-white/5">
+                <Link
+                  href={`/author/${author.slug || author.username || 'suheel-hilal'}`}
+                  target="_blank"
+                  className="text-[11px] font-bold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                >
+                  <span>Public Byline</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+
+                <div className="flex items-center gap-1.5">
                   <button
+                    type="button"
                     onClick={() => handleOpenModal(author)}
-                    className="p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors"
+                    className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
                     title="Edit Profile"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModal({ open: true, author })}
+                    className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600"
+                    title="Safe Deactivate / Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -231,146 +555,290 @@ export default function AuthorsPage() {
         </div>
       )}
 
-      {/* Edit / Create Modal */}
+      {/* 5. MODAL: EDIT / CREATE AUTHOR */}
       <AnimatePresence>
         {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/10 shadow-2xl max-w-lg w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] overflow-y-auto"
             >
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-200 dark:border-white/10">
-                <h3 className="text-xl font-bold font-display">
-                  {editingAuthor ? 'Edit Author Profile' : 'Add Team Member'}
-                </h3>
-                <button
-                  onClick={() => setModalOpen(false)}
-                  className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
-                >
-                  <XCircle className="w-5 h-5" />
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-red-600" />
+                  <h3 className="font-display font-bold text-base text-zinc-900 dark:text-white">
+                    {editingAuthor ? `Edit Byline: ${editingAuthor.name}` : 'New Newsroom Author Profile'}
+                  </h3>
+                </div>
+                <button onClick={() => setModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+                {/* Full Name & Email */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                      Full Name *
-                    </label>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Full Name</label>
                     <input
                       type="text"
-                      required
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={handleNameChange}
                       placeholder="e.g. Suheel Hilal"
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm"
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-bold"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                      Email *
-                    </label>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Email Address</label>
                     <input
                       type="email"
-                      required
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="author@teachyblogs.com"
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm"
+                      onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="journalist@teachyblogs.com"
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* Byline Title & URL Slug */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                      Role & Permissions
-                    </label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm font-bold"
-                    >
-                      {ROLES.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </select>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Byline Title</label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                      placeholder="Senior Kashmir Correspondent"
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                      Profile Slug
-                    </label>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Public Byline Slug</label>
                     <input
                       type="text"
                       value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      onChange={(e) => {
+                        setIsSlugManual(true);
+                        setFormData((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^\w-]/g, '') }));
+                      }}
                       placeholder="suheel-hilal"
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm font-mono"
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs font-mono outline-none"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Avatar Image URL
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.avatar}
-                    onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm"
-                  />
+                {/* Bureau & Primary Desk Placement */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Regional Bureau</label>
+                    <select
+                      value={formData.bureau}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, bureau: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    >
+                      {BUREAUS.filter((b) => b.id !== 'all').map((b) => (
+                        <option key={b.id} value={b.id}>{b.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Primary Editorial Desk</label>
+                    <select
+                      value={formData.primaryDesk}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, primaryDesk: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    >
+                      {DESKS.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
+                {/* Editorial Role & Roster Status */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Editorial Role Classification</label>
+                    <select
+                      value={formData.editorialRole}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, editorialRole: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    >
+                      {EDITORIAL_ROLES.filter((r) => r.id !== 'all').map((r) => (
+                        <option key={r.id} value={r.id}>{r.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Roster Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    >
+                      <option value="active">Active Staff</option>
+                      <option value="on_leave">On Leave</option>
+                      <option value="former">Former Staff</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Avatar URL & Website */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Avatar Photo URL</label>
+                    <input
+                      type="text"
+                      value={formData.avatar}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, avatar: e.target.value }))}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Personal Website</label>
+                    <input
+                      type="text"
+                      value={formData.website}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, website: e.target.value }))}
+                      placeholder="https://suheel.dev"
+                      className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Bio */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Biography / Byline
-                  </label>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Journalistic Bio</label>
                   <textarea
                     rows={3}
                     value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Editorial writer and software architect covering..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
+                    placeholder="Short journalistic background and focus areas..."
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none resize-none"
                   />
                 </div>
 
+                {/* Expertise Tags */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">
-                    Expertise Areas (comma-separated)
-                  </label>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Beats & Expertise (comma separated)</label>
                   <input
                     type="text"
                     value={formData.expertise}
-                    onChange={(e) => setFormData({ ...formData, expertise: e.target.value })}
-                    placeholder="Next.js, Kashmir Economy, AI Systems, Cloud"
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-sm"
+                    onChange={(e) => setFormData((prev) => ({ ...prev, expertise: e.target.value }))}
+                    placeholder="Artificial Intelligence, Education, Kashmir, Cloud Architecture"
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-6 border-t border-zinc-200 dark:border-white/10">
+                {/* Verification & Spotlight Toggles */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <label className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200 dark:border-white/10 cursor-pointer">
+                    <span className="font-bold flex items-center gap-1">
+                      <BadgeCheck className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Verified Byline</span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={formData.verified}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, verified: e.target.checked }))}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200 dark:border-white/10 cursor-pointer">
+                    <span className="font-bold flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Featured Spotlight</span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={formData.featured}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, featured: e.target.checked }))}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-white/10">
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="px-5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 text-xs font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-blue-500/25 flex items-center gap-2"
+                    className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5"
                   >
-                    {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    {editingAuthor ? 'Save Profile' : 'Create Member'}
+                    {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    <span>{editingAuthor ? 'Save Profile' : 'Create Byline'}</span>
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 6. MODAL: SAFE DELETE / DEACTIVATE */}
+      <AnimatePresence>
+        {deleteModal.open && deleteModal.author && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <Trash2 className="w-4 h-4 text-rose-600" />
+                  <h3 className="font-display font-bold text-base text-zinc-900 dark:text-white">
+                    Manage "{deleteModal.author.name}"
+                  </h3>
+                </div>
+                <button onClick={() => setDeleteModal({ open: false, author: null })} className="p-1 text-zinc-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                {deleteModal.author.postCount > 0 ? (
+                  <>
+                    This author has <strong className="text-zinc-900 dark:text-white">{deleteModal.author.postCount} published stories</strong>. To protect historical bylines and prevent broken URLs, the profile will be safely transitioned to <strong>Former Staff</strong> rather than hard-deleted.
+                  </>
+                ) : (
+                  'This author has 0 published stories and can be safely removed from the system.'
+                )}
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteModal({ open: false, author: null })}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteDelete}
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  {deleteModal.author.postCount > 0 ? 'Archive as Former Staff' : 'Confirm Delete'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

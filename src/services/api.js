@@ -245,8 +245,13 @@ export const taxonomyAPI = {
 
 // Author API
 export const authorAPI = {
-  getAll: async () => {
-    return apiCall('/authors', { method: 'GET' });
+  getRosterOverview: async () => {
+    return apiCall('/authors/roster-overview', { method: 'GET' });
+  },
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const endpoint = `/authors${query ? '?' + query : ''}`;
+    return apiCall(endpoint, { method: 'GET' });
   },
   create: async (data) => {
     return apiCall('/authors', {
@@ -258,6 +263,11 @@ export const authorAPI = {
     return apiCall(`/authors/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  },
+  delete: async (id) => {
+    return apiCall(`/authors/${id}`, {
+      method: 'DELETE',
     });
   },
 };
