@@ -14,7 +14,7 @@ export async function GET(req) {
     const user = await verifyAuth(req);
 
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
     const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -45,10 +45,10 @@ export async function GET(req) {
         status: 'published',
         publishedAt: { $gte: startOfDay, $lte: endOfDay },
       }),
-      // 2. Scheduled today count
+      // 2. Active Scheduled today count (scheduled for today and not yet expired/published)
       Post.countDocuments({
         status: 'scheduled',
-        scheduledAt: { $gte: startOfDay, $lte: endOfDay },
+        scheduledAt: { $gte: now, $lte: endOfDay },
       }),
       // 3. In review count
       Post.countDocuments({ status: 'in_review' }),
@@ -95,13 +95,14 @@ export async function GET(req) {
         .limit(5)
         .select('title slug author primarySection categories updatedAt')
         .lean(),
-      // 11. Missing SEO description (Actionable queue)
+      // 11. Missing SEO description (Actionable queue - matching central readiness rules)
       Post.find({
         status: { $ne: 'archived' },
         $and: [
           { 'seo.description': { $in: ['', null] } },
           { metaDescription: { $in: ['', null] } },
           { subtitle: { $in: ['', null] } },
+          { excerpt: { $in: ['', null] } },
         ],
       })
         .sort({ updatedAt: -1 })
@@ -247,7 +248,7 @@ export async function GET(req) {
       });
     });
 
-    // Extract recent chronological activities
+    // Extract recent chronological activities (safe audit projection)
     const recentActivity = [];
     recentActivityArticles.forEach((post) => {
       (post.editorialHistory || []).forEach((hist) => {
@@ -259,7 +260,7 @@ export async function GET(req) {
           action: hist.action,
           actor: hist.by?.name || 'Editor',
           role: hist.by?.role || 'Staff',
-          summary: hist.summary || hist.note || '',
+          summary: hist.summary || '',
           timestamp: hist.at || post.updatedAt,
         });
       });

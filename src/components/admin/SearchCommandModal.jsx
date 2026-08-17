@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, Layers, MapPin, Users, ArrowRight, X, Sparkles } from 'lucide-react';
-import { postsAPI, taxonomyAPI, authorsAPI } from '@/services/api';
+import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 
 export default function SearchCommandModal({ isOpen, onClose }) {
   const [query, setQuery] = useState('');
@@ -32,12 +32,12 @@ export default function SearchCommandModal({ isOpen, onClose }) {
       setLoading(true);
       try {
         const [postsRes, taxRes, authRes] = await Promise.allSettled([
-          postsAPI.getAll({ search: query, limit: 5 }),
+          postAPI.getAllPosts({ search: query, limit: 5 }),
           taxonomyAPI.getAll({ search: query }),
-          authorsAPI.getAll(),
+          authorAPI.getAll(),
         ]);
 
-        const stories = postsRes.status === 'fulfilled' && postsRes.value?.data ? postsRes.value.data.slice(0, 5) : [];
+        const stories = postsRes.status === 'fulfilled' && postsRes.value?.posts ? postsRes.value.posts.slice(0, 5) : [];
         const taxonomies = taxRes.status === 'fulfilled' && taxRes.value?.data ? taxRes.value.data : [];
         const authors = authRes.status === 'fulfilled' && authRes.value?.data 
           ? authRes.value.data.filter(a => a.name?.toLowerCase().includes(query.toLowerCase())).slice(0, 4) 

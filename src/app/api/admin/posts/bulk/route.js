@@ -6,10 +6,19 @@ import { validatePublicationIntegrity, serialiseActor } from '@/lib/services/edi
 
 export const dynamic = 'force-dynamic';
 
+const EDITORIAL_ROLES = new Set(['editor', 'admin', 'superadmin']);
+
 export async function POST(req) {
   try {
     await connectToDatabase();
     const user = await verifyAuth(req);
+
+    if (!EDITORIAL_ROLES.has(user?.role)) {
+      return NextResponse.json(
+        { success: false, message: 'Editorial privileges required for bulk operations' },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json();
     const { action, postIds = [], data = {} } = body;
