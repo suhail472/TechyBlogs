@@ -361,4 +361,87 @@ export const commentAPI = {
   },
 };
 
-export default { authAPI, postAPI, taxonomyAPI, authorAPI, workflowAPI, searchAPI, calendarAPI, commentAPI };
+// Audience & Subscriber API
+export const subscriberAPI = {
+  getMetrics: async () => {
+    return apiCall('/admin/subscribers/metrics', { method: 'GET' });
+  },
+  getGrowth: async (range = '30d') => {
+    return apiCall(`/admin/subscribers/growth?range=${range}`, { method: 'GET' });
+  },
+  getConversions: async () => {
+    return apiCall('/admin/subscribers/conversions', { method: 'GET' });
+  },
+  getList: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/newsletter/subscribers${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+  suppress: async (id, reason) => {
+    return apiCall('/newsletter/subscribers', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, action: 'suppress', reason }),
+    });
+  },
+  restore: async (id) => {
+    return apiCall('/newsletter/subscribers', {
+      method: 'PATCH',
+      body: JSON.stringify({ id, action: 'restore' }),
+    });
+  },
+  deleteSubscriber: async (id) => {
+    return apiCall(`/newsletter/subscribers?id=${id}`, { method: 'DELETE' });
+  },
+};
+
+// Newsletter Campaign API
+export const campaignAPI = {
+  getAll: async (status = 'all') => {
+    return apiCall(`/admin/newsletter/campaigns?status=${status}`, { method: 'GET' });
+  },
+  getById: async (id) => {
+    return apiCall(`/admin/newsletter/campaigns/${id}`, { method: 'GET' });
+  },
+  create: async (data) => {
+    return apiCall('/admin/newsletter/campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+  update: async (id, data) => {
+    return apiCall(`/admin/newsletter/campaigns/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  },
+  test: async (id, testEmail) => {
+    return apiCall(`/admin/newsletter/campaigns/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'test', testEmail }),
+    });
+  },
+  send: async (id) => {
+    return apiCall(`/admin/newsletter/campaigns/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'send' }),
+    });
+  },
+  previewSegment: async (targetAudience) => {
+    return apiCall('/admin/newsletter/segment-preview', {
+      method: 'POST',
+      body: JSON.stringify(targetAudience),
+    });
+  },
+};
+
+export default {
+  authAPI,
+  postAPI,
+  taxonomyAPI,
+  authorAPI,
+  workflowAPI,
+  searchAPI,
+  calendarAPI,
+  commentAPI,
+  subscriberAPI,
+  campaignAPI,
+};
