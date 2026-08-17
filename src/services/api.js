@@ -298,8 +298,35 @@ export const searchAPI = {
 
 // Editorial Calendar API
 export const calendarAPI = {
-  getEvents: async (month, year) => {
-    return apiCall(`/admin/calendar-events?month=${month}&year=${year}`, { method: 'GET' });
+  getMetrics: async () => {
+    return apiCall('/admin/calendar/metrics', { method: 'GET' });
+  },
+  getEvents: async (params = {}) => {
+    if (typeof params === 'number') {
+      const month = arguments[0];
+      const year = arguments[1];
+      return apiCall(`/admin/calendar-events?month=${month}&year=${year}`, { method: 'GET' });
+    }
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/admin/calendar-events${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+  schedule: async (postId, data) => {
+    return apiCall('/admin/calendar-events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'schedule', postId, data }),
+    });
+  },
+  reschedule: async (postId, scheduledAt) => {
+    return apiCall('/admin/calendar-events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'reschedule', postId, data: { scheduledAt } }),
+    });
+  },
+  updatePlanning: async (postId, data) => {
+    return apiCall('/admin/calendar-events', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'update_planning', postId, data }),
+    });
   },
 };
 
