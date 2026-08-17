@@ -183,6 +183,20 @@ export const postAPI = {
       body: JSON.stringify({ version }),
     });
   },
+
+  bulkAction: async (action, postIds, data = {}) => {
+    return apiCall('/admin/posts/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ action, postIds, data }),
+    });
+  },
+};
+
+// Admin Newsroom Command Center API
+export const adminAPI = {
+  getCommandCenterData: async () => {
+    return apiCall('/admin/command-center', { method: 'GET' });
+  },
 };
 
 // Taxonomy API
