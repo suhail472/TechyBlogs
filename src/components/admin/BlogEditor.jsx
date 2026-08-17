@@ -67,6 +67,8 @@ import {
   RefreshCw,
   ArrowUp,
   ArrowDown,
+  Lock,
+  ExternalLink,
 } from 'lucide-react';
 import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
@@ -90,6 +92,232 @@ const CONTENT_TYPES = [
   { id: 'report', label: 'Research Report', desc: 'Data studies and whitepapers' },
   { id: 'announcement', label: 'Announcement', desc: 'Official bulletins and platform updates' },
 ];
+
+const generateFaqId = () => `faq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+/**
+ * Centralized Publication Readiness Validation Engine
+ */
+export function getPublicationReadiness(article) {
+  const blockingIssues = [];
+  const warnings = [];
+  const completed = [];
+
+  // 1. Headline (Mandatory)
+  if (!article.title || !article.title.trim()) {
+    blockingIssues.push({
+      id: 'title',
+      label: 'Headline',
+      message: 'Add an article headline before publishing.',
+      sectionId: null,
+      fieldId: 'story-headline-input',
+    });
+  } else {
+    completed.push({ id: 'title', label: 'Story Headline' });
+  }
+
+  // 2. Article Body (Mandatory)
+  const bodyText = (article.content || '').trim();
+  if (!bodyText) {
+    blockingIssues.push({
+      id: 'content',
+      label: 'Article Content Body',
+      message: 'Add article Markdown content before publishing.',
+      sectionId: null,
+      fieldId: 'story-content-textarea',
+    });
+  } else {
+    completed.push({ id: 'content', label: 'Article Content Body' });
+  }
+
+  // 3. Author (Mandatory)
+  if (!article.author || !article.author.trim()) {
+    blockingIssues.push({
+      id: 'author',
+      label: 'Author Byline',
+      message: 'Assign an author to the article.',
+      sectionId: 'publication',
+      fieldId: 'author-input',
+    });
+  } else {
+    completed.push({ id: 'author', label: `Author: ${article.author}` });
+  }
+
+  // 4. Primary Section (Mandatory)
+  if (!article.primarySection || !article.primarySection.trim()) {
+    blockingIssues.push({
+      id: 'section',
+      label: 'Primary Section',
+      message: 'Select a primary editorial desk / section.',
+      sectionId: 'classification',
+      fieldId: 'primary-section-select',
+    });
+  } else {
+    completed.push({ id: 'section', label: `Desk: ${article.primarySection}` });
+  }
+
+  // 5. Content Type (Mandatory)
+  if (!article.contentType || !article.contentType.trim()) {
+    blockingIssues.push({
+      id: 'contentType',
+      label: 'Content Type',
+      message: 'Select an editorial content classification.',
+      sectionId: 'classification',
+      fieldId: 'content-type-select',
+    });
+  } else {
+    completed.push({ id: 'contentType', label: `Type: ${article.contentType}` });
+  }
+
+  // 6. Cover Image (Mandatory)
+  if (!article.image || !article.image.trim()) {
+    blockingIssues.push({
+      id: 'image',
+      label: 'Cover Image',
+      message: 'Upload or provide a featured cover image.',
+      sectionId: 'media',
+      fieldId: 'cover-image-input',
+    });
+  } else {
+    completed.push({ id: 'image', label: 'Cover Image Attached' });
+  }
+
+  // 7. URL Slug (Mandatory)
+  if (!article.slug || !article.slug.trim()) {
+    blockingIssues.push({
+      id: 'slug',
+      label: 'URL Slug',
+      message: 'Provide a valid URL slug for the article.',
+      sectionId: 'seo',
+      fieldId: 'slug-input',
+    });
+  } else {
+    completed.push({ id: 'slug', label: `Slug (/blog/${article.slug})` });
+  }
+
+  // 8. Meta Description (Mandatory)
+  const metaDesc = (article.seo?.description || article.metaDescription || article.subtitle || '').trim();
+  if (!metaDesc) {
+    blockingIssues.push({
+      id: 'metaDescription',
+      label: 'Meta Description',
+      message: 'Add an SEO meta description (recommended 140–160 chars).',
+      sectionId: 'seo',
+      fieldId: 'meta-description-textarea',
+    });
+  } else if (metaDesc.length < 50) {
+    warnings.push({
+      id: 'metaDescription_short',
+      label: 'Meta Description Length',
+      message: `Meta description is short (${metaDesc.length}/160 chars). Recommended 140–160 chars.`,
+      sectionId: 'seo',
+      fieldId: 'meta-description-textarea',
+    });
+    completed.push({ id: 'metaDescription', label: 'Meta Description (Short)' });
+  } else if (metaDesc.length > 160) {
+    warnings.push({
+      id: 'metaDescription_long',
+      label: 'Meta Description Length',
+      message: `Meta description exceeds 160 chars (${metaDesc.length}/160). Search engines may truncate it.`,
+      sectionId: 'seo',
+      fieldId: 'meta-description-textarea',
+    });
+    completed.push({ id: 'metaDescription', label: 'Meta Description' });
+  } else {
+    completed.push({ id: 'metaDescription', label: 'Meta Description (Optimal)' });
+  }
+
+  // 9. SEO Title (Mandatory check for usable title)
+  const effectiveSeoTitle = (article.seo?.title || article.title || '').trim();
+  if (!effectiveSeoTitle) {
+    blockingIssues.push({
+      id: 'seoTitle',
+      label: 'SEO Title',
+      message: 'Provide a search title for the article.',
+      sectionId: 'seo',
+      fieldId: 'meta-title-input',
+    });
+  } else if (effectiveSeoTitle.length < 30) {
+    warnings.push({
+      id: 'seoTitle_short',
+      label: 'SEO Title Length',
+      message: `SEO title is short (${effectiveSeoTitle.length}/60 chars). Recommended 50–60 chars.`,
+      sectionId: 'seo',
+      fieldId: 'meta-title-input',
+    });
+  } else if (effectiveSeoTitle.length > 60) {
+    warnings.push({
+      id: 'seoTitle_long',
+      label: 'SEO Title Length',
+      message: `SEO title exceeds 60 chars (${effectiveSeoTitle.length}/60 chars).`,
+      sectionId: 'seo',
+      fieldId: 'meta-title-input',
+    });
+  }
+
+  // 10. FAQ Validation (If FAQs exist, each must be complete)
+  if (article.faqs && article.faqs.length > 0) {
+    article.faqs.forEach((faq, idx) => {
+      const q = (faq.question || '').trim();
+      const a = (faq.answer || '').trim();
+      if (!q && !a) {
+        blockingIssues.push({
+          id: `faq_empty_${idx}`,
+          label: `FAQ #${idx + 1}`,
+          message: `FAQ #${idx + 1} is empty. Complete question & answer or remove it.`,
+          sectionId: 'faqs',
+          fieldId: `faq-question-${idx}`,
+        });
+      } else if (!q) {
+        blockingIssues.push({
+          id: `faq_no_q_${idx}`,
+          label: `FAQ #${idx + 1} Question`,
+          message: `FAQ #${idx + 1} has an answer but is missing a question.`,
+          sectionId: 'faqs',
+          fieldId: `faq-question-${idx}`,
+        });
+      } else if (!a) {
+        blockingIssues.push({
+          id: `faq_no_a_${idx}`,
+          label: `FAQ #${idx + 1} Answer`,
+          message: `FAQ #${idx + 1} has a question but is missing an answer.`,
+          sectionId: 'faqs',
+          fieldId: `faq-answer-${idx}`,
+        });
+      }
+    });
+  }
+
+  // 11. Recommendations / Warnings
+  if (!article.seo?.keywords || article.seo.keywords.length === 0) {
+    warnings.push({
+      id: 'keywords',
+      label: 'SEO Keywords',
+      message: 'Consider adding 2-5 relevant SEO keyword tags.',
+      sectionId: 'seo',
+      fieldId: 'keywords-input',
+    });
+  }
+
+  if (!article.seo?.socialImage && !article.image) {
+    warnings.push({
+      id: 'socialImage',
+      label: 'Social Share Image',
+      message: 'Add an Open Graph social card image.',
+      sectionId: 'seo',
+      fieldId: 'social-image-input',
+    });
+  }
+
+  const canPublish = blockingIssues.length === 0;
+
+  return {
+    canPublish,
+    blockingIssues,
+    warnings,
+    completed,
+  };
+}
 
 export default function BlogEditor({ id }) {
   const router = useRouter();
@@ -140,9 +368,9 @@ export default function BlogEditor({ id }) {
   const [autosaveStatus, setAutosaveStatus] = useState('idle'); // 'idle', 'saved', 'saving', 'local', 'offline', 'error'
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [countdownSeconds, setCountdownSeconds] = useState(20);
   const [recoveryDraft, setRecoveryDraft] = useState(null);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [readinessModalOpen, setReadinessModalOpen] = useState(false);
 
   const textareaRef = useRef(null);
   const debounceTimerRef = useRef(null);
@@ -206,6 +434,9 @@ export default function BlogEditor({ id }) {
       },
     },
   });
+
+  // Central Publication Readiness Evaluation
+  const readiness = useMemo(() => getPublicationReadiness(formData), [formData]);
 
   // Online / Offline Listeners
   useEffect(() => {
@@ -277,7 +508,12 @@ export default function BlogEditor({ id }) {
             developing: !!(p.editorial?.developing || p.developing),
             editorNote: p.editorNote || '',
             sources: p.sources || [],
-            faqs: (p.faqs || []).map((f, i) => ({ ...f, order: f.order ?? i })),
+            faqs: (p.faqs || []).map((f, i) => ({
+              id: f.id || f._id || generateFaqId(),
+              question: f.question || '',
+              answer: f.answer || '',
+              order: f.order ?? i,
+            })),
             editorial: p.editorial || {
               breaking: false,
               developing: false,
@@ -471,8 +707,9 @@ export default function BlogEditor({ id }) {
       // Escape: close modals / inspector
       if (e.key === 'Escape') {
         if (activeModal) setActiveModal(null);
-        else if (inspectorOpen) setInspectorOpen(false);
+        else if (readinessModalOpen) setReadinessModalOpen(false);
         else if (publishModalOpen) setPublishModalOpen(false);
+        else if (inspectorOpen) setInspectorOpen(false);
       }
     };
 
@@ -490,7 +727,7 @@ export default function BlogEditor({ id }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [formData, inspectorOpen, publishModalOpen, activeModal, hasUnsavedChanges, viewMode]);
+  }, [formData, inspectorOpen, publishModalOpen, readinessModalOpen, activeModal, hasUnsavedChanges, viewMode]);
 
   // Mode Switch with Save Trigger
   const handleModeSwitch = (newMode) => {
@@ -557,30 +794,6 @@ export default function BlogEditor({ id }) {
     return { wordCount: words, charCount: chars, readingTime: readMin };
   }, [formData.content]);
 
-  // SEO Health Breakdown (Required vs Recommended)
-  const seoHealth = useMemo(() => {
-    const required = [
-      { id: 'title', label: 'Story Headline', valid: !!formData.title?.trim() },
-      { id: 'content', label: 'Markdown Body', valid: !!formData.content?.trim() },
-      { id: 'author', label: 'Author Byline', valid: !!formData.author?.trim() },
-      { id: 'section', label: 'Primary Section', valid: !!formData.primarySection },
-    ];
-    const recommended = [
-      { id: 'meta_title', label: 'SEO Title (50-60 chars)', valid: (formData.seo?.title || formData.title)?.length >= 40 },
-      { id: 'meta_desc', label: 'Meta Description (140-160 chars)', valid: (formData.seo?.description || formData.subtitle)?.length >= 100 },
-      { id: 'slug', label: 'Custom URL Slug', valid: !!formData.slug?.trim() },
-      { id: 'keywords', label: 'SEO Keywords Added', valid: (formData.seo?.keywords?.length || 0) > 0 },
-      { id: 'cover', label: 'Cover Image Media', valid: !!formData.image },
-      { id: 'faqs', label: 'Structured FAQ Items', valid: (formData.faqs?.length || 0) > 0 },
-    ];
-
-    const reqPassed = required.filter((r) => r.valid).length;
-    const recPassed = recommended.filter((r) => r.valid).length;
-    const isReadyToPublish = reqPassed === required.length;
-
-    return { required, recommended, reqPassed, recPassed, isReadyToPublish };
-  }, [formData]);
-
   // Insert markdown helper at cursor
   const insertTextAtCursor = (before, after = '') => {
     const textarea = textareaRef.current;
@@ -643,11 +856,14 @@ export default function BlogEditor({ id }) {
     }));
   };
 
-  // FAQ Builder Handlers
+  // FAQ Builder Handlers (With Stable UUID & Immutable Array Reorder)
   const handleAddFaq = () => {
     updateForm((prev) => ({
       ...prev,
-      faqs: [...prev.faqs, { question: '', answer: '', order: prev.faqs.length }],
+      faqs: [
+        ...(prev.faqs || []),
+        { id: generateFaqId(), question: '', answer: '', order: (prev.faqs || []).length },
+      ],
     }));
   };
 
@@ -662,20 +878,53 @@ export default function BlogEditor({ id }) {
   const handleRemoveFaq = (index) => {
     updateForm((prev) => ({
       ...prev,
-      faqs: prev.faqs.filter((_, i) => i !== index),
+      faqs: prev.faqs.filter((_, i) => i !== index).map((f, i) => ({ ...f, order: i })),
     }));
   };
 
   const handleMoveFaq = (index, direction) => {
     updateForm((prev) => {
+      const faqs = [...(prev.faqs || [])];
       const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= prev.faqs.length) return prev;
-      const nextFaqs = [...prev.faqs];
-      const temp = nextFaqs[index];
-      nextFaqs[index] = nextFaqs[targetIndex];
-      nextFaqs[targetIndex] = temp;
-      return { ...prev, faqs: nextFaqs.map((f, i) => ({ ...f, order: i })) };
+      if (targetIndex < 0 || targetIndex >= faqs.length) return prev;
+
+      // Immutable swap
+      const itemToMove = faqs[index];
+      const itemToSwap = faqs[targetIndex];
+      faqs[index] = itemToSwap;
+      faqs[targetIndex] = itemToMove;
+
+      // Normalize orders strictly
+      const normalized = faqs.map((f, i) => ({
+        ...f,
+        order: i,
+      }));
+
+      return { ...prev, faqs: normalized };
     });
+  };
+
+  // Click-to-Fix Handler (Navigates directly to inspector section and focuses element)
+  const handleFixIssue = (issue) => {
+    setReadinessModalOpen(false);
+    setPublishModalOpen(false);
+
+    if (issue.sectionId) {
+      setInspectorOpen(true);
+      setOpenSections((prev) => ({ ...prev, [issue.sectionId]: true }));
+    }
+
+    setTimeout(() => {
+      if (issue.fieldId) {
+        const el = document.getElementById(issue.fieldId);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+          el.classList.add('ring-2', 'ring-red-500');
+          setTimeout(() => el.classList.remove('ring-2', 'ring-red-500'), 2500);
+        }
+      }
+    }, 200);
   };
 
   // Manual Save Draft (immediate server sync)
@@ -695,7 +944,7 @@ export default function BlogEditor({ id }) {
       const payload = {
         ...formData,
         status: targetStatus,
-        isAutosave: false, // Record formal version on manual save
+        isAutosave: false, // Record formal version milestone on manual save
         publishedAt: targetStatus === 'published' && !formData.publishedAt ? new Date() : formData.publishedAt,
       };
 
@@ -715,6 +964,7 @@ export default function BlogEditor({ id }) {
       setAutosaveStatus('saved');
       setLastSavedTime(new Date());
       setPublishModalOpen(false);
+      setReadinessModalOpen(false);
     } catch (err) {
       addToast(err.message || 'Saving failed', 'error');
       setAutosaveStatus('error');
@@ -723,8 +973,16 @@ export default function BlogEditor({ id }) {
     }
   };
 
-  // Publish Workflow (Forces server save before publish confirmation)
+  // Publish Workflow (Strictly gated by readiness + pre-publish server sync)
   const handlePublishClick = async () => {
+    // 1. Strict Gate Evaluation
+    const check = getPublicationReadiness(formData);
+    if (!check.canPublish) {
+      setReadinessModalOpen(true);
+      return;
+    }
+
+    // 2. Pre-Publish Dirty Sync
     if (hasUnsavedChanges) {
       setSubmitting(true);
       try {
@@ -736,6 +994,8 @@ export default function BlogEditor({ id }) {
       }
       setSubmitting(false);
     }
+
+    // 3. Open Confirmation Modal
     setPublishModalOpen(true);
   };
 
@@ -992,8 +1252,28 @@ export default function BlogEditor({ id }) {
           </button>
         </div>
 
-        {/* Right: Actions & Inspector Trigger */}
+        {/* Right: Actions, Readiness Indicator & Inspector Trigger */}
         <div className="flex items-center gap-2">
+          {/* Live Readiness Pill */}
+          <button
+            type="button"
+            onClick={() => setReadinessModalOpen(true)}
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-zinc-200/80 dark:border-white/10 text-[11px] font-bold font-mono transition-colors hover:bg-zinc-100 dark:hover:bg-white/5"
+            title="View Publication Readiness Checklist"
+          >
+            {readiness.canPublish ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-emerald-600 dark:text-emerald-400">Ready to publish</span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-amber-600 dark:text-amber-400">{readiness.blockingIssues.length} issues blocking</span>
+              </>
+            )}
+          </button>
+
           {/* Inspector Toggle */}
           <button
             type="button"
@@ -1007,7 +1287,7 @@ export default function BlogEditor({ id }) {
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Inspector</span>
-            {!seoHealth.isReadyToPublish && (
+            {!readiness.canPublish && (
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
             )}
           </button>
@@ -1037,16 +1317,28 @@ export default function BlogEditor({ id }) {
             <span>Save</span>
           </button>
 
-          {/* Publish Trigger */}
-          <button
-            type="button"
-            onClick={handlePublishClick}
-            disabled={submitting}
-            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5"
-          >
-            {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Publish</span>
-          </button>
+          {/* Strictly Gated Publish Trigger */}
+          {readiness.canPublish ? (
+            <button
+              type="button"
+              onClick={handlePublishClick}
+              disabled={submitting}
+              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5"
+            >
+              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              <span>Publish</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setReadinessModalOpen(true)}
+              className="px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-white/10 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Click to see requirements preventing publication"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Publish</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -1059,6 +1351,7 @@ export default function BlogEditor({ id }) {
               {/* Document Header (Headline & Dek) */}
               <div className="space-y-3">
                 <input
+                  id="story-headline-input"
                   type="text"
                   value={formData.title}
                   onChange={handleTitleChange}
@@ -1066,6 +1359,7 @@ export default function BlogEditor({ id }) {
                   className="w-full text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight bg-transparent border-none outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700 text-zinc-950 dark:text-white"
                 />
                 <input
+                  id="story-subtitle-input"
                   type="text"
                   value={formData.subtitle}
                   onChange={(e) => {
@@ -1081,6 +1375,7 @@ export default function BlogEditor({ id }) {
 
               {/* Full-width Markdown Body Textarea */}
               <textarea
+                id="story-content-textarea"
                 ref={textareaRef}
                 value={formData.content}
                 onChange={(e) => {
@@ -1190,7 +1485,7 @@ export default function BlogEditor({ id }) {
 
               {/* Drawer Body (Accordion Groups) */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs font-sans">
-                {/* 1. SEO & Publish Health */}
+                {/* 1. SEO & Publish Health Summary */}
                 <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <button
                     type="button"
@@ -1199,50 +1494,57 @@ export default function BlogEditor({ id }) {
                   >
                     <div className="flex items-center gap-2">
                       <Activity className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>SEO & Publish Readiness</span>
+                      <span>Publication Health</span>
                     </div>
                     <span className="font-mono text-[10px] text-zinc-500">
-                      {seoHealth.reqPassed}/{seoHealth.required.length} Required
+                      {readiness.completed.length} / {readiness.completed.length + readiness.blockingIssues.length} Ready
                     </span>
                   </button>
 
                   {openSections.health && (
                     <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
-                      <div>
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
-                          Mandatory Criteria
-                        </span>
-                        <div className="space-y-1">
-                          {seoHealth.required.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between text-xs">
-                              <span className={item.valid ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-400'}>{item.label}</span>
-                              {item.valid ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                              ) : (
-                                <span className="text-[9px] font-mono text-rose-500 font-bold uppercase">Required</span>
-                              )}
-                            </div>
-                          ))}
+                      {readiness.blockingIssues.length > 0 && (
+                        <div>
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-rose-500 block mb-1.5">
+                            Blocking Publication ({readiness.blockingIssues.length})
+                          </span>
+                          <div className="space-y-1.5">
+                            {readiness.blockingIssues.map((issue) => (
+                              <div
+                                key={issue.id}
+                                className="p-2 rounded-lg bg-rose-500/5 border border-rose-500/20 flex items-center justify-between gap-2"
+                              >
+                                <span className="text-rose-700 dark:text-rose-400 font-medium text-[11px]">
+                                  ✕ {issue.message}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleFixIssue(issue)}
+                                  className="text-[10px] font-bold text-rose-600 hover:underline shrink-0"
+                                >
+                                  Fix ↗
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className="pt-2 border-t border-zinc-100 dark:border-white/5">
-                        <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
-                          Recommended SEO
-                        </span>
-                        <div className="space-y-1">
-                          {seoHealth.recommended.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between text-xs">
-                              <span className={item.valid ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400'}>{item.label}</span>
-                              {item.valid ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                              ) : (
-                                <span className="text-[9px] font-mono text-amber-500 font-bold uppercase">Recommended</span>
-                              )}
-                            </div>
-                          ))}
+                      {readiness.warnings.length > 0 && (
+                        <div className="pt-2 border-t border-zinc-100 dark:border-white/5">
+                          <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-amber-500 block mb-1.5">
+                            Recommendations ({readiness.warnings.length})
+                          </span>
+                          <div className="space-y-1">
+                            {readiness.warnings.map((w) => (
+                              <div key={w.id} className="text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-1">
+                                <span>⚠</span>
+                                <span>{w.message}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1287,6 +1589,7 @@ export default function BlogEditor({ id }) {
                           </div>
                         </div>
                         <input
+                          id="meta-title-input"
                           type="text"
                           value={formData.seo?.title || ''}
                           onChange={(e) => updateForm({ seo: { ...formData.seo, title: e.target.value } })}
@@ -1319,6 +1622,7 @@ export default function BlogEditor({ id }) {
                           </div>
                         </div>
                         <textarea
+                          id="meta-description-textarea"
                           rows={3}
                           value={formData.seo?.description || ''}
                           onChange={(e) => updateForm({ seo: { ...formData.seo, description: e.target.value } })}
@@ -1349,6 +1653,7 @@ export default function BlogEditor({ id }) {
                             </span>
                           ))}
                           <input
+                            id="keywords-input"
                             type="text"
                             value={keywordInput}
                             onChange={(e) => setKeywordInput(e.target.value)}
@@ -1365,6 +1670,7 @@ export default function BlogEditor({ id }) {
                         <div className="flex items-center rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-white/10 overflow-hidden focus-within:border-red-500">
                           <span className="px-2.5 text-zinc-400 font-mono text-[11px] border-r border-zinc-200 dark:border-white/10">/blog/</span>
                           <input
+                            id="slug-input"
                             type="text"
                             value={formData.slug}
                             onChange={(e) => {
@@ -1480,6 +1786,7 @@ export default function BlogEditor({ id }) {
                             <div>
                               <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">OG Social Image URL</label>
                               <input
+                                id="social-image-input"
                                 type="text"
                                 value={formData.seo?.socialImage || ''}
                                 onChange={(e) => updateForm({ seo: { ...formData.seo, socialImage: e.target.value } })}
@@ -1514,7 +1821,7 @@ export default function BlogEditor({ id }) {
                   )}
                 </div>
 
-                {/* 3. STRUCTURED FAQ BUILDER */}
+                {/* 3. STRUCTURED FAQ BUILDER (Fixed Reordering & Stable Keys) */}
                 <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
                   <button
                     type="button"
@@ -1536,7 +1843,7 @@ export default function BlogEditor({ id }) {
                         <div className="space-y-3">
                           {formData.faqs.map((faq, idx) => (
                             <div
-                              key={idx}
+                              key={faq.id || `faq_${idx}`}
                               className="p-3 rounded-xl border border-zinc-200/80 dark:border-white/10 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-2"
                             >
                               <div className="flex items-center justify-between">
@@ -1548,32 +1855,43 @@ export default function BlogEditor({ id }) {
                                     type="button"
                                     onClick={() => handleMoveFaq(idx, 'up')}
                                     disabled={idx === 0}
-                                    className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white disabled:opacity-30"
-                                    title="Move Up"
+                                    className={`p-1 rounded transition-colors ${
+                                      idx === 0
+                                        ? 'opacity-30 cursor-not-allowed text-zinc-400'
+                                        : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                    }`}
+                                    title="Move FAQ up"
+                                    aria-label={`Move FAQ ${idx + 1} up`}
                                   >
-                                    <ArrowUp className="w-3 h-3" />
+                                    <ArrowUp className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleMoveFaq(idx, 'down')}
                                     disabled={idx === formData.faqs.length - 1}
-                                    className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white disabled:opacity-30"
-                                    title="Move Down"
+                                    className={`p-1 rounded transition-colors ${
+                                      idx === formData.faqs.length - 1
+                                        ? 'opacity-30 cursor-not-allowed text-zinc-400'
+                                        : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                    }`}
+                                    title="Move FAQ down"
+                                    aria-label={`Move FAQ ${idx + 1} down`}
                                   >
-                                    <ArrowDown className="w-3 h-3" />
+                                    <ArrowDown className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveFaq(idx)}
-                                    className="p-1 text-rose-500 hover:text-rose-700"
+                                    className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 rounded ml-1"
                                     title="Remove Question"
                                   >
-                                    <Trash2 className="w-3 h-3" />
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </div>
                               </div>
 
                               <input
+                                id={`faq-question-${idx}`}
                                 type="text"
                                 value={faq.question}
                                 onChange={(e) => handleUpdateFaq(idx, 'question', e.target.value)}
@@ -1582,6 +1900,7 @@ export default function BlogEditor({ id }) {
                               />
 
                               <textarea
+                                id={`faq-answer-${idx}`}
                                 rows={2}
                                 value={faq.answer}
                                 onChange={(e) => handleUpdateFaq(idx, 'answer', e.target.value)}
@@ -1637,6 +1956,7 @@ export default function BlogEditor({ id }) {
                       <div>
                         <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Author Byline</label>
                         <input
+                          id="author-input"
                           type="text"
                           value={formData.author}
                           onChange={(e) => updateForm({ author: e.target.value })}
@@ -1664,6 +1984,7 @@ export default function BlogEditor({ id }) {
                       <div>
                         <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Content Type</label>
                         <select
+                          id="content-type-select"
                           value={formData.contentType}
                           onChange={(e) => updateForm({ contentType: e.target.value })}
                           className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
@@ -1677,6 +1998,7 @@ export default function BlogEditor({ id }) {
                       <div>
                         <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Primary Desk / Section</label>
                         <select
+                          id="primary-section-select"
                           value={formData.primarySection}
                           onChange={(e) => updateForm({ primarySection: e.target.value, categories: [e.target.value] })}
                           className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
@@ -1800,6 +2122,7 @@ export default function BlogEditor({ id }) {
                       <div>
                         <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Direct Image URL</label>
                         <input
+                          id="cover-image-input"
                           type="text"
                           value={formData.image}
                           onChange={(e) => updateForm({ image: e.target.value })}
@@ -2039,7 +2362,158 @@ export default function BlogEditor({ id }) {
         )}
       </AnimatePresence>
 
-      {/* 7. PUBLISH CONFIRMATION & HEALTH CHECK MODAL */}
+      {/* 7. PUBLICATION READINESS / GATE PANEL MODAL */}
+      <AnimatePresence>
+        {readinessModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl overflow-hidden"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl ${readiness.canPublish ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                    {readiness.canPublish ? <CheckCircle2 className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h3 className="font-display text-base font-bold text-zinc-900 dark:text-white">
+                      {readiness.canPublish ? 'Article Ready for Publication' : "Article Isn't Ready to Publish"}
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      {readiness.canPublish
+                        ? 'All mandatory editorial and SEO requirements have been satisfied.'
+                        : 'Please resolve the following critical items before publishing.'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setReadinessModalOpen(false)}
+                  className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto space-y-4 pr-1 text-xs">
+                {/* Blocking Issues */}
+                {readiness.blockingIssues.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-500 block">
+                      Blocking Requirements ({readiness.blockingIssues.length})
+                    </span>
+                    <div className="space-y-2">
+                      {readiness.blockingIssues.map((issue) => (
+                        <div
+                          key={issue.id}
+                          className="p-3 rounded-xl bg-rose-500/5 border border-rose-500/20 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-rose-500 font-bold">✕</span>
+                            <div>
+                              <p className="font-bold text-zinc-900 dark:text-zinc-100">{issue.label}</p>
+                              <p className="text-zinc-500 dark:text-zinc-400 text-[11px] leading-relaxed">{issue.message}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleFixIssue(issue)}
+                            className="px-3 py-1 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white font-bold text-[11px] shrink-0 transition-colors"
+                          >
+                            Fix Issue ↗
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {readiness.warnings.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-white/5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-500 block">
+                      Recommendations ({readiness.warnings.length})
+                    </span>
+                    <div className="space-y-2">
+                      {readiness.warnings.map((w) => (
+                        <div
+                          key={w.id}
+                          className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-amber-500 font-bold">⚠</span>
+                            <div>
+                              <p className="font-bold text-zinc-900 dark:text-zinc-100">{w.label}</p>
+                              <p className="text-zinc-500 dark:text-zinc-400 text-[11px]">{w.message}</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleFixIssue(w)}
+                            className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500 hover:text-white font-bold text-[11px] shrink-0 transition-colors"
+                          >
+                            Inspect ↗
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Completed Items */}
+                {readiness.completed.length > 0 && (
+                  <div className="space-y-1.5 pt-2 border-t border-zinc-100 dark:border-white/5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-500 block">
+                      Completed Checklist ({readiness.completed.length})
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {readiness.completed.map((c) => (
+                        <div key={c.id} className="flex items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-400">
+                          <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                          <span className="truncate">{c.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-200 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setReadinessModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Close
+                </button>
+                {readiness.canPublish ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReadinessModalOpen(false);
+                      handlePublishClick();
+                    }}
+                    className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <span>Proceed to Publish</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleFixIssue(readiness.blockingIssues[0])}
+                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all flex items-center gap-1"
+                  >
+                    <span>Fix First Issue: {readiness.blockingIssues[0]?.label}</span>
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 8. PUBLISH CONFIRMATION MODAL (When Valid) */}
       <AnimatePresence>
         {publishModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -2050,34 +2524,35 @@ export default function BlogEditor({ id }) {
               className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl"
             >
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-red-600">
-                  Editorial Confirmation
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-600">
+                  Ready to Publish
                 </span>
                 <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
                   Publish Story to TeachyBlogs?
                 </h3>
                 <p className="text-xs text-zinc-500 leading-relaxed font-sans">
-                  This will make this article publicly readable across the frontpage, section verticals, and RSS feeds.
+                  This article is validated and ready. Publishing makes it immediately accessible across public editorial feeds, search indexes, and RSS.
                 </p>
               </div>
 
-              {/* Health checklist breakdown */}
-              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 space-y-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block mb-1">
-                  Pre-Flight Verification:
-                </span>
-                {seoHealth.required.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between text-xs font-semibold">
-                    <span className={item.valid ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400'}>
-                      {item.label}
-                    </span>
-                    {item.valid ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    ) : (
-                      <span className="text-[10px] text-rose-500 font-mono uppercase">Required</span>
-                    )}
-                  </div>
-                ))}
+              {/* Pre-flight checklist preview */}
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                  <span>Headline & Markdown Body</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                  <span>Author & Desk Classification</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                  <span>Cover Image & SEO Metadata</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
+                <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 font-medium">
+                  <span>Structured FAQ Schema ({formData.faqs?.length || 0} items)</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -2091,8 +2566,8 @@ export default function BlogEditor({ id }) {
                 <button
                   type="button"
                   onClick={() => handleManualSave('published')}
-                  disabled={submitting || !seoHealth.isReadyToPublish}
-                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5"
                 >
                   {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                   <span>Confirm & Publish</span>

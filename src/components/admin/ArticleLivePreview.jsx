@@ -368,13 +368,15 @@ export default function ArticleLivePreview({ formData, className = '' }) {
                   Frequently Asked Questions
                 </h2>
                 <div className="space-y-3">
-                  {formData.faqs.map((faq, idx) => {
-                    const isOpen = openFaqIndex === idx;
-                    return (
-                      <div
-                        key={idx}
-                        className="rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/60"
-                      >
+                  {[...formData.faqs]
+                    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                    .map((faq, idx) => {
+                      const isOpen = openFaqIndex === idx;
+                      return (
+                        <div
+                          key={faq.id || `preview_faq_${idx}`}
+                          className="rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-white dark:bg-zinc-900/60"
+                        >
                         <button
                           type="button"
                           onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
