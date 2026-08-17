@@ -301,10 +301,9 @@ export const calendarAPI = {
   getMetrics: async () => {
     return apiCall('/admin/calendar/metrics', { method: 'GET' });
   },
-  getEvents: async (params = {}) => {
+  getEvents: async (params = {}, year) => {
     if (typeof params === 'number') {
-      const month = arguments[0];
-      const year = arguments[1];
+      const month = params;
       return apiCall(`/admin/calendar-events?month=${month}&year=${year}`, { method: 'GET' });
     }
     const query = new URLSearchParams(params).toString();
