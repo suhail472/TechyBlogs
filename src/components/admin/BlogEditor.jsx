@@ -69,6 +69,8 @@ import {
   ArrowDown,
   Lock,
   ExternalLink,
+  Keyboard,
+  CheckCheck,
 } from 'lucide-react';
 import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
@@ -332,7 +334,7 @@ export default function BlogEditor({ id }) {
 
   // Workspace View Modes: 'write' (wide canvas), 'split' (resizable dual-pane), 'preview' (full public simulation)
   const [viewMode, setViewMode] = useState('write');
-  const [inspectorOpen, setInspectorOpen] = useState(false); // Closed by default
+  const [inspectorOpen, setInspectorOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [splitRatio, setSplitRatio] = useState(50); // percentage for editor in split mode (25-75)
   const isDraggingSplitRef = useRef(false);
@@ -340,6 +342,9 @@ export default function BlogEditor({ id }) {
   // Inserter Modals: null, 'image', 'link'
   const [activeModal, setActiveModal] = useState(null);
   const [modalInput, setModalInput] = useState({ url: '', alt: '', text: '' });
+
+  // Keyboard Shortcuts Modal
+  const [shortcutsModalOpen, setShortcutsModalOpen] = useState(false);
 
   // Accordion open states inside inspector
   const [openSections, setOpenSections] = useState({
@@ -694,19 +699,30 @@ export default function BlogEditor({ id }) {
         e.preventDefault();
         handleManualSave('draft');
       }
-      // Ctrl+\ / Cmd+\: Toggle Inspector
-      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+      // Ctrl+Enter / Cmd+Enter: Open Publish / Readiness workflow
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        setInspectorOpen((prev) => !prev);
+        handlePublishClick();
       }
       // Ctrl+Shift+P / Cmd+Shift+P: Toggle Preview
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+      else if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
         e.preventDefault();
         handleModeSwitch(viewMode === 'preview' ? 'write' : 'preview');
       }
+      // Ctrl+Shift+I or Ctrl+\: Toggle Inspector
+      else if (((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')) || ((e.ctrlKey || e.metaKey) && e.key === '\\')) {
+        e.preventDefault();
+        setInspectorOpen((prev) => !prev);
+      }
+      // Ctrl+/ or Cmd+/: Show Keyboard Shortcuts Cheat Sheet
+      else if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShortcutsModalOpen((prev) => !prev);
+      }
       // Escape: close modals / inspector
-      if (e.key === 'Escape') {
-        if (activeModal) setActiveModal(null);
+      else if (e.key === 'Escape') {
+        if (shortcutsModalOpen) setShortcutsModalOpen(false);
+        else if (activeModal) setActiveModal(null);
         else if (readinessModalOpen) setReadinessModalOpen(false);
         else if (publishModalOpen) setPublishModalOpen(false);
         else if (inspectorOpen) setInspectorOpen(false);
@@ -727,7 +743,7 @@ export default function BlogEditor({ id }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [formData, inspectorOpen, publishModalOpen, readinessModalOpen, activeModal, hasUnsavedChanges, viewMode]);
+  }, [formData, inspectorOpen, publishModalOpen, readinessModalOpen, shortcutsModalOpen, activeModal, hasUnsavedChanges, viewMode]);
 
   // Mode Switch with Save Trigger
   const handleModeSwitch = (newMode) => {
@@ -1047,18 +1063,19 @@ export default function BlogEditor({ id }) {
     <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12151c]/95 backdrop-blur-md py-1.5 px-2 border-y border-zinc-200/80 dark:border-white/10 flex items-center overflow-x-auto no-scrollbar gap-1 whitespace-nowrap shadow-xs">
       {/* Headings */}
       <div className="flex items-center gap-0.5 pr-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
-        <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Heading 1" aria-label="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Heading 2" aria-label="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Heading 3" aria-label="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('#### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Heading 4" aria-label="Heading 4"><Heading4 className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Inline Formatting */}
       <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
-        <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('~~', '~~')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Inline Code"><Code className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Blockquote"><Quote className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Bold (Ctrl+B)" aria-label="Bold"><Bold className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Italic (Ctrl+I)" aria-label="Italic"><Italic className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('~~', '~~')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Strikethrough" aria-label="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Inline Code" aria-label="Inline Code"><Code className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors" title="Blockquote" aria-label="Blockquote"><Quote className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Media & Link Inserts */}
@@ -1068,6 +1085,7 @@ export default function BlogEditor({ id }) {
           onClick={() => setActiveModal('image')}
           className="p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-600 text-zinc-700 dark:text-zinc-300 flex items-center gap-1 font-bold text-xs transition-colors"
           title="Insert Article Image"
+          aria-label="Insert Image"
         >
           <ImageIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
           <span>Image</span>
@@ -1076,8 +1094,9 @@ export default function BlogEditor({ id }) {
         <button
           type="button"
           onClick={() => setActiveModal('link')}
-          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center gap-1 text-xs"
+          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center gap-1 text-xs transition-colors"
           title="Insert Hyperlink"
+          aria-label="Insert Hyperlink"
         >
           <Link2 className="w-3.5 h-3.5 text-blue-500" />
           <span>Link</span>
@@ -1086,35 +1105,39 @@ export default function BlogEditor({ id }) {
 
       {/* Lists & Dividers */}
       <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
-        <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-3.5 h-3.5" /></button>
-        <button type="button" onClick={() => insertTextAtCursor('\n---\n\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Horizontal Divider"><Minus className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List" aria-label="Bullet List"><List className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List" aria-label="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task Checklist" aria-label="Task Checklist"><CheckSquare className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('\n---\n\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Horizontal Divider" aria-label="Horizontal Divider"><Minus className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Rich Component Inserters */}
       <div className="flex items-center gap-1 pl-1 text-xs text-zinc-500 font-bold shrink-0">
-        <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Table" aria-label="Table">
           <TableIcon className="w-3 h-3 text-purple-500" /> Table
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('```javascript\n// Code snippet\nconsole.log("TeachyBlogs Engineering");\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor('```javascript\n// Code snippet\nconsole.log("TeachyBlogs Editorial Workstation");\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Code Block" aria-label="Code Block">
           <FileCode className="w-3 h-3 text-amber-500" /> Code Block
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor('$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Math LaTeX" aria-label="Math LaTeX">
           <Sigma className="w-3 h-3 text-emerald-500" /> Math LaTeX
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('```mermaid\ngraph TD\n  A[Input] --> B[Processing]\n  B --> C[Result]\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor('```mermaid\ngraph TD\n  A[Client Request] --> B[Next.js App Router]\n  B --> C{Cache Hit?}\n  C -->|Yes| D[Edge CDN]\n  C -->|No| E[MongoDB Atlas]\n  E --> D\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Mermaid Diagram" aria-label="Mermaid Diagram">
           <GitBranch className="w-3 h-3 text-indigo-500" /> Diagram
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor(':::note\nImportant editorial takeaway or context note.\n:::\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor(':::note\nImportant editorial takeaway or contextual notice.\n:::\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Editorial Callout" aria-label="Callout">
           <Info className="w-3 h-3 text-blue-500" /> Callout
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('```js playground\n// Interactive executable sandbox\nconst msg = "Welcome to TeachyBlogs Sandbox";\nconsole.log(msg);\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+        <button type="button" onClick={() => insertTextAtCursor(':::quiz What is Next.js 15 App Router standard?\n( ) Legacy Pages\n(*) Modern Server-First App Router\n( ) Pure SPA\n:::\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Interactive Quiz" aria-label="Interactive Quiz">
+          <HelpCircle className="w-3 h-3 text-cyan-500" /> Quiz
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor('```js playground\n// Interactive executable sandbox\nconst headline = "TeachyBlogs Engine";\nconsole.log(headline);\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert JavaScript Sandbox" aria-label="Playground Sandbox">
           <Play className="w-3 h-3 text-rose-500" /> Sandbox
         </button>
       </div>
@@ -1283,7 +1306,7 @@ export default function BlogEditor({ id }) {
                 ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
                 : 'border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5'
             }`}
-            title="Toggle Editorial Inspector (Ctrl+\)"
+            title="Toggle Editorial Inspector (Ctrl+Shift+I or Ctrl+\)"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Inspector</span>
@@ -1691,7 +1714,7 @@ export default function BlogEditor({ id }) {
                           value={formData.seo?.canonicalUrl || ''}
                           onChange={(e) => updateForm({ seo: { ...formData.seo, canonicalUrl: e.target.value } })}
                           placeholder="https://www.teachyblogs.com/blog/..."
-                          className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
+                          className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
                         />
                         <p className="text-[10px] text-zinc-400 mt-1">Use this when the article's primary URL differs from this page.</p>
                       </div>
@@ -1882,8 +1905,9 @@ export default function BlogEditor({ id }) {
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveFaq(idx)}
-                                    className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 rounded ml-1"
+                                    className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 rounded ml-1 transition-colors"
                                     title="Remove Question"
+                                    aria-label={`Remove FAQ ${idx + 1}`}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -2194,12 +2218,12 @@ export default function BlogEditor({ id }) {
       </main>
 
       {/* 4. PERSISTENT BOTTOM STATUS BAR */}
-      <footer className="bg-white dark:bg-[#12151c] border-t border-zinc-200/80 dark:border-white/10 px-6 py-2 flex items-center justify-between text-xs text-zinc-400 font-mono select-none">
-        <div className="flex items-center gap-4">
-          <span>{wordCount.toLocaleString()} words</span>
+      <footer className="bg-white dark:bg-[#12151c] border-t border-zinc-200/80 dark:border-white/10 px-4 sm:px-6 py-2 flex items-center justify-between text-xs text-zinc-400 font-mono select-none">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300">{wordCount.toLocaleString()} words</span>
           <span>•</span>
-          <span>{charCount.toLocaleString()} characters</span>
-          <span>•</span>
+          <span className="hidden sm:inline">{charCount.toLocaleString()} characters</span>
+          <span className="hidden sm:inline">•</span>
           <span>{readingTime} min read</span>
         </div>
 
@@ -2223,10 +2247,83 @@ export default function BlogEditor({ id }) {
           ) : (
             <span>Ready</span>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShortcutsModalOpen(true)}
+            className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[10px] font-mono text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors"
+            title="Keyboard Shortcuts Cheat Sheet (Ctrl+/)"
+          >
+            <Keyboard className="w-3 h-3" />
+            <span>Ctrl + /</span>
+          </button>
         </div>
       </footer>
 
-      {/* 5. MODAL: INSERT IMAGE */}
+      {/* 5. MODAL: KEYBOARD SHORTCUTS CHEAT SHEET */}
+      <AnimatePresence>
+        {shortcutsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <Keyboard className="w-4 h-4 text-red-600" />
+                  <h3 className="font-display font-bold text-sm text-zinc-900 dark:text-white">
+                    Editorial Workstation Keyboard Shortcuts
+                  </h3>
+                </div>
+                <button onClick={() => setShortcutsModalOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Save Draft</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Ctrl + S</kbd>
+                </div>
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Publish Story</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Ctrl + Enter</kbd>
+                </div>
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Toggle Preview</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Ctrl + Shift + P</kbd>
+                </div>
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Toggle Inspector</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Ctrl + Shift + I</kbd>
+                </div>
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Shortcuts Cheat Sheet</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Ctrl + /</kbd>
+                </div>
+                <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-300 font-medium">Close Modal / Drawer</span>
+                  <kbd className="px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 font-mono text-[11px] font-bold">Esc</kbd>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShortcutsModalOpen(false)}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider"
+                >
+                  Got It
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 6. MODAL: INSERT IMAGE */}
       <AnimatePresence>
         {activeModal === 'image' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -2294,7 +2391,7 @@ export default function BlogEditor({ id }) {
         )}
       </AnimatePresence>
 
-      {/* 6. MODAL: INSERT LINK */}
+      {/* 7. MODAL: INSERT LINK */}
       <AnimatePresence>
         {activeModal === 'link' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -2362,7 +2459,7 @@ export default function BlogEditor({ id }) {
         )}
       </AnimatePresence>
 
-      {/* 7. PUBLICATION READINESS / GATE PANEL MODAL */}
+      {/* 8. PUBLICATION READINESS / GATE PANEL MODAL */}
       <AnimatePresence>
         {readinessModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -2513,7 +2610,7 @@ export default function BlogEditor({ id }) {
         )}
       </AnimatePresence>
 
-      {/* 8. PUBLISH CONFIRMATION MODAL (When Valid) */}
+      {/* 9. PUBLISH CONFIRMATION MODAL (When Valid) */}
       <AnimatePresence>
         {publishModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
