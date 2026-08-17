@@ -31,18 +31,12 @@ import {
   ArrowRight,
   TrendingUp,
   Award,
+  ArrowRightLeft,
 } from 'lucide-react';
-import { authorAPI } from '@/services/api';
+import { authorAPI, taxonomyAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
 import AdminHeader from '@/components/admin/AdminHeader';
 import EmptyState from '@/components/admin/EmptyState';
-
-const BUREAUS = [
-  { id: 'all', label: 'All Bureaus' },
-  { id: 'Global Newsroom', label: 'Global Newsroom' },
-  { id: 'Kashmir Regional Bureau', label: 'Kashmir Regional Bureau' },
-  { id: 'India Edition', label: 'India Edition' },
-];
 
 const EDITORIAL_ROLES = [
   { id: 'all', label: 'All Roles' },
@@ -56,22 +50,11 @@ const EDITORIAL_ROLES = [
   { id: 'guest_writer', label: 'Guest Contributor' },
 ];
 
-const DESKS = [
-  'Technology',
-  'Artificial Intelligence',
-  'Education',
-  'Science',
-  'Business',
-  'Travel',
-  'Culture',
-  'Kashmir',
-  'India',
-  'World',
-];
-
 export default function AuthorsManagementPage() {
   const [authors, setAuthors] = useState([]);
   const [overview, setOverview] = useState(null);
+  const [bureaus, setBureaus] = useState(['Global Newsroom', 'Kashmir Regional Bureau', 'India Edition']);
+  const [desks, setDesks] = useState(['Technology', 'Education', 'Science', 'Business', 'Travel', 'Culture', 'News', 'Kashmir', 'India', 'World']);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBureau, setSelectedBureau] = useState('all');
@@ -86,6 +69,9 @@ export default function AuthorsManagementPage() {
   const [editingAuthor, setEditingAuthor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [isSlugManual, setIsSlugManual] = useState(false);
+
+  // Transfer Authorship Modal State
+  const [transferModal, setTransferModal] = useState({ open: false, sourceAuthor: null, targetAuthorId: '' });
 
   // Delete & Deactivate Modal State
   const [deleteModal, setDeleteModal] = useState({ open: false, author: null });
@@ -111,6 +97,26 @@ export default function AuthorsManagementPage() {
     socialLinks: { twitter: '', github: '', linkedin: '' },
     seo: { title: '', description: '' },
   });
+
+  // Fetch Taxonomy Desks and Bureaus
+  const fetchTaxonomy = useCallback(async () => {
+    try {
+      const [sectionsRes, regionsRes] = await Promise.allSettled([
+        taxonomyAPI.getAll({ kind: 'section' }),
+        taxonomyAPI.getAll({ kind: 'region' }),
+      ]);
+
+      if (sectionsRes.status === 'fulfilled' && sectionsRes.value?.data?.length) {
+        setDesks(sectionsRes.value.data.map((s) => s.name));
+      }
+      if (regionsRes.status === 'fulfilled' && regionsRes.value?.data?.length) {
+        const dynamicBureaus = regionsRes.value.data.map((r) => `${r.name} Bureau`);
+        setBureaus(['Global Newsroom', ...dynamicBureaus]);
+      }
+    } catch (e) {
+      // Fallback to defaults
+    }
+  }, []);
 
   // Fetch Overview Stats
   const fetchOverview = useCallback(async () => {
@@ -147,9 +153,10 @@ export default function AuthorsManagementPage() {
   }, [selectedBureau, selectedStatus, selectedRole, selectedDesk, searchQuery]);
 
   useEffect(() => {
+    fetchTaxonomy();
     fetchOverview();
     fetchAuthors();
-  }, [fetchOverview, fetchAuthors]);
+  }, [fetchTaxonomy, fetchOverview, fetchAuthors]);
 
   // Open Create / Edit Modal
   const handleOpenModal = (author = null) => {
@@ -163,8 +170,8 @@ export default function AuthorsManagementPage() {
         role: author.role || 'author',
         editorialRole: author.editorialRole || 'staff_writer',
         title: author.title || 'Staff Correspondent',
-        bureau: author.bureau || 'Global Newsroom',
-        primaryDesk: author.primaryDesk || 'Technology',
+        bureau: author.bureau || bureaus[0] || 'Global Newsroom',
+        primaryDesk: author.primaryDesk || desks[0] || 'Technology',
         status: author.status || 'active',
         verified: author.verified ?? true,
         featured: author.featured ?? false,
@@ -193,8 +200,8 @@ export default function AuthorsManagementPage() {
         role: 'author',
         editorialRole: 'staff_writer',
         title: 'Staff Correspondent',
-        bureau: selectedBureau !== 'all' ? selectedBureau : 'Global Newsroom',
-        primaryDesk: 'Technology',
+        bureau: selectedBureau !== 'all' ? selectedBureau : (bureaus[0] || 'Global Newsroom'),
+        primaryDesk: desks[0] || 'Technology',
         status: 'active',
         verified: true,
         featured: false,
@@ -278,6 +285,27 @@ export default function AuthorsManagementPage() {
     }
   };
 
+  // Execute Authorship Transfer
+  const handleExecuteTransfer = async () => {
+    if (!transferModal.sourceAuthor || !transferModal.targetAuthorId) {
+      addToast('Please select a target author to receive articles', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await authorAPI.transferArticles(transferModal.sourceAuthor._id, transferModal.targetAuthorId);
+      addToast(res.message || 'Authorship transfer complete', 'success');
+      setTransferModal({ open: false, sourceAuthor: null, targetAuthorId: '' });
+      fetchAuthors();
+      fetchOverview();
+    } catch (err) {
+      addToast(err.message || 'Authorship transfer failed', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-16 font-sans">
       {/* 1. TOP COMMAND BAR */}
@@ -345,13 +373,25 @@ export default function AuthorsManagementPage() {
       <section className="space-y-4">
         {/* Bureau Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 border-b border-zinc-200/80 dark:border-white/10">
-          {BUREAUS.map((b) => {
-            const active = selectedBureau === b.id;
+          <button
+            type="button"
+            onClick={() => setSelectedBureau('all')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
+              selectedBureau === 'all'
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
+                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>All Bureaus</span>
+          </button>
+          {bureaus.map((b) => {
+            const active = selectedBureau === b;
             return (
               <button
-                key={b.id}
+                key={b}
                 type="button"
-                onClick={() => setSelectedBureau(b.id)}
+                onClick={() => setSelectedBureau(b)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                   active
                     ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
@@ -359,7 +399,7 @@ export default function AuthorsManagementPage() {
                 }`}
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span>{b.label}</span>
+                <span>{b}</span>
               </button>
             );
           })}
@@ -400,7 +440,7 @@ export default function AuthorsManagementPage() {
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 text-xs font-bold outline-none"
             >
               <option value="all">All Primary Desks</option>
-              {DESKS.map((d) => (
+              {desks.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
@@ -533,6 +573,15 @@ export default function AuthorsManagementPage() {
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
+                    onClick={() => setTransferModal({ open: true, sourceAuthor: author, targetAuthorId: '' })}
+                    className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+                    title="Transfer Articles to another author"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => handleOpenModal(author)}
                     className="p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
                     title="Edit Profile"
@@ -640,8 +689,8 @@ export default function AuthorsManagementPage() {
                       onChange={(e) => setFormData((prev) => ({ ...prev, bureau: e.target.value }))}
                       className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                     >
-                      {BUREAUS.filter((b) => b.id !== 'all').map((b) => (
-                        <option key={b.id} value={b.id}>{b.label}</option>
+                      {bureaus.map((b) => (
+                        <option key={b} value={b}>{b}</option>
                       ))}
                     </select>
                   </div>
@@ -653,7 +702,7 @@ export default function AuthorsManagementPage() {
                       onChange={(e) => setFormData((prev) => ({ ...prev, primaryDesk: e.target.value }))}
                       className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                     >
-                      {DESKS.map((d) => (
+                      {desks.map((d) => (
                         <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
@@ -738,6 +787,57 @@ export default function AuthorsManagementPage() {
                   />
                 </div>
 
+                {/* Social Links */}
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">X / Twitter</label>
+                    <input
+                      type="text"
+                      value={formData.socialLinks?.twitter || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialLinks: { ...prev.socialLinks, twitter: e.target.value },
+                        }))
+                      }
+                      placeholder="https://x.com/username"
+                      className="w-full p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-[11px] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">LinkedIn</label>
+                    <input
+                      type="text"
+                      value={formData.socialLinks?.linkedin || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialLinks: { ...prev.socialLinks, linkedin: e.target.value },
+                        }))
+                      }
+                      placeholder="https://linkedin.com/in/..."
+                      className="w-full p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-[11px] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">GitHub</label>
+                    <input
+                      type="text"
+                      value={formData.socialLinks?.github || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          socialLinks: { ...prev.socialLinks, github: e.target.value },
+                        }))
+                      }
+                      placeholder="https://github.com/..."
+                      className="w-full p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-[11px] outline-none"
+                    />
+                  </div>
+                </div>
+
                 {/* Verification & Spotlight Toggles */}
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <label className="flex items-center justify-between p-2.5 rounded-xl border border-zinc-200 dark:border-white/10 cursor-pointer">
@@ -790,7 +890,73 @@ export default function AuthorsManagementPage() {
         )}
       </AnimatePresence>
 
-      {/* 6. MODAL: SAFE DELETE / DEACTIVATE */}
+      {/* 6. MODAL: TRANSFER AUTHORSHIP */}
+      <AnimatePresence>
+        {transferModal.open && transferModal.sourceAuthor && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <ArrowRightLeft className="w-4 h-4 text-purple-500" />
+                  <h3 className="font-display font-bold text-base text-zinc-900 dark:text-white">
+                    Transfer Articles from {transferModal.sourceAuthor.name}
+                  </h3>
+                </div>
+                <button onClick={() => setTransferModal({ open: false, sourceAuthor: null, targetAuthorId: '' })} className="p-1 text-zinc-400 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Select a target author to receive attribution for all stories currently authored by <strong>{transferModal.sourceAuthor.name}</strong> ({transferModal.sourceAuthor.postCount || 0} published stories).
+              </p>
+
+              <div>
+                <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Target Author</label>
+                <select
+                  value={transferModal.targetAuthorId}
+                  onChange={(e) => setTransferModal((prev) => ({ ...prev, targetAuthorId: e.target.value }))}
+                  className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                >
+                  <option value="">Select target author...</option>
+                  {authors
+                    .filter((a) => a._id !== transferModal.sourceAuthor._id)
+                    .map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name} ({a.title || a.role})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTransferModal({ open: false, sourceAuthor: null, targetAuthorId: '' })}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExecuteTransfer}
+                  disabled={submitting || !transferModal.targetAuthorId}
+                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  Confirm Transfer
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 7. MODAL: SAFE DELETE / DEACTIVATE */}
       <AnimatePresence>
         {deleteModal.open && deleteModal.author && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true">

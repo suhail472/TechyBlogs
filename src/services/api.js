@@ -270,6 +270,12 @@ export const authorAPI = {
       method: 'DELETE',
     });
   },
+  transferArticles: async (sourceAuthorId, targetAuthorId) => {
+    return apiCall('/authors/transfer', {
+      method: 'POST',
+      body: JSON.stringify({ sourceAuthorId, targetAuthorId }),
+    });
+  },
 };
 
 // Editorial Workflow API

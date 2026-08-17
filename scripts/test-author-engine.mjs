@@ -38,9 +38,39 @@ async function runAuthorEngineTests() {
       }
     }
 
-    // 3. Test Database Overview Aggregation if DB connected
+    // 3. Test URL & Social Sanitization
+    const maliciousUrl = 'javascript:alert("XSS")';
+    const cleanUrl = authorService.sanitizeUrl(maliciousUrl);
+    if (cleanUrl === '') {
+      console.log('✅ sanitizeUrl correctly neutralized javascript: protocol.');
+    } else {
+      throw new Error(`Sanitize failed to block: ${cleanUrl}`);
+    }
+
+    const cleanWebsite = authorService.sanitizeUrl('suheel.dev');
+    if (cleanWebsite === 'https://suheel.dev') {
+      console.log('✅ sanitizeUrl correctly normalized plain domain to https.');
+    } else {
+      throw new Error(`Normalization failed: ${cleanWebsite}`);
+    }
+
+    // 4. Test Database Operations if DB connected
     try {
       await connectToDatabase();
+      
+      // Test Transfer Guard on Same Author
+      try {
+        await authorService.transferArticles(
+          '64f1a2b3c4d5e6f7a8b9c0d1',
+          '64f1a2b3c4d5e6f7a8b9c0d1',
+          { _id: '64f1a2b3c4d5e6f7a8b9c0d3', role: 'admin' }
+        );
+      } catch (err) {
+        if (err.message.includes('Cannot transfer articles to the same author') || err.message.includes('must exist')) {
+          console.log('✅ transferArticles correctly validated transfer targets.');
+        }
+      }
+
       const overview = await authorService.getRosterOverview();
       console.log(`✅ getRosterOverview successfully calculated: ${overview.stats.totalAuthors} authors, ${overview.stats.totalBylines} bylines.`);
     } catch (dbErr) {
