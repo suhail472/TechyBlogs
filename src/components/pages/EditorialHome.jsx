@@ -16,9 +16,11 @@ import {
   BookOpen,
   CheckCircle2,
   Mail,
+  ChevronRight,
 } from 'lucide-react';
 import EditorialCard from '@/components/shared/EditorialCard';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
+import { getDeskLayout } from '@/lib/services/layoutStrategy';
 import useToastStore from '@/store/useToastStore';
 
 export default function EditorialHome({ posts = [] }) {
@@ -61,22 +63,26 @@ export default function EditorialHome({ posts = [] }) {
   const heroStory = ordered.find((p) => p.featured) || ordered[0];
   const secondaryLead = ordered.filter((p) => (p._id || p.slug) !== (heroStory?._id || heroStory?.slug));
 
-  // Specialized Desks
+  // Specialized Desks with dynamic layout strategy
   const techStories = dataset.filter((p) =>
     /tech|code|react|ai|hardware|next\.js|software|python/i.test((p.categories || []).join(' ') + p.title)
   );
+  const techLayout = getDeskLayout(techStories);
 
   const kashmirStories = dataset.filter((p) =>
     /kashmir|srinagar|dal lake|gulmarg|jammu/i.test((p.categories || []).join(' ') + p.title)
   );
+  const kashmirLayout = getDeskLayout(kashmirStories);
 
   const educationStories = dataset.filter((p) =>
     /education|admissions|university|exam|syllabus|tutorial|guide/i.test((p.categories || []).join(' ') + p.title)
   );
+  const educationLayout = getDeskLayout(educationStories);
 
   const reviewStories = dataset.filter((p) =>
     p.contentType === 'review' || /review|m4|macbook|hardware|scorecard/i.test((p.categories || []).join(' ') + p.title)
   );
+  const reviewLayout = getDeskLayout(reviewStories);
 
   const opinionStories = dataset.filter((p) =>
     p.contentType === 'opinion' || /opinion|analysis|editorial|future|perspective/i.test((p.categories || []).join(' ') + p.title)
@@ -91,7 +97,7 @@ export default function EditorialHome({ posts = [] }) {
 
   return (
     <main className="pt-24 pb-20">
-      {/* 1. Restrained Breaking Ticker (Only renders if genuinely breaking stories exist) */}
+      {/* 1. Restrained Breaking Ticker */}
       {breaking.length > 0 && (
         <div className="bg-zinc-950 text-white border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 overflow-x-auto no-scrollbar">
@@ -177,8 +183,8 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 5. Technology & AI Systems Desk */}
-        {techStories.length > 0 && (
+        {/* 5. Technology & AI Systems Desk (Content-Aware Layout) */}
+        {techLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
               <div className="flex items-center gap-2.5">
@@ -200,16 +206,28 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className={`grid gap-6 ${techStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-              {techStories.slice(0, 3).map((post) => (
-                <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
-              ))}
-            </div>
+            {techLayout.mode === 'single-spotlight' && (
+              <EditorialCard blog={techLayout.lead} variant="spotlight-single" />
+            )}
+            {techLayout.mode === 'balanced-pair' && (
+              <div className="grid md:grid-cols-2 gap-6">
+                {[techLayout.lead, ...techLayout.secondary].map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
+                ))}
+              </div>
+            )}
+            {(techLayout.mode === 'triad' || techLayout.mode === 'lead-and-rail' || techLayout.mode === 'ensemble') && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[techLayout.lead, ...techLayout.secondary].map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
         {/* 6. Kashmir Regional Bureau Spotlight (High-Contrast Presentation) */}
-        {kashmirStories.length > 0 && (
+        {kashmirLayout.shouldRender && (
           <section className="my-12 rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 relative overflow-hidden border border-white/15 shadow-2xl">
             <div className="flex flex-wrap items-end justify-between gap-4 mb-8 pb-6 border-b border-white/15">
               <div>
@@ -231,21 +249,25 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className={`grid gap-6 ${kashmirStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-              {kashmirStories.slice(0, 3).map((post) => (
-                <EditorialCard
-                  key={String(post._id || post.slug)}
-                  blog={post}
-                  variant="featured"
-                  isDarkSection={true}
-                />
-              ))}
-            </div>
+            {kashmirLayout.mode === 'single-spotlight' ? (
+              <EditorialCard blog={kashmirLayout.lead} variant="spotlight-single" isDarkSection={true} />
+            ) : (
+              <div className={`grid gap-6 ${kashmirStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+                {[kashmirLayout.lead, ...kashmirLayout.secondary].map((post) => (
+                  <EditorialCard
+                    key={String(post._id || post.slug)}
+                    blog={post}
+                    variant="featured"
+                    isDarkSection={true}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
         {/* 7. Education & Academia Desk */}
-        {educationStories.length > 0 && (
+        {educationLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
               <div className="flex items-center gap-2.5">
@@ -267,16 +289,28 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className={`grid gap-6 ${educationStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-              {educationStories.slice(0, 3).map((post) => (
-                <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
-              ))}
-            </div>
+            {educationLayout.mode === 'single-spotlight' && (
+              <EditorialCard blog={educationLayout.lead} variant="spotlight-single" />
+            )}
+            {educationLayout.mode === 'balanced-pair' && (
+              <div className="grid md:grid-cols-2 gap-6">
+                {[educationLayout.lead, ...educationLayout.secondary].map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
+                ))}
+              </div>
+            )}
+            {(educationLayout.mode === 'triad' || educationLayout.mode === 'lead-and-rail' || educationLayout.mode === 'ensemble') && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[educationLayout.lead, ...educationLayout.secondary].map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
-        {/* 8. Gear Lab & Product Reviews (Adaptive Density: Spotlight if 1, Grid if 2+) */}
-        {reviewStories.length > 0 && (
+        {/* 8. Gear Lab & Product Reviews (Adaptive Density) */}
+        {reviewLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
               <div className="flex items-center gap-2.5">
@@ -298,12 +332,11 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            {/* Adaptive layout: if only 1 review, render full spotlight; if 2+, render grid */}
-            {reviewStories.length === 1 ? (
-              <EditorialCard blog={reviewStories[0]} variant="review-spotlight" />
+            {reviewLayout.mode === 'single-spotlight' ? (
+              <EditorialCard blog={reviewLayout.lead} variant="review-spotlight" />
             ) : (
               <div className={`grid gap-6 ${reviewStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
-                {reviewStories.slice(0, 3).map((post) => (
+                {[reviewLayout.lead, ...reviewLayout.secondary].map((post) => (
                   <EditorialCard key={String(post._id || post.slug)} blog={post} variant="review" />
                 ))}
               </div>

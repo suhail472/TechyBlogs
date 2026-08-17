@@ -29,6 +29,7 @@ import Comments from '@/components/shared/Comments';
 import RelatedArticles from '@/components/shared/RelatedArticles';
 import ImageLightbox from '@/components/shared/ImageLightbox';
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
+import EditorialImage from '@/components/shared/EditorialImage';
 import { extractHeadings } from '@/utils/markdownEngine';
 import { getReadingTime } from '@/utils/readingTime';
 import useToastStore from '@/store/useToastStore';
@@ -425,7 +426,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       {/* Featured Cover Image */}
       <section className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-16">
         <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-zinc-200/50 dark:border-white/[0.06] bg-zinc-100 dark:bg-zinc-900 shadow-xl shadow-zinc-200/20 dark:shadow-black/20">
-          <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
+          <EditorialImage
+            src={blog.image}
+            alt={blog.title}
+            category={blog.primarySection?.name || blog.categories?.[0] || 'Article'}
+            title={blog.title}
+            priority={true}
+            className="w-full h-full object-cover"
+          />
         </div>
       </section>
 
@@ -554,25 +562,32 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               <div className="mt-8 p-5 rounded-2xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-white/10 text-xs">
                 <div className="font-bold text-zinc-900 dark:text-white uppercase tracking-wider text-[11px] mb-2 flex items-center gap-1.5">
                   <ExternalLink className="w-3.5 h-3.5 text-red-500" />
-                  <span>Editorial Sources & Documentation</span>
+                  <span>Editorial Sources & Verified Documentation</span>
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {blog.sources?.map((src, i) => (
-                    <div key={i} className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                      <span>• {src.name}</span>
+                    <div key={i} className="flex flex-wrap items-center justify-between gap-2 text-zinc-600 dark:text-zinc-400">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-zinc-800 dark:text-zinc-200">• {src.name}</span>
+                        {src.type && (
+                          <span className="text-[9px] uppercase px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 font-bold">
+                            {src.type}
+                          </span>
+                        )}
+                      </div>
                       <a
                         href={src.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-red-600 dark:text-red-400 hover:underline font-mono text-[11px]"
                       >
-                        Access Reference ↗
+                        Access Source ↗
                       </a>
                     </div>
                   ))}
                   {blog.source?.name && !blog.sources?.length && (
                     <div className="flex items-center justify-between text-zinc-600 dark:text-zinc-400">
-                      <span>• {blog.source.name}</span>
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">• {blog.source.name}</span>
                       {blog.source.url && (
                         <a
                           href={blog.source.url}
@@ -580,12 +595,25 @@ export default function PostClient({ blog, relatedPosts = [] }) {
                           rel="noopener noreferrer"
                           className="text-red-600 dark:text-red-400 hover:underline font-mono text-[11px]"
                         >
-                          Access Reference ↗
+                          Access Source ↗
                         </a>
                       )}
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Editorial Correction Notice */}
+            {(blog.correction || blog.revisionNote) && (
+              <div className="mt-6 p-4 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-xs text-zinc-700 dark:text-zinc-300">
+                <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400 font-black uppercase text-[10px] tracking-wider mb-1">
+                  <Info className="w-3.5 h-3.5" />
+                  <span>Editorial Correction Notice</span>
+                </div>
+                <p className="leading-relaxed">
+                  {blog.correction || blog.revisionNote}
+                </p>
               </div>
             )}
 

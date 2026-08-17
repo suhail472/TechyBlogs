@@ -23,9 +23,15 @@ const KASHMIR_DISTRICTS = [
   { name: 'Srinagar', query: 'srinagar' },
   { name: 'Baramulla', query: 'baramulla' },
   { name: 'Anantnag', query: 'anantnag' },
+  { name: 'Kupwara', query: 'kupwara' },
+  { name: 'Pulwama', query: 'pulwama' },
+  { name: 'Budgam', query: 'budgam' },
+  { name: 'Ganderbal', query: 'ganderbal' },
+  { name: 'Bandipora', query: 'bandipora' },
+  { name: 'Kulgam', query: 'kulgam' },
+  { name: 'Shopian', query: 'shopian' },
   { name: 'Gulmarg', query: 'gulmarg' },
   { name: 'Pahalgam', query: 'pahalgam' },
-  { name: 'Kupwara', query: 'kupwara' },
 ];
 
 const typeLabel = {

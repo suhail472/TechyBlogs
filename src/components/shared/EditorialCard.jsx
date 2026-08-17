@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, Eye, Flame, Star, ArrowUpRight, CheckCircle2, ChevronRight, User } from 'lucide-react';
+import { Clock, Eye, Flame, Star, ArrowUpRight, CheckCircle2, ChevronRight, User, Activity } from 'lucide-react';
 import { getReadingTime } from '@/utils/readingTime';
+import { getEditorialBadge } from '@/lib/services/layoutStrategy';
 import EditorialImage from './EditorialImage';
 
 const formatViews = (views = 0) => {
@@ -31,8 +32,8 @@ const getCategoryLabel = (blog) => {
 };
 
 /**
- * EditorialCard — Composable card system for TeachyBlogs
- * Supports variants: 'lead', 'featured', 'horizontal', 'compact', 'trending', 'review', 'review-spotlight', 'opinion'
+ * EditorialCard — Composable publication card system
+ * Supports variants: 'lead', 'spotlight-single', 'featured', 'horizontal', 'compact', 'trending', 'review', 'review-spotlight', 'opinion'
  */
 export default function EditorialCard({
   blog,
@@ -48,6 +49,7 @@ export default function EditorialCard({
   const dateText = formatDate(blog?.publishedAt || blog?.createdAt || blog?.date);
   const category = getCategoryLabel(blog);
   const views = formatViews(blog?.views || 0);
+  const badge = getEditorialBadge(blog);
 
   if (!blog) return null;
 
@@ -56,7 +58,6 @@ export default function EditorialCard({
     return (
       <article className={`group relative flex flex-col justify-between ${className}`}>
         <Link href={`/blog/${blog.slug}`} className="block">
-          {/* Hero Media Container with 16:9 ratio */}
           <div className="aspect-[16/9] overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-900 relative mb-5 border border-zinc-200/80 dark:border-white/10 shadow-sm">
             <EditorialImage
               src={blog.image}
@@ -66,9 +67,11 @@ export default function EditorialCard({
               priority={priority}
               className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
-            {blog.breaking && (
-              <span className="absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] bg-red-600 text-white px-2.5 py-1 rounded-full shadow-md">
-                <Flame className="w-3 h-3" /> Breaking
+            {badge && (
+              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full ${badge.classes}`}>
+                {badge.type === 'breaking' && <Flame className="w-3 h-3" />}
+                {badge.type === 'developing' && <Activity className="w-3 h-3" />}
+                <span>{badge.label}</span>
               </span>
             )}
             <div className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-zinc-950/80 text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
@@ -76,7 +79,6 @@ export default function EditorialCard({
             </div>
           </div>
 
-          {/* Editorial Content Block */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 dark:text-red-400">
@@ -105,7 +107,7 @@ export default function EditorialCard({
                 </div>
                 <div className="text-xs">
                   <span className="font-bold text-zinc-900 dark:text-white">{blog.author || 'Editorial Bureau'}</span>
-                  <span className="text-zinc-400 text-[11px] ml-1.5 font-medium">· TeachyBlogs Staff</span>
+                  <span className="text-zinc-400 text-[11px] ml-1.5 font-medium">· Staff Writer</span>
                 </div>
               </div>
             )}
@@ -115,7 +117,60 @@ export default function EditorialCard({
     );
   }
 
-  // 2. TRENDING / MOST READ VARIANT (01 to 05, subtle number, strong headline)
+  // 2. SPOTLIGHT SINGLE VARIANT (For desk sections with exactly 1 story)
+  if (variant === 'spotlight-single') {
+    return (
+      <article className={`group rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 p-6 md:p-8 transition-all hover:shadow-xl ${className}`}>
+        <Link href={`/blog/${blog.slug}`} className="grid lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-6 aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 relative">
+            <EditorialImage
+              src={blog.image}
+              alt={blog.title}
+              category={category}
+              title={blog.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            {badge && (
+              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full ${badge.classes}`}>
+                <span>{badge.label}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="lg:col-span-6 space-y-3.5">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 dark:text-red-400">
+                {category}
+              </span>
+              <span className="text-zinc-300 dark:text-zinc-700">/</span>
+              <span className="text-zinc-500 font-medium">{dateText}</span>
+              <span className="text-zinc-300 dark:text-zinc-700">/</span>
+              <span className="text-zinc-500 font-medium">{readingTime} min read</span>
+            </div>
+
+            <h3 className="font-display text-2xl sm:text-3xl font-black leading-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+              {blog.title}
+            </h3>
+
+            {showExcerpt && (blog.subtitle || blog.excerpt) && (
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed line-clamp-3">
+                {blog.subtitle || blog.excerpt}
+              </p>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-zinc-200/80 dark:border-white/10 text-xs">
+              <span className="font-bold text-zinc-800 dark:text-zinc-200">{blog.author || 'Staff Writer'}</span>
+              <span className="text-red-600 dark:text-red-400 font-bold flex items-center gap-1">
+                Read Story <ChevronRight className="w-4 h-4" />
+              </span>
+            </div>
+          </div>
+        </Link>
+      </article>
+    );
+  }
+
+  // 3. TRENDING / MOST READ VARIANT (01 to 05, subtle number, strong headline)
   if (variant === 'trending') {
     const formattedRank = rank < 10 ? `0${rank}` : `${rank}`;
     return (
@@ -141,7 +196,7 @@ export default function EditorialCard({
     );
   }
 
-  // 3. HORIZONTAL STORY ROW
+  // 4. HORIZONTAL STORY ROW
   if (variant === 'horizontal') {
     return (
       <article className={`group border-b border-zinc-200/80 dark:border-white/10 py-5 last:border-0 ${className}`}>
@@ -190,7 +245,7 @@ export default function EditorialCard({
     );
   }
 
-  // 4. REVIEW SPOTLIGHT VARIANT (Full width 2-column layout when 1 review is present)
+  // 5. REVIEW SPOTLIGHT VARIANT (Full width 2-column layout when 1 review is present)
   if (variant === 'review-spotlight') {
     const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
     const pros = blog.contentMetadata?.reviewMetadata?.pros || [];
@@ -265,7 +320,7 @@ export default function EditorialCard({
     );
   }
 
-  // 5. STANDARD REVIEW SCORECARD VARIANT (For 2+ review items in grid)
+  // 6. STANDARD REVIEW SCORECARD VARIANT (For 2+ review items in grid)
   if (variant === 'review') {
     const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
     return (
@@ -302,7 +357,7 @@ export default function EditorialCard({
     );
   }
 
-  // 6. OPINION / COLUMNIST VARIANT
+  // 7. OPINION / COLUMNIST VARIANT
   if (variant === 'opinion') {
     return (
       <article className={`group border-l-2 border-red-600 pl-4 py-2 space-y-2 ${className}`}>
@@ -320,13 +375,33 @@ export default function EditorialCard({
           </p>
         </Link>
         <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 pt-1">
-          By {blog.author || 'Suheel Hilal'}
+          By {blog.author || 'Editorial Columnist'}
         </p>
       </article>
     );
   }
 
-  // 7. FEATURED CARD (With high-contrast support for dark sections)
+  // 8. COMPACT FEED VARIANT
+  if (variant === 'compact') {
+    return (
+      <article className={`group py-3 border-b border-zinc-200/60 dark:border-white/5 last:border-0 ${className}`}>
+        <Link href={`/blog/${blog.slug}`} className="block space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] font-black uppercase tracking-[0.16em] text-red-600 dark:text-red-400">
+              {category}
+            </span>
+            <span className="text-zinc-400 text-[10px]">·</span>
+            <span className="text-[10px] text-zinc-400">{dateText}</span>
+          </div>
+          <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
+            {blog.title}
+          </h4>
+        </Link>
+      </article>
+    );
+  }
+
+  // 9. DEFAULT: FEATURED CARD (With high-contrast support for dark sections)
   const containerClasses = isDarkSection
     ? 'bg-zinc-950/80 border-white/15 text-white shadow-md shadow-black/40'
     : 'bg-white dark:bg-zinc-900/60 border-zinc-200/80 dark:border-white/10 text-zinc-900 dark:text-white';
@@ -358,9 +433,9 @@ export default function EditorialCard({
             title={blog.title}
             className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
-          {blog.breaking && (
-            <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-2.5 py-0.5 rounded-full shadow-md">
-              <Flame className="w-3 h-3" /> Breaking
+          {badge && (
+            <span className={`absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${badge.classes}`}>
+              <span>{badge.label}</span>
             </span>
           )}
         </div>
