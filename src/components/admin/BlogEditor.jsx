@@ -504,18 +504,18 @@ export default function BlogEditor({ id }) {
     );
   }
 
-  // Render Toolbar Component (shared between Write and Split modes)
+  // Render Toolbar Component (shared between Write and Split modes) - Single sleek line
   const renderToolbar = () => (
-    <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12151c]/95 backdrop-blur-md py-2 px-1 border-y border-zinc-200/80 dark:border-white/10 flex flex-wrap items-center gap-1">
+    <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12151c]/95 backdrop-blur-md py-1.5 px-2 border-y border-zinc-200/80 dark:border-white/10 flex items-center overflow-x-auto no-scrollbar gap-1 whitespace-nowrap shadow-xs">
       {/* Headings */}
-      <div className="flex items-center gap-0.5 pr-1.5 border-r border-zinc-200 dark:border-white/10">
+      <div className="flex items-center gap-0.5 pr-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
         <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Inline Formatting */}
-      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
         <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('~~', '~~')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></button>
@@ -524,7 +524,7 @@ export default function BlogEditor({ id }) {
       </div>
 
       {/* Media & Link Inserts */}
-      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
         <button
           type="button"
           onClick={() => setActiveModal('image')}
@@ -532,7 +532,7 @@ export default function BlogEditor({ id }) {
           title="Insert Article Image"
         >
           <ImageIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
-          <span className="hidden sm:inline">Image</span>
+          <span>Image</span>
         </button>
 
         <button
@@ -542,12 +542,12 @@ export default function BlogEditor({ id }) {
           title="Insert Hyperlink"
         >
           <Link2 className="w-3.5 h-3.5 text-blue-500" />
-          <span className="hidden sm:inline">Link</span>
+          <span>Link</span>
         </button>
       </div>
 
       {/* Lists & Dividers */}
-      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10 shrink-0">
         <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
         <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-3.5 h-3.5" /></button>
@@ -555,7 +555,7 @@ export default function BlogEditor({ id }) {
       </div>
 
       {/* Rich Component Inserters */}
-      <div className="flex items-center gap-1 pl-1 text-xs text-zinc-500 font-bold">
+      <div className="flex items-center gap-1 pl-1 text-xs text-zinc-500 font-bold shrink-0">
         <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
           <TableIcon className="w-3 h-3 text-purple-500" /> Table
         </button>
@@ -718,7 +718,7 @@ export default function BlogEditor({ id }) {
         {/* VIEW MODE 1: WRITE (Wide distraction-free document canvas) */}
         {viewMode === 'write' && (
           <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 flex flex-col items-center">
-            <div className="w-full max-w-4xl space-y-6">
+            <div className={`w-full ${focusMode ? 'max-w-6xl px-4 md:px-8' : 'max-w-5xl'} space-y-6 transition-all duration-300`}>
               {/* Document Header (Headline & Dek) */}
               <div className="space-y-3">
                 <input
@@ -752,7 +752,7 @@ export default function BlogEditor({ id }) {
                   setHasUnsavedChanges(true);
                 }}
                 placeholder="Start typing your story in Markdown..."
-                className="w-full min-h-[600px] font-mono text-sm leading-relaxed bg-transparent border-none outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                className={`w-full ${focusMode ? 'min-h-[75vh]' : 'min-h-[600px]'} font-mono text-sm leading-relaxed bg-transparent border-none outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400`}
                 spellCheck="false"
               />
             </div>
