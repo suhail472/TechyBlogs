@@ -575,7 +575,8 @@ export function parseMarkdownToHtml(markdownInput) {
     image({ href, title, text }) {
       const cleanHref = href || '';
       const altText = escapeHtml(text || '');
-      const captionText = title ? `<figcaption class="article-figcaption" dir="auto">${escapeHtml(title)}</figcaption>` : (text ? `<figcaption class="article-figcaption" dir="auto">${altText}</figcaption>` : '');
+      // Only render figcaption if an explicit title was provided, preventing duplicate text below images or on load failure
+      const captionText = title ? `<figcaption class="article-figcaption" dir="auto">${escapeHtml(title)}</figcaption>` : '';
 
       return `<figure class="article-figure"><img src="${cleanHref}" alt="${altText}" loading="lazy" class="rounded-2xl border border-zinc-200 dark:border-zinc-800 max-w-full mx-auto shadow-md hover:shadow-xl transition-shadow duration-300" />${captionText}</figure>\n`;
     },
