@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronLeft,
   Save,
@@ -37,32 +38,28 @@ import {
   Quote,
   List,
   ListOrdered,
-  Link2,
-  Image as ImageIcon,
   Minus,
   CheckCircle2,
-  Copy,
-  ExternalLink,
-  BookOpen,
-  ArrowRight,
-  ShieldCheck,
-  RefreshCw,
   MapPin,
   Tag,
   Globe,
   Bookmark,
   History,
   RotateCcw,
-  Star,
+  SlidersHorizontal,
+  ChevronDown,
   Check,
   AlertTriangle,
-  Radio,
+  Flame,
+  Activity,
+  Trash2,
+  GripVertical,
 } from 'lucide-react';
 import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
-import MarkdownRenderer from '@/components/shared/MarkdownRenderer';
+import ArticleLivePreview from './ArticleLivePreview';
 import { extractHeadings } from '@/utils/markdownEngine';
-import katex from 'katex';
+import { getReadingTime } from '@/utils/readingTime';
 
 const CONTENT_TYPES = [
   { id: 'article', label: 'Standard Article', desc: 'In-depth longform technical or general writing' },
@@ -78,430 +75,315 @@ const CONTENT_TYPES = [
   { id: 'announcement', label: 'Announcement', desc: 'Official bulletins and platform updates' },
 ];
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'ur', label: 'Urdu (اردو)' },
-  { code: 'hi', label: 'Hindi (हिन्दी)' },
-  { code: 'ks', label: 'Kashmiri (کٲشُر)' },
-  { code: 'ar', label: 'Arabic (العربية)' },
-  { code: 'pa', label: 'Punjabi (ਪੰਜਾਬੀ)' },
-];
-
 export default function BlogEditor({ id }) {
   const router = useRouter();
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(!!id);
   const [submitting, setSubmitting] = useState(false);
   const [tagInput, setTagInput] = useState('');
-  const [imagePreview, setImagePreview] = useState(null);
   const [imageUploading, setImageUploading] = useState(false);
   const [isSlugManual, setIsSlugManual] = useState(false);
 
-  // Editor View Modes: 'split' (dual-pane), 'write' (source only), 'preview' (full preview)
-  const [viewMode, setViewMode] = useState('split');
-  const [zenMode, setZenMode] = useState(false);
-  const [activeSidebarTab, setActiveSidebarTab] = useState('settings'); // 'settings', 'taxonomy', 'contextual', 'revisions', 'seo', 'outline', 'faqs'
+  // Workspace View Modes: 'write' (wide canvas), 'split' (resizable dual-pane), 'preview' (full public simulation)
+  const [viewMode, setViewMode] = useState('write');
+  const [inspectorOpen, setInspectorOpen] = useState(false); // Closed by default
+  const [focusMode, setFocusMode] = useState(false);
+  const [splitRatio, setSplitRatio] = useState(50); // percentage for editor in split mode (30-70)
+  const isDraggingSplitRef = useRef(false);
+
+  // Accordion open states inside inspector
+  const [openSections, setOpenSections] = useState({
+    health: true,
+    publication: true,
+    classification: true,
+    priority: false,
+    review_tutorial: false,
+    seo: false,
+    media: false,
+    sources: false,
+    corrections: false,
+    faqs: false,
+    revisions: false,
+  });
 
   // Multi-Dimensional Taxonomy & Relations
   const [availableTopics, setAvailableTopics] = useState([]);
   const [availableRegions, setAvailableRegions] = useState([]);
-  const [availableContentTypes, setAvailableContentTypes] = useState([]);
-  const [availableSeries, setAvailableSeries] = useState([]);
-  const [availableCoverage, setAvailableCoverage] = useState([]);
   const [availableAuthors, setAvailableAuthors] = useState([]);
   const [revisionsList, setRevisionsList] = useState([]);
   const [loadingRevisions, setLoadingRevisions] = useState(false);
 
-  // Autosave State
+  // Autosave & Validation State
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [localBackupAvailable, setLocalBackupAvailable] = useState(false);
-  const [debouncedContent, setDebouncedContent] = useState('');
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
 
-  // Textarea Ref for cursor insertion
   const textareaRef = useRef(null);
 
-  // Modal Assistants
-  const [activeModal, setActiveModal] = useState(null); // 'table', 'math', 'mermaid', 'callout', 'quiz', 'image', 'link'
-
-  // Modal States
-  const [tableConfig, setTableConfig] = useState({ rows: 3, cols: 3, align: 'left', hasHeader: true });
-  const [mathConfig, setMathConfig] = useState({ formula: '\\int_{0}^{\\infty} e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}', display: true });
-  const [mermaidConfig, setMermaidConfig] = useState({
-    type: 'flowchart',
-    code: 'graph TD\n    A[User Request] --> B[Next.js Server Component]\n    B --> C[MongoDB Database]\n    C --> B\n    B --> D[Streaming HTML to Client]',
-  });
-  const [calloutConfig, setCalloutConfig] = useState({ type: 'note', title: '', content: 'Enter the important note details here.' });
-  const [quizConfig, setQuizConfig] = useState({
-    question: 'What is the primary benefit of React Server Components?',
-    options: ['Zero client bundle size for server-rendered code', 'Faster CSS compilation', 'Automatic database creation', 'Better local storage sync'],
-    answer: 0,
-  });
-  const [imageModalConfig, setImageModalConfig] = useState({ url: '', alt: '', caption: '', alignment: 'center' });
-  const [linkConfig, setLinkConfig] = useState({ url: '', text: '', openInNewTab: true });
-
-  // Source builder input states
-  const [newSourceName, setNewSourceName] = useState('');
-  const [newSourceUrl, setNewSourceUrl] = useState('');
-  const [newSourceType, setNewSourceType] = useState('official');
-
-  // Review pros/cons input states
-  const [newPro, setNewPro] = useState('');
-  const [newCon, setNewCon] = useState('');
-
+  // Form Data State
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
     slug: '',
-    excerpt: '',
     content: '',
-    image: '',
+    categories: ['Technology'],
+    primarySection: 'Technology',
+    secondarySections: [],
+    primaryTopic: null,
+    secondaryTopics: [],
+    primaryRegion: null,
+    districts: [],
     contentType: 'article',
-    primaryTopic: '',
-    topics: [],
-    primaryRegion: '',
-    regions: [],
-    tags: [],
-    language: 'en',
-    series: '',
-    seriesOrder: 1,
-    coverage: '',
+    author: 'Editorial Bureau',
+    authorRole: 'Staff Correspondent',
+    status: 'draft',
+    visibility: 'public',
+    image: '',
+    imageAlt: '',
+    imageCaption: '',
+    imageCredit: '',
+    publishedAt: null,
+    scheduledAt: null,
+    breaking: false,
+    developing: false,
+    editorNote: '',
     sources: [],
+    faqs: [],
     editorial: {
       breaking: false,
+      developing: false,
       locationName: '',
       correction: { hasCorrection: false, note: '', correctedAt: null },
     },
-    reviewData: { rating: 4.5, pros: [], cons: [], entityName: '' },
-    tutorialData: { difficulty: 'intermediate', prerequisites: [], technologies: [] },
-    primaryAuthor: '',
-    categories: ['Technology'],
-    status: 'draft',
-    scheduledAt: '',
-    featured: false,
-    faqs: [],
-    metaDescription: '',
-    keywords: '',
-    seo: {
-      title: '',
-      description: '',
-      canonicalUrl: '',
-      socialTitle: '',
-      socialDescription: '',
-      indexable: true,
+    contentMetadata: {
+      tutorialMetadata: { difficulty: 'intermediate', estimatedTime: '', prerequisites: [] },
+      reviewMetadata: { rating: 4.5, pros: [], cons: [], verdict: '' },
     },
-    changeSummary: '',
+    seo: {
+      metaTitle: '',
+      metaDescription: '',
+      canonicalUrl: '',
+    },
   });
 
-  // Fetch initial taxonomies and existing article
+  // Load existing article if editing
   useEffect(() => {
-    fetchMetadata();
-    if (id) {
-      fetchBlog();
-      fetchRevisions();
-    } else {
-      checkLocalBackup('new');
-    }
+    if (!id) return;
+    const fetchPost = async () => {
+      setLoading(true);
+      try {
+        const res = await postAPI.getPost(id);
+        if (res.post) {
+          const p = res.post;
+          setFormData({
+            title: p.title || '',
+            subtitle: p.subtitle || '',
+            slug: p.slug || '',
+            content: p.content || '',
+            categories: p.categories || ['Technology'],
+            primarySection: p.primarySection?.name || p.primarySection || 'Technology',
+            secondarySections: p.secondarySections || [],
+            primaryTopic: p.primaryTopic?._id || p.primaryTopic || null,
+            secondaryTopics: p.secondaryTopics || [],
+            primaryRegion: p.primaryRegion?._id || p.primaryRegion || null,
+            districts: p.districts || [],
+            contentType: p.contentType || 'article',
+            author: p.author || 'Editorial Bureau',
+            authorRole: p.primaryAuthor?.role || 'Staff Correspondent',
+            status: p.status || 'draft',
+            visibility: p.visibility || 'public',
+            image: p.image || '',
+            imageAlt: p.imageAlt || '',
+            imageCaption: p.imageCaption || '',
+            imageCredit: p.imageCredit || '',
+            publishedAt: p.publishedAt || null,
+            scheduledAt: p.scheduledAt || null,
+            breaking: !!(p.editorial?.breaking || p.breaking),
+            developing: !!(p.editorial?.developing || p.developing),
+            editorNote: p.editorNote || '',
+            sources: p.sources || [],
+            faqs: p.faqs || [],
+            editorial: p.editorial || {
+              breaking: false,
+              developing: false,
+              locationName: '',
+              correction: { hasCorrection: false, note: '', correctedAt: null },
+            },
+            contentMetadata: p.contentMetadata || {
+              tutorialMetadata: { difficulty: 'intermediate', estimatedTime: '', prerequisites: [] },
+              reviewMetadata: { rating: 4.5, pros: [], cons: [], verdict: '' },
+            },
+            seo: p.seo || {
+              metaTitle: p.title || '',
+              metaDescription: p.excerpt || '',
+              canonicalUrl: '',
+            },
+          });
+          setIsSlugManual(true);
+        }
+      } catch (err) {
+        addToast('Failed to load article: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPost();
   }, [id]);
 
-  const checkLocalBackup = (postId) => {
-    try {
-      const backup = localStorage.getItem(`teachy_draft_${postId}`);
-      if (backup) {
-        setLocalBackupAvailable(true);
-      }
-    } catch (e) {}
-  };
-
-  const restoreLocalBackup = () => {
-    try {
-      const backup = localStorage.getItem(`teachy_draft_${id || 'new'}`);
-      if (backup) {
-        const parsed = JSON.parse(backup);
-        setFormData((prev) => ({ ...prev, ...parsed }));
-        setImagePreview(parsed.image || null);
-        setLocalBackupAvailable(false);
-        addToast({ message: 'Local draft backup restored successfully', type: 'success' });
-      }
-    } catch (err) {
-      addToast({ message: 'Failed to restore backup: ' + err.message, type: 'error' });
-    }
-  };
-
-  const discardLocalBackup = () => {
-    try {
-      localStorage.removeItem(`teachy_draft_${id || 'new'}`);
-      setLocalBackupAvailable(false);
-      addToast({ message: 'Local backup discarded', type: 'info' });
-    } catch (e) {}
-  };
-
-  // Periodic Local Draft Autosave
+  // Load taxonomy and authors
   useEffect(() => {
-    if (!formData.title && !formData.content) return;
-    const timer = setTimeout(() => {
+    const fetchTaxonomyAndAuthors = async () => {
       try {
-        localStorage.setItem(`teachy_draft_${id || 'new'}`, JSON.stringify(formData));
-        setLastSavedTime(new Date());
-      } catch (e) {}
-    }, 2000);
+        const [taxRes, authRes] = await Promise.allSettled([
+          taxonomyAPI.getAll(),
+          authorAPI.getAll(),
+        ]);
 
-    return () => clearTimeout(timer);
-  }, [formData, id]);
+        if (taxRes.status === 'fulfilled' && taxRes.value?.data) {
+          const allTax = taxRes.value.data;
+          setAvailableTopics(allTax.filter((t) => t.kind === 'topic' || t.kind === 'section'));
+          setAvailableRegions(allTax.filter((t) => t.kind === 'region' || t.kind === 'edition'));
+        }
 
-  // Debounced live preview content (120ms) for high-performance 60fps typing on large documents
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedContent(formData.content);
-    }, 120);
-    return () => clearTimeout(timer);
-  }, [formData.content]);
+        if (authRes.status === 'fulfilled' && authRes.value?.data) {
+          setAvailableAuthors(authRes.value.data);
+        }
+      } catch (err) {
+        // Silently fail
+      }
+    };
+    fetchTaxonomyAndAuthors();
+  }, []);
 
-  const fetchMetadata = async () => {
-    try {
-      const [topRes, regRes, ctRes, serRes, covRes, authRes] = await Promise.all([
-        taxonomyAPI.getAll({ kind: 'topic' }),
-        taxonomyAPI.getAll({ kind: 'region' }),
-        taxonomyAPI.getAll({ kind: 'content_type' }),
-        taxonomyAPI.getAll({ kind: 'series' }),
-        taxonomyAPI.getAll({ kind: 'coverage' }),
-        authorAPI.getAll(),
-      ]);
-      if (topRes.success) setAvailableTopics(topRes.data || []);
-      if (regRes.success) setAvailableRegions(regRes.data || []);
-      if (ctRes.success) setAvailableContentTypes(ctRes.data || []);
-      if (serRes.success) setAvailableSeries(serRes.data || []);
-      if (covRes.success) setAvailableCoverage(covRes.data || []);
-      if (authRes.success) setAvailableAuthors(authRes.data || []);
-    } catch (err) {
-      console.error('Failed to load editorial taxonomy:', err);
-    }
-  };
-
-  const fetchRevisions = async () => {
+  // Fetch revisions if editing
+  const fetchRevisions = useCallback(async () => {
     if (!id) return;
     setLoadingRevisions(true);
     try {
       const res = await postAPI.getRevisions(id);
       if (res.success) {
-        setRevisionsList(res.data || []);
+        setRevisionsList(res.revisions || []);
       }
     } catch (err) {
-      console.error('Failed to load revisions:', err);
+      // Silently fail
     } finally {
       setLoadingRevisions(false);
     }
-  };
+  }, [id]);
 
-  const fetchBlog = async () => {
-    try {
-      const post = await postAPI.getPostById(id);
-      if (post) {
-        setFormData({
-          title: post.title || '',
-          subtitle: post.subtitle || '',
-          slug: post.slug || '',
-          excerpt: post.excerpt || '',
-          content: post.content || '',
-          image: post.image || '',
-          contentType: post.contentType || 'article',
-          primaryTopic: post.primaryTopic?._id || post.primaryTopic || '',
-          topics: (post.topics || []).map((t) => t._id || t),
-          primaryRegion: post.primaryRegion?._id || post.primaryRegion || '',
-          regions: (post.regions || []).map((r) => r._id || r),
-          tags: post.tags || [],
-          language: post.language || 'en',
-          series: post.series?._id || post.series || '',
-          seriesOrder: post.seriesOrder || 1,
-          coverage: post.coverage?._id || post.coverage || '',
-          sources: post.sources || [],
-          editorial: {
-            breaking: post.editorial?.breaking || post.breaking || false,
-            locationName: post.editorial?.locationName || '',
-            correction: post.editorial?.correction || { hasCorrection: false, note: '', correctedAt: null },
-          },
-          reviewData: post.reviewData || { rating: 4.5, pros: [], cons: [], entityName: '' },
-          tutorialData: post.tutorialData || { difficulty: 'intermediate', prerequisites: [], technologies: [] },
-          primaryAuthor: post.primaryAuthor?._id || post.primaryAuthor || '',
-          categories: post.categories || ['Technology'],
-          status: post.status || 'draft',
-          scheduledAt: post.scheduledAt ? new Date(post.scheduledAt).toISOString().slice(0, 16) : '',
-          featured: post.featured || false,
-          faqs: post.faqs || [],
-          metaDescription: post.metaDescription || '',
-          keywords: post.keywords || '',
-          seo: {
-            title: post.seo?.title || '',
-            description: post.seo?.description || '',
-            canonicalUrl: post.seo?.canonicalUrl || '',
-            socialTitle: post.seo?.socialTitle || '',
-            socialDescription: post.seo?.socialDescription || '',
-            indexable: post.seo?.indexable ?? true,
-          },
-          changeSummary: '',
-        });
-        setImagePreview(post.image || null);
-        setIsSlugManual(true);
+  // Keyboard Shortcuts listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl+S / Cmd+S: Save Draft
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSave('draft');
       }
-    } catch (err) {
-      addToast({ message: 'Failed to fetch article: ' + err.message, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRestoreRevision = async (version) => {
-    if (!window.confirm(`Are you sure you want to restore revision version v${version}? Current unsaved content will be overwritten.`)) {
-      return;
-    }
-    try {
-      const res = await postAPI.restoreRevision(id, version);
-      if (res.success) {
-        addToast({ message: `Restored revision v${version}`, type: 'success' });
-        fetchBlog();
-        fetchRevisions();
+      // Ctrl+\ / Cmd+\: Toggle Inspector
+      if ((e.ctrlKey || e.metaKey) && e.key === '\\') {
+        e.preventDefault();
+        setInspectorOpen((prev) => !prev);
       }
-    } catch (err) {
-      addToast({ message: 'Rollback failed: ' + err.message, type: 'error' });
-    }
-  };
+      // Ctrl+Shift+P / Cmd+Shift+P: Toggle Preview
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        setViewMode((prev) => (prev === 'preview' ? 'write' : 'preview'));
+      }
+      // Escape: close modals / inspector
+      if (e.key === 'Escape') {
+        if (inspectorOpen) setInspectorOpen(false);
+        if (publishModalOpen) setPublishModalOpen(false);
+      }
+    };
 
-  // Auto-generate slug from title if not manually customized
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [formData, inspectorOpen, publishModalOpen]);
+
+  // Auto-generate slug from title if not manual
   const handleTitleChange = (e) => {
     const title = e.target.value;
-    setFormData((prev) => {
-      const next = { ...prev, title };
-      if (!isSlugManual) {
-        next.slug = title
-          .toLowerCase()
-          .trim()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-      }
-      return next;
-    });
-    setHasUnsavedChanges(true);
-  };
-
-  // Image Upload via Cloudinary / Local API
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      addToast({ message: 'Please upload an image file', type: 'error' });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      addToast({ message: 'Image size should be less than 5MB', type: 'error' });
-      return;
-    }
-
-    setImageUploading(true);
-    try {
-      const uploadData = new FormData();
-      uploadData.append('file', file);
-
-      const res = await fetch('/api/admin/upload-image', {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      const data = await res.json();
-      if (data.success && data.url) {
-        setImagePreview(data.url);
-        setFormData((prev) => ({ ...prev, image: data.url }));
-        setHasUnsavedChanges(true);
-        addToast({ message: 'Cover image uploaded successfully', type: 'success' });
-      } else {
-        throw new Error(data.message || 'Upload failed');
-      }
-    } catch (err) {
-      addToast({ message: err.message || 'Failed to upload image', type: 'error' });
-    } finally {
-      setImageUploading(false);
-    }
-  };
-
-  // Tags Management
-  const handleAddTag = (e) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      const val = tagInput.trim().replace(/^,|,$/g, '');
-      if (val && !formData.tags.includes(val)) {
-        setFormData((prev) => ({ ...prev, tags: [...prev.tags, val] }));
-        setTagInput('');
-        setHasUnsavedChanges(true);
+    const updates = { title };
+    if (!isSlugManual) {
+      updates.slug = title
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .trim();
+      if (!formData.seo.metaTitle) {
+        updates.seo = { ...formData.seo, metaTitle: title };
       }
     }
-  };
-
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((t) => t !== tagToRemove),
-    }));
+    setFormData((prev) => ({ ...prev, ...updates }));
     setHasUnsavedChanges(true);
   };
 
-  // Sources Management
-  const handleAddSource = () => {
-    if (!newSourceName.trim() || !newSourceUrl.trim()) {
-      addToast({ message: 'Source name and valid URL are required', type: 'error' });
-      return;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      sources: [...prev.sources, { name: newSourceName.trim(), url: newSourceUrl.trim(), type: newSourceType, accessedAt: new Date() }],
-    }));
-    setNewSourceName('');
-    setNewSourceUrl('');
-    setHasUnsavedChanges(true);
+  // Draggable Split Divider Handlers
+  const handleMouseDownSplit = () => {
+    isDraggingSplitRef.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e) => {
+      if (!isDraggingSplitRef.current) return;
+      const containerWidth = window.innerWidth;
+      const newRatio = (e.clientX / containerWidth) * 100;
+      if (newRatio >= 25 && newRatio <= 75) {
+        setSplitRatio(newRatio);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDraggingSplitRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
-  const handleRemoveSource = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      sources: prev.sources.filter((_, i) => i !== index),
-    }));
-    setHasUnsavedChanges(true);
-  };
+  // Word & Character count calculations
+  const { wordCount, charCount, readingTime } = useMemo(() => {
+    const raw = formData.content || '';
+    const cleanText = raw.replace(/[#*`~\[\]()>-]/g, ' ').replace(/\s+/g, ' ').trim();
+    const words = cleanText ? cleanText.split(' ').filter(Boolean).length : 0;
+    const chars = raw.length;
+    const readMin = getReadingTime(raw);
+    return { wordCount: words, charCount: chars, readingTime: readMin };
+  }, [formData.content]);
 
-  // Review Pros/Cons Management
-  const handleAddPro = () => {
-    if (!newPro.trim()) return;
-    setFormData((prev) => ({
-      ...prev,
-      reviewData: { ...prev.reviewData, pros: [...prev.reviewData.pros, newPro.trim()] },
-    }));
-    setNewPro('');
-    setHasUnsavedChanges(true);
-  };
+  // Article Health / Publish Readiness Check
+  const healthCheck = useMemo(() => {
+    const items = [
+      { id: 'title', label: 'Story Headline', valid: !!formData.title?.trim() },
+      { id: 'content', label: 'Article Markdown Body', valid: !!formData.content?.trim() },
+      { id: 'author', label: 'Journalist Author Byline', valid: !!formData.author?.trim() },
+      { id: 'section', label: 'Primary Desk / Section', valid: !!formData.primarySection },
+      { id: 'type', label: 'Content Classification', valid: !!formData.contentType },
+      { id: 'cover', label: 'Cover Image Media', valid: !!formData.image },
+      { id: 'seo_title', label: 'SEO Meta Title', valid: !!formData.seo?.metaTitle },
+      { id: 'seo_desc', label: 'SEO Meta Description', valid: !!formData.seo?.metaDescription },
+    ];
+    const passed = items.filter((i) => i.valid).length;
+    const total = items.length;
+    const isReady = passed >= 6 && items[0].valid && items[1].valid; // headline & content mandatory
+    return { items, passed, total, isReady };
+  }, [formData]);
 
-  const handleAddCon = () => {
-    if (!newCon.trim()) return;
-    setFormData((prev) => ({
-      ...prev,
-      reviewData: { ...prev.reviewData, cons: [...prev.reviewData.cons, newCon.trim()] },
-    }));
-    setNewCon('');
-    setHasUnsavedChanges(true);
-  };
-
-  // Textarea Cursor Helpers
+  // Insert markdown helper at cursor
   const insertTextAtCursor = (before, after = '') => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const previousContent = formData.content;
-    const selection = previousContent.substring(start, end);
-
-    const replacement = before + selection + after;
-    const newContent = previousContent.substring(0, start) + replacement + previousContent.substring(end);
+    const selected = formData.content.substring(start, end);
+    const replacement = before + selected + after;
+    const newContent = formData.content.substring(0, start) + replacement + formData.content.substring(end);
 
     setFormData((prev) => ({ ...prev, content: newContent }));
     setHasUnsavedChanges(true);
@@ -509,34 +391,17 @@ export default function BlogEditor({ id }) {
     setTimeout(() => {
       textarea.focus();
       textarea.setSelectionRange(start + before.length, end + before.length);
-    }, 0);
+    }, 10);
   };
 
-  // Keyboard Shortcuts
-  const handleKeyDown = (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-      e.preventDefault();
-      insertTextAtCursor('**', '**');
-    } else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
-      e.preventDefault();
-      insertTextAtCursor('*', '*');
-    } else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      setActiveModal('link');
-    } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-      e.preventDefault();
-      handleSave(formData.status);
-    }
-  };
-
-  // Main Submit Action
+  // Save handler
   const handleSave = async (targetStatus = 'draft') => {
-    if (!formData.title.trim()) {
-      addToast({ message: 'Title is required', type: 'error' });
+    if (!formData.title?.trim()) {
+      addToast('Story headline is required', 'error');
       return;
     }
-    if (!formData.content.trim()) {
-      addToast({ message: 'Content is required', type: 'error' });
+    if (!formData.content?.trim()) {
+      addToast('Article content body is required', 'error');
       return;
     }
 
@@ -545,850 +410,827 @@ export default function BlogEditor({ id }) {
       const payload = {
         ...formData,
         status: targetStatus,
-        metaDescription: formData.seo.description || formData.excerpt,
-        categories: formData.categories.length ? formData.categories : ['Technology'],
+        publishedAt: targetStatus === 'published' && !formData.publishedAt ? new Date() : formData.publishedAt,
       };
 
+      let res;
       if (id) {
-        await postAPI.updatePost(id, payload);
-        addToast({ message: `Article updated as ${targetStatus}`, type: 'success' });
-        fetchRevisions();
+        res = await postAPI.updatePost(id, payload);
+        addToast(`Story updated as ${targetStatus}`, 'success');
       } else {
-        const created = await postAPI.createPost(payload);
-        addToast({ message: `Article created as ${targetStatus}`, type: 'success' });
-        localStorage.removeItem('teachy_draft_new');
-        router.push(`/admin/edit/${created._id}`);
+        res = await postAPI.createPost(payload);
+        addToast(`Story created as ${targetStatus}`, 'success');
+        if (res.post?._id) {
+          router.push(`/admin/edit/${res.post._id}`);
+        }
       }
+
       setHasUnsavedChanges(false);
+      setLastSavedTime(new Date());
+      setPublishModalOpen(false);
     } catch (err) {
-      addToast({ message: err.message || 'Saving failed', type: 'error' });
+      addToast(err.message || 'Saving failed', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Calculations
-  const wordCount = useMemo(() => {
-    return formData.content.trim().split(/\s+/).filter(Boolean).length;
-  }, [formData.content]);
+  // Handle Cover Image Upload
+  const handleImageUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      addToast('Please upload an image file', 'error');
+      return;
+    }
+    setImageUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const res = await fetch('/api/admin/upload-image', { method: 'POST', body: form });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setFormData((prev) => ({ ...prev, image: data.url }));
+        setHasUnsavedChanges(true);
+        addToast('Cover image uploaded successfully', 'success');
+      } else {
+        throw new Error(data.message || 'Upload failed');
+      }
+    } catch (err) {
+      addToast('Image upload failed: ' + err.message, 'error');
+    } finally {
+      setImageUploading(false);
+    }
+  };
 
-  const readingTime = useMemo(() => {
-    return Math.max(1, Math.ceil(wordCount / 200));
-  }, [wordCount]);
+  const toggleAccordion = (sectionKey) => {
+    setOpenSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }));
+  };
 
-  const headingsOutline = useMemo(() => {
-    return extractHeadings(formData.content);
-  }, [formData.content]);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-[#0c0e12]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+          <span className="text-zinc-400 font-bold text-xs font-mono uppercase tracking-wider">
+            Loading Article Studio Workstation...
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className={`min-h-screen bg-zinc-50 dark:bg-[#0b0f19] text-zinc-900 dark:text-zinc-100 ${zenMode ? 'fixed inset-0 z-50 overflow-hidden' : 'pt-24 pb-20'}`}>
-      {/* Top Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-zinc-200 dark:border-white/10 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin"
-            className="p-2 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="text-base font-black font-display truncate max-w-sm md:max-w-md">
+    <div className={`min-h-screen bg-[#FAFAFA] dark:bg-[#0c0e12] text-zinc-900 dark:text-zinc-100 flex flex-col font-sans ${focusMode ? 'fixed inset-0 z-50 overflow-hidden' : ''}`}>
+      {/* 1. TOP WORKSPACE BAR */}
+      <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#12151c]/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-white/10 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+        {/* Left: Back & Title breadcrumb */}
+        <div className="flex items-center gap-3 min-w-0">
+          {!focusMode && (
+            <Link
+              href="/admin"
+              className="p-1.5 rounded-xl border border-zinc-200/80 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-600 dark:text-zinc-400 transition-colors shrink-0"
+              title="Back to Stories (Esc)"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Link>
+          )}
+
+          <div className="min-w-0">
+            <h1 className="font-display text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[200px] sm:max-w-xs md:max-w-md">
               {formData.title || 'Untitled Story'}
             </h1>
-            <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-              <span className="capitalize font-mono font-bold text-red-600 dark:text-red-400">{formData.contentType}</span>
+            <div className="flex items-center gap-2 text-[10px] text-zinc-400 font-mono">
+              <span className="uppercase text-red-600 dark:text-red-400 font-bold">{formData.status}</span>
               <span>•</span>
               <span>{wordCount} words</span>
               <span>•</span>
               <span>{readingTime}m read</span>
-              {lastSavedTime && (
-                <>
-                  <span>•</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
-                    <CheckCircle2 className="w-3 h-3" /> Auto-saved
-                  </span>
-                </>
-              )}
+              {hasUnsavedChanges ? (
+                <span className="text-amber-500 font-bold">• Unsaved changes</span>
+              ) : lastSavedTime ? (
+                <span className="text-emerald-500 font-bold">• Auto-saved</span>
+              ) : null}
             </div>
           </div>
         </div>
 
-        {/* View Mode & Actions */}
-        <div className="flex items-center gap-3">
-          <div className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl flex items-center text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setViewMode('write')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${viewMode === 'write' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500'}`}
-            >
-              Write
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('split')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${viewMode === 'split' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500'}`}
-            >
-              Split
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('preview')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${viewMode === 'preview' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500'}`}
-            >
-              Preview
-            </button>
-          </div>
-
+        {/* Center: Mode Switcher */}
+        <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 p-0.5 rounded-xl text-xs font-bold">
           <button
             type="button"
-            onClick={() => setZenMode(!zenMode)}
-            className={`p-2 rounded-xl border transition-colors ${zenMode ? 'bg-red-600 text-white border-red-600' : 'border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-            title="Zen Mode"
+            onClick={() => setViewMode('write')}
+            className={`px-3 py-1 rounded-lg transition-all ${
+              viewMode === 'write'
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+            }`}
           >
-            {zenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            Write
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('split')}
+            className={`px-3 py-1 rounded-lg transition-all ${
+              viewMode === 'split'
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+            }`}
+          >
+            Split
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('preview')}
+            className={`px-3 py-1 rounded-lg transition-all ${
+              viewMode === 'preview'
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-xs'
+                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+            }`}
+          >
+            Preview
+          </button>
+        </div>
+
+        {/* Right: Actions & Inspector Trigger */}
+        <div className="flex items-center gap-2">
+          {/* Inspector Toggle */}
+          <button
+            type="button"
+            onClick={() => setInspectorOpen(!inspectorOpen)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 ${
+              inspectorOpen
+                ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30'
+                : 'border-zinc-200/80 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5'
+            }`}
+            title="Toggle Editorial Inspector (Ctrl+\)"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Inspector</span>
+            {!healthCheck.isReady && (
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            )}
           </button>
 
+          {/* Focus Mode Trigger */}
+          <button
+            type="button"
+            onClick={() => setFocusMode(!focusMode)}
+            className={`p-1.5 rounded-xl border transition-colors ${
+              focusMode
+                ? 'bg-red-600 text-white border-red-600'
+                : 'border-zinc-200/80 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-white/5'
+            }`}
+            title="Focus Distraction-Free Mode"
+          >
+            {focusMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+
+          {/* Save Draft */}
           <button
             type="button"
             onClick={() => handleSave('draft')}
             disabled={submitting}
-            className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-white/10 text-xs font-bold hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1.5"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200/80 dark:border-white/10 text-xs font-bold hover:bg-zinc-100 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-200 transition-colors"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>Save Draft</span>
+            <span>Save</span>
           </button>
 
+          {/* Publish Trigger */}
           <button
             type="button"
-            onClick={() => handleSave('published')}
+            onClick={() => setPublishModalOpen(true)}
             disabled={submitting}
-            className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-red-600/20 transition-all flex items-center gap-1.5"
+            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5"
           >
             {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Publish Story</span>
+            <span>Publish</span>
           </button>
         </div>
       </header>
 
-      {/* Main Layout Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {localBackupAvailable && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>A newer unsaved local draft is available from your previous writing session.</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={restoreLocalBackup}
-                className="px-3 py-1 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600"
-              >
-                Restore
-              </button>
-              <button
-                type="button"
-                onClick={discardLocalBackup}
-                className="px-3 py-1 bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-bold rounded-lg"
-              >
-                Discard
-              </button>
+      {/* 2. MAIN WORKSPACE CANVAS */}
+      <main className="flex-1 relative flex overflow-hidden">
+        {/* VIEW MODE 1: WRITE (Wide distraction-free document canvas) */}
+        {viewMode === 'write' && (
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-8 flex flex-col items-center">
+            <div className="w-full max-w-4xl space-y-6">
+              {/* Document Header (Headline & Dek) */}
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={handleTitleChange}
+                  placeholder="Story Headline..."
+                  className="w-full text-3xl sm:text-4xl md:text-5xl font-black font-display tracking-tight bg-transparent border-none outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700 text-zinc-950 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={formData.subtitle}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, subtitle: e.target.value }));
+                    setHasUnsavedChanges(true);
+                  }}
+                  placeholder="Add editorial subtitle or narrative dek..."
+                  className="w-full text-lg md:text-xl font-medium font-sans bg-transparent border-none outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700 text-zinc-600 dark:text-zinc-300"
+                />
+              </div>
+
+              {/* Restrained Markdown Toolbar */}
+              <div className="sticky top-0 z-10 bg-white/90 dark:bg-[#12151c]/90 backdrop-blur-md py-2 border-y border-zinc-200/80 dark:border-white/10 flex flex-wrap items-center gap-1">
+                <div className="flex items-center gap-0.5 pr-2 border-r border-zinc-200 dark:border-white/10">
+                  <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
+                </div>
+
+                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
+                  <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Inline Code"><Code className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Blockquote"><Quote className="w-3.5 h-3.5" /></button>
+                </div>
+
+                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
+                  <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
+                  <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-3.5 h-3.5" /></button>
+                </div>
+
+                <div className="flex items-center gap-1 pl-2 text-xs text-zinc-500 font-bold">
+                  <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+                    <TableIcon className="w-3 h-3" /> Table
+                  </button>
+                  <button type="button" onClick={() => insertTextAtCursor('$$\n', '\n$$')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+                    <Sigma className="w-3 h-3" /> Math
+                  </button>
+                  <button type="button" onClick={() => insertTextAtCursor('```mermaid\ngraph TD\n  A[Start] --> B[Finish]\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+                    <GitBranch className="w-3 h-3" /> Diagram
+                  </button>
+                  <button type="button" onClick={() => insertTextAtCursor(':::note\n', '\n:::')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+                    <Info className="w-3 h-3" /> Callout
+                  </button>
+                </div>
+              </div>
+
+              {/* Full-width Markdown Body Textarea */}
+              <textarea
+                ref={textareaRef}
+                value={formData.content}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, content: e.target.value }));
+                  setHasUnsavedChanges(true);
+                }}
+                placeholder="Start typing your story in Markdown..."
+                className="w-full min-h-[600px] font-mono text-sm leading-relaxed bg-transparent border-none outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                spellCheck="false"
+              />
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main Writing Area */}
-          <div className={viewMode === 'preview' ? 'lg:col-span-12' : 'lg:col-span-8 space-y-6'}>
-            {/* Title & Subtitle */}
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-4 shadow-sm">
-              <input
-                type="text"
-                value={formData.title}
-                onChange={handleTitleChange}
-                placeholder="Story Title..."
-                className="w-full text-2xl md:text-3xl font-black font-display bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-zinc-400"
-              />
-              <input
-                type="text"
-                value={formData.subtitle}
+        {/* VIEW MODE 2: SPLIT (Resizable Dual-Pane) */}
+        {viewMode === 'split' && (
+          <div className="flex-1 flex w-full h-full overflow-hidden">
+            {/* Left Source Pane */}
+            <div
+              style={{ width: `${splitRatio}%` }}
+              className="flex flex-col border-r border-zinc-200/80 dark:border-white/10 h-full overflow-hidden bg-white dark:bg-[#0c0e12]"
+            >
+              <div className="p-4 border-b border-zinc-200/80 dark:border-white/10 space-y-2">
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={handleTitleChange}
+                  placeholder="Headline..."
+                  className="w-full text-xl font-bold font-display bg-transparent border-none outline-none text-zinc-950 dark:text-white"
+                />
+                <input
+                  type="text"
+                  value={formData.subtitle}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, subtitle: e.target.value }));
+                    setHasUnsavedChanges(true);
+                  }}
+                  placeholder="Subtitle dek..."
+                  className="w-full text-xs font-medium text-zinc-500 bg-transparent border-none outline-none"
+                />
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={formData.content}
                 onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, subtitle: e.target.value }));
+                  setFormData((prev) => ({ ...prev, content: e.target.value }));
                   setHasUnsavedChanges(true);
                 }}
-                placeholder="Subtitle or narrative hook (optional)..."
-                className="w-full text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-transparent border-0 focus:ring-0 focus:outline-none placeholder:text-zinc-400"
+                placeholder="Write Markdown..."
+                className="flex-1 p-4 font-mono text-xs leading-relaxed bg-transparent border-none outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                spellCheck="false"
               />
             </div>
 
-            {/* Markdown Toolbar */}
-            {viewMode !== 'preview' && (
-              <div className="sticky top-[69px] z-30 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-2xl border border-zinc-200 dark:border-white/10 p-2.5 flex flex-wrap items-center gap-1 shadow-sm">
-                {/* Headings */}
-                <div className="flex items-center gap-0.5 pr-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('#### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 4"><Heading4 className="w-4 h-4" /></button>
-                </div>
+            {/* Draggable Divider Handle */}
+            <div
+              onMouseDown={handleMouseDownSplit}
+              className="w-1.5 hover:w-2 bg-zinc-200/80 hover:bg-red-500 dark:bg-white/10 dark:hover:bg-red-500 cursor-col-resize transition-all flex items-center justify-center"
+              title="Drag to resize split panes"
+            >
+              <GripVertical className="w-3 h-3 text-zinc-400 pointer-events-none opacity-40" />
+            </div>
 
-                {/* Inline Formatting */}
-                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('~~', '~~')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Strikethrough"><Strikethrough className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Inline Code"><Code className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Blockquote"><Quote className="w-4 h-4" /></button>
-                </div>
-
-                {/* Lists */}
-                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-4 h-4" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('\n---\n\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Horizontal Divider"><Minus className="w-4 h-4" /></button>
-                </div>
-
-                {/* Rich Modal Inserters */}
-                <div className="flex items-center gap-1 pl-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal('table')}
-                    className="px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 hover:text-indigo-600 text-zinc-600 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <TableIcon className="w-3.5 h-3.5" /> Table
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal('math')}
-                    className="px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 hover:text-indigo-600 text-zinc-600 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <Sigma className="w-3.5 h-3.5" /> Math LaTeX
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal('mermaid')}
-                    className="px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 hover:text-indigo-600 text-zinc-600 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <GitBranch className="w-3.5 h-3.5" /> Diagram
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal('callout')}
-                    className="px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 hover:text-indigo-600 text-zinc-600 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <Info className="w-3.5 h-3.5" /> Callout
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActiveModal('quiz')}
-                    className="px-2.5 py-1.5 rounded-lg hover:bg-indigo-500/10 hover:text-indigo-600 text-zinc-600 dark:text-zinc-300 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" /> Quiz
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Split Dual-Pane Mode */}
-            {viewMode === 'split' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Markdown Input Area */}
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 flex flex-col shadow-sm overflow-hidden">
-                  <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/10 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>Markdown Source</span>
-                    <span className="text-[10px] font-mono">GFM + Math + Mermaid</span>
-                  </div>
-                  <textarea
-                    ref={textareaRef}
-                    value={formData.content}
-                    onChange={(e) => {
-                      setFormData((prev) => ({ ...prev, content: e.target.value }));
-                      setHasUnsavedChanges(true);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Write article in Markdown... (Headings, GFM tables, math $$, diagrams ```mermaid, callouts :::note)"
-                    className="flex-1 p-5 font-mono text-sm leading-relaxed bg-transparent border-0 focus:ring-0 focus:outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 min-h-[600px]"
-                  />
-                </div>
-
-                {/* Live Rendered Preview Pane */}
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 flex flex-col shadow-sm overflow-hidden">
-                  <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/10 text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
-                    <span>Live High-Fidelity Preview</span>
-                    <span className="text-indigo-500 font-semibold">Real-time</span>
-                  </div>
-                  <div className="flex-1 p-6 overflow-y-auto max-h-[750px]">
-                    <MarkdownRenderer content={debouncedContent} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Single Pane Write Mode */}
-            {viewMode === 'write' && (
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 flex flex-col shadow-sm overflow-hidden min-h-[650px]">
-                <textarea
-                  ref={textareaRef}
-                  value={formData.content}
-                  onChange={(e) => {
-                    setFormData((prev) => ({ ...prev, content: e.target.value }));
-                    setHasUnsavedChanges(true);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Write article in Markdown... (Headings, GFM tables, math $$, diagrams ```mermaid, callouts :::note)"
-                  className="flex-1 p-6 font-mono text-sm leading-relaxed bg-transparent border-0 focus:ring-0 focus:outline-none resize-none text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 min-h-[650px]"
-                />
-              </div>
-            )}
-
-            {/* Single Pane Full Preview Mode */}
-            {viewMode === 'preview' && (
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-8 md:p-12 shadow-sm max-w-4xl mx-auto">
-                <header className="mb-10 pb-8 border-b border-zinc-200 dark:border-white/10 space-y-4">
-                  {imagePreview && (
-                    <img src={imagePreview} alt="" className="w-full aspect-[16/9] rounded-2xl object-cover shadow-lg mb-6" />
-                  )}
-                  <h1 className="text-3xl md:text-5xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
-                    {formData.title || 'Untitled Story'}
-                  </h1>
-                  {formData.subtitle && (
-                    <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-300 font-medium leading-relaxed">
-                      {formData.subtitle}
-                    </p>
-                  )}
-                </header>
-                <MarkdownRenderer content={debouncedContent} />
-              </div>
-            )}
+            {/* Right Live Article Preview Pane */}
+            <div
+              style={{ width: `${100 - splitRatio}%` }}
+              className="h-full overflow-y-auto bg-[#FAFAFA] dark:bg-[#0c0e12]"
+            >
+              <ArticleLivePreview formData={formData} />
+            </div>
           </div>
+        )}
 
-          {/* Publishing & Settings Sidebar */}
-          {viewMode !== 'preview' && (
-            <div className="lg:col-span-4 space-y-6">
-              {/* Sidebar Tab Selector */}
-              <div className="bg-zinc-100 dark:bg-zinc-800/80 p-1 rounded-2xl flex flex-wrap items-center justify-between text-xs font-bold gap-1">
-                {[
-                  { id: 'settings', label: 'Settings' },
-                  { id: 'taxonomy', label: 'Taxonomy' },
-                  { id: 'contextual', label: 'Editorial' },
-                  { id: 'revisions', label: 'Revisions' },
-                  { id: 'seo', label: 'SEO' },
-                  { id: 'outline', label: 'TOC' },
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveSidebarTab(tab.id)}
-                    className={`flex-1 py-2 px-2.5 rounded-xl transition-all text-center ${
-                      activeSidebarTab === tab.id
-                        ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+        {/* VIEW MODE 3: PREVIEW (Full-Width True Public Article Simulation) */}
+        {viewMode === 'preview' && (
+          <div className="flex-1 overflow-y-auto h-full">
+            <ArticleLivePreview formData={formData} />
+          </div>
+        )}
+
+        {/* 3. COLLAPSIBLE EDITORIAL INSPECTOR DRAWER */}
+        <AnimatePresence>
+          {inspectorOpen && (
+            <motion.aside
+              initial={{ x: 380, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 380, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-[53px] bottom-0 right-0 z-40 w-full sm:w-[380px] bg-white dark:bg-[#12151c] border-l border-zinc-200/80 dark:border-white/10 shadow-2xl flex flex-col overflow-hidden"
+            >
+              {/* Drawer Header */}
+              <div className="p-4 border-b border-zinc-200/80 dark:border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4 text-red-600" />
+                  <h3 className="font-display font-bold text-sm text-zinc-900 dark:text-white">
+                    Editorial Inspector
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setInspectorOpen(false)}
+                  className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {/* Tab 1: Story Settings */}
-              {activeSidebarTab === 'settings' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-6 shadow-sm">
-                  {/* Status & Publication */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Publishing Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      <option value="draft">Draft (Private)</option>
-                      <option value="in_review">In Review (Editorial)</option>
-                      <option value="scheduled">Scheduled</option>
-                      <option value="published">Published (Public)</option>
-                      <option value="archived">Archived</option>
-                    </select>
+              {/* Drawer Body (Accordion Groups) */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs font-sans">
+                {/* 1. Article Health & Readiness */}
+                <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-zinc-400">
+                      Publish Readiness
+                    </span>
+                    <span className="font-mono font-bold text-[10px] text-zinc-600 dark:text-zinc-300">
+                      {healthCheck.passed} / {healthCheck.total} Passed
+                    </span>
                   </div>
-
-                  {/* Primary Author */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Author Profile</label>
-                    <select
-                      value={formData.primaryAuthor}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, primaryAuthor: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      <option value="">Select Author</option>
-                      {availableAuthors.map((author) => (
-                        <option key={author._id} value={author._id}>{author.name} ({author.role || 'Author'})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Featured Image */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Cover Image</label>
-                    {imagePreview ? (
-                      <div className="relative rounded-xl overflow-hidden aspect-[16/9] border border-zinc-200 dark:border-white/10 mb-3">
-                        <img src={imagePreview} alt="Cover" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setImagePreview(null);
-                            setFormData((prev) => ({ ...prev, image: '' }));
-                          }}
-                          className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-xl cursor-pointer hover:border-indigo-500 transition-colors mb-3">
-                        {imageUploading ? (
-                          <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-                        ) : (
-                          <>
-                            <Upload className="w-6 h-6 text-zinc-400 mb-2" />
-                            <span className="text-xs font-bold">Upload Cover Image</span>
-                            <span className="text-[10px] text-zinc-400">PNG, JPG, WebP up to 5MB</span>
-                          </>
-                        )}
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                      </label>
-                    )}
-                    <input
-                      type="text"
-                      value={formData.image}
-                      onChange={(e) => {
-                        setFormData((prev) => ({ ...prev, image: e.target.value }));
-                        setImagePreview(e.target.value || null);
-                      }}
-                      placeholder="Or paste image URL..."
-                      className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                  <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${healthCheck.isReady ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                      style={{ width: `${(healthCheck.passed / healthCheck.total) * 100}%` }}
                     />
                   </div>
-
-                  {/* Flags (Featured & Breaking) */}
-                  <div className="space-y-3 pt-2 border-t border-zinc-200 dark:border-white/10">
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold">
-                      <input
-                        type="checkbox"
-                        checked={formData.featured}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, featured: e.target.checked }))}
-                        className="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                      />
-                      <span>Feature on Homepage Hero</span>
-                    </label>
-
-                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-red-600 dark:text-red-400">
-                      <input
-                        type="checkbox"
-                        checked={formData.editorial.breaking}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, editorial: { ...prev.editorial, breaking: e.target.checked } }))}
-                        className="rounded border-zinc-300 text-red-600 focus:ring-red-500 w-4 h-4"
-                      />
-                      <span>Mark as Breaking News Ticker</span>
-                    </label>
-                  </div>
                 </div>
-              )}
 
-              {/* Tab 2: Multi-Dimensional Taxonomy */}
-              {activeSidebarTab === 'taxonomy' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-5 shadow-sm">
-                  {/* Content Type */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Content Type</label>
-                    <select
-                      value={formData.contentType}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, contentType: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      {CONTENT_TYPES.map((t) => (
-                        <option key={t.id} value={t.id}>{t.label}</option>
-                      ))}
-                    </select>
-                  </div>
+                {/* 2. Publication Settings */}
+                <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('publication')}
+                    className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                  >
+                    <span>Publication & Status</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.publication ? 'rotate-180' : ''}`} />
+                  </button>
 
-                  {/* Primary Topic */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-                      <Tag className="w-3.5 h-3.5 text-indigo-500" />
-                      <span>Primary Topic</span>
-                    </label>
-                    <select
-                      value={formData.primaryTopic}
-                      onChange={(e) => {
-                        const topId = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          primaryTopic: topId,
-                          topics: topId ? Array.from(new Set([...prev.topics, topId])) : prev.topics,
-                        }));
-                      }}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      <option value="">Select Primary Topic</option>
-                      {availableTopics.map((top) => (
-                        <option key={top._id} value={top._id}>
-                          {top.ancestors?.length ? `${top.ancestors.map((a) => a.name).join(' → ')} → ` : ''}
-                          {top.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Primary Region / Geography */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Primary Region / Location</span>
-                    </label>
-                    <select
-                      value={formData.primaryRegion}
-                      onChange={(e) => {
-                        const regId = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          primaryRegion: regId,
-                          regions: regId ? Array.from(new Set([...prev.regions, regId])) : prev.regions,
-                        }));
-                      }}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      <option value="">Select Primary Region</option>
-                      {availableRegions.map((reg) => (
-                        <option key={reg._id} value={reg._id}>
-                          {reg.ancestors?.length ? `${reg.ancestors.map((a) => a.name).join(' → ')} → ` : ''}
-                          {reg.name} {reg.isHub ? '⭐ (Hub)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Language */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5 text-blue-500" />
-                      <span>Article Language</span>
-                    </label>
-                    <select
-                      value={formData.language}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, language: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold"
-                    >
-                      {LANGUAGES.map((lng) => (
-                        <option key={lng.code} value={lng.code}>{lng.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Series */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2 flex items-center gap-1.5">
-                      <Bookmark className="w-3.5 h-3.5 text-purple-500" />
-                      <span>Series (Optional)</span>
-                    </label>
-                    <select
-                      value={formData.series}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, series: e.target.value }))}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold mb-2"
-                    >
-                      <option value="">— Not in a series —</option>
-                      {availableSeries.map((ser) => (
-                        <option key={ser._id} value={ser._id}>{ser.name || ser.title}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">Tags</label>
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleAddTag}
-                      placeholder="Type tag and press Enter..."
-                      className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs mb-2"
-                    />
-                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
-                      {formData.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-medium"
-                        >
-                          <span>#{tag}</span>
-                          <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-red-500">
-                            <X className="w-3 h-3" />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Contextual Editorial Fields */}
-              {activeSidebarTab === 'contextual' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-6 shadow-sm">
-                  {/* News Fields */}
-                  {formData.contentType === 'news' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-indigo-500 font-display flex items-center gap-1.5">
-                        <Radio className="w-4 h-4" /> News Editorial Metadata
-                      </h4>
+                  {openSections.publication && (
+                    <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
                       <div>
-                        <label className="block text-xs font-bold text-zinc-400 mb-1">Dateline / Reporting Location</label>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Status</label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, status: e.target.value }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="in_review">In Review</option>
+                          <option value="approved">Approved</option>
+                          <option value="scheduled">Scheduled</option>
+                          <option value="published">Published</option>
+                          <option value="archived">Archived</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Author Byline</label>
                         <input
                           type="text"
-                          value={formData.editorial.locationName}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, editorial: { ...prev.editorial, locationName: e.target.value } }))}
-                          placeholder="e.g. Srinagar, New Delhi"
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                          value={formData.author}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, author: e.target.value }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          placeholder="e.g. Suheel Hilal"
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                         />
-                      </div>
-
-                      {/* Sources Builder */}
-                      <div className="pt-2 border-t border-zinc-200 dark:border-white/10">
-                        <label className="block text-xs font-bold text-zinc-400 mb-2">Sources & Attribution</label>
-                        <div className="space-y-2 mb-3">
-                          <input
-                            type="text"
-                            value={newSourceName}
-                            onChange={(e) => setNewSourceName(e.target.value)}
-                            placeholder="Source Name (e.g. University Bulletin)"
-                            className="w-full px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
-                          />
-                          <input
-                            type="url"
-                            value={newSourceUrl}
-                            onChange={(e) => setNewSourceUrl(e.target.value)}
-                            placeholder="Source URL (https://...)"
-                            className="w-full px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-mono"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleAddSource}
-                            className="w-full py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-lg hover:bg-indigo-100"
-                          >
-                            + Add Source
-                          </button>
-                        </div>
-                        {formData.sources.map((src, i) => (
-                          <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 text-xs mb-1.5">
-                            <div className="truncate mr-2">
-                              <span className="font-bold">{src.name}</span>
-                              <span className="text-[10px] text-zinc-400 block truncate">{src.url}</span>
-                            </div>
-                            <button type="button" onClick={() => handleRemoveSource(i)} className="text-red-500 hover:text-red-600">
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Editorial Correction Note */}
-                      <div className="pt-2 border-t border-zinc-200 dark:border-white/10">
-                        <label className="flex items-center gap-2 text-xs font-bold mb-2">
-                          <input
-                            type="checkbox"
-                            checked={formData.editorial.correction?.hasCorrection}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                editorial: {
-                                  ...prev.editorial,
-                                  correction: { ...prev.editorial.correction, hasCorrection: e.target.checked, correctedAt: new Date() },
-                                },
-                              }))
-                            }
-                            className="rounded border-zinc-300 text-amber-500"
-                          />
-                          <span>Attach Editorial Correction Note</span>
-                        </label>
-                        {formData.editorial.correction?.hasCorrection && (
-                          <textarea
-                            rows={2}
-                            value={formData.editorial.correction?.note || ''}
-                            onChange={(e) =>
-                              setFormData((prev) => ({
-                                ...prev,
-                                editorial: { ...prev.editorial, correction: { ...prev.editorial.correction, note: e.target.value } },
-                              }))
-                            }
-                            placeholder="State what was corrected and when..."
-                            className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
-                          />
-                        )}
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Tutorial Fields */}
-                  {formData.contentType === 'tutorial' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-indigo-500 font-display flex items-center gap-1.5">
-                        <Code className="w-4 h-4" /> Tutorial Metadata
-                      </h4>
+                {/* 3. Classification & Taxonomy */}
+                <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('classification')}
+                    className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                  >
+                    <span>Classification & Desks</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.classification ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {openSections.classification && (
+                    <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
                       <div>
-                        <label className="block text-xs font-bold text-zinc-400 mb-1">Difficulty Level</label>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Content Type</label>
                         <select
-                          value={formData.tutorialData?.difficulty || 'intermediate'}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, tutorialData: { ...prev.tutorialData, difficulty: e.target.value } }))}
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                          value={formData.contentType}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, contentType: e.target.value }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
                         >
-                          <option value="beginner">Beginner</option>
-                          <option value="intermediate">Intermediate</option>
-                          <option value="advanced">Advanced</option>
-                          <option value="all-levels">All Levels</option>
+                          {CONTENT_TYPES.map((ct) => (
+                            <option key={ct.id} value={ct.id}>{ct.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Primary Desk / Section</label>
+                        <select
+                          value={formData.primarySection}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, primarySection: e.target.value, categories: [e.target.value] }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                        >
+                          <option value="Technology">Technology</option>
+                          <option value="Education">Education</option>
+                          <option value="News">News</option>
+                          <option value="Business">Business</option>
+                          <option value="Travel">Travel</option>
+                          <option value="Kashmir">Kashmir Regional</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Regional Bureau</label>
+                        <select
+                          value={formData.primaryRegion || ''}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, primaryRegion: e.target.value || null }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                        >
+                          <option value="">Global Edition (No Bureau)</option>
+                          <option value="kashmir">Kashmir Regional Bureau</option>
+                          <option value="india">India Edition</option>
                         </select>
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Review Fields */}
-                  {formData.contentType === 'review' && (
-                    <div className="space-y-4">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-indigo-500 font-display flex items-center gap-1.5">
-                        <Star className="w-4 h-4" /> Review Scorecard
-                      </h4>
+                {/* 4. Editorial Priorities */}
+                <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('priority')}
+                    className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                  >
+                    <span>Editorial Priority Flags</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.priority ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {openSections.priority && (
+                    <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
+                      <label className="flex items-center justify-between p-2 rounded-lg border border-zinc-200 dark:border-white/10 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-red-600" />
+                          <span className="font-bold">Breaking News Indicator</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.breaking}
+                          onChange={(e) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              breaking: e.target.checked,
+                              editorial: { ...prev.editorial, breaking: e.target.checked },
+                            }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-4 h-4 text-red-600 rounded"
+                        />
+                      </label>
+
+                      <label className="flex items-center justify-between p-2 rounded-lg border border-zinc-200 dark:border-white/10 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-amber-500" />
+                          <span className="font-bold">Developing Story Flag</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={formData.developing}
+                          onChange={(e) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              developing: e.target.checked,
+                              editorial: { ...prev.editorial, developing: e.target.checked },
+                            }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          className="w-4 h-4 text-amber-500 rounded"
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. SEO & Social Meta */}
+                <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('seo')}
+                    className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                  >
+                    <span>SEO & Metadata</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.seo ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {openSections.seo && (
+                    <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
                       <div>
-                        <label className="block text-xs font-bold text-zinc-400 mb-1">Entity / Product Name</label>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Meta Title</label>
+                          <span className={`text-[10px] font-mono ${(formData.seo.metaTitle?.length || 0) > 60 ? 'text-rose-500' : 'text-zinc-400'}`}>
+                            {formData.seo.metaTitle?.length || 0} / 60
+                          </span>
+                        </div>
                         <input
                           type="text"
-                          value={formData.reviewData?.entityName || ''}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, reviewData: { ...prev.reviewData, entityName: e.target.value } }))}
-                          placeholder="e.g. Next.js 15, MacBook Pro M4"
-                          className="w-full px-3 py-2 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
+                          value={formData.seo.metaTitle || ''}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, seo: { ...prev.seo, metaTitle: e.target.value } }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          placeholder="Search engine title..."
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-zinc-400 mb-1">Rating (0 - 5 Stars): {formData.reviewData?.rating || 4.5}</label>
-                        <input
-                          type="range"
-                          min="0"
-                          max="5"
-                          step="0.1"
-                          value={formData.reviewData?.rating || 4.5}
-                          onChange={(e) => setFormData((prev) => ({ ...prev, reviewData: { ...prev.reviewData, rating: parseFloat(e.target.value) } }))}
-                          className="w-full accent-amber-500"
-                        />
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Standard Note for generic articles */}
-                  {!['news', 'tutorial', 'review'].includes(formData.contentType) && (
-                    <div className="text-xs text-zinc-400 py-6 text-center">
-                      <Info className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mx-auto mb-2" />
-                      <p>No special contextual fields required for this content format.</p>
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Meta Description</label>
+                          <span className={`text-[10px] font-mono ${(formData.seo.metaDescription?.length || 0) > 160 ? 'text-rose-500' : 'text-zinc-400'}`}>
+                            {formData.seo.metaDescription?.length || 0} / 160
+                          </span>
+                        </div>
+                        <textarea
+                          value={formData.seo.metaDescription || ''}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, seo: { ...prev.seo, metaDescription: e.target.value } }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          rows={3}
+                          placeholder="Search snippet summary..."
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none resize-none"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Tab 4: Version Revisions */}
-              {activeSidebarTab === 'revisions' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-4 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 font-display flex items-center gap-1.5">
-                      <History className="w-4 h-4" /> Version Snapshots ({revisionsList.length})
-                    </h3>
-                    <button type="button" onClick={fetchRevisions} className="text-xs text-indigo-500 hover:text-indigo-600">
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                {/* 6. Cover Media */}
+                <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => toggleAccordion('media')}
+                    className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                  >
+                    <span>Cover Artwork & Media</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.media ? 'rotate-180' : ''}`} />
+                  </button>
 
-                  {loadingRevisions ? (
-                    <div className="py-8 text-center text-xs text-zinc-400">Loading version history...</div>
-                  ) : revisionsList.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-zinc-400 italic">No previous revisions recorded yet. Revisions are created automatically upon save and publish.</div>
-                  ) : (
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {revisionsList.map((rev) => (
-                        <div key={rev.version} className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 text-xs">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-bold font-mono text-indigo-600 dark:text-indigo-400">v{rev.version}</span>
-                            <span className="text-[10px] text-zinc-400">{new Date(rev.createdAt).toLocaleString()}</span>
-                          </div>
-                          <p className="text-zinc-600 dark:text-zinc-300 font-medium mb-2">{rev.changeSummary || 'Content updated'}</p>
+                  {openSections.media && (
+                    <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
+                      {formData.image ? (
+                        <div className="relative rounded-xl overflow-hidden aspect-[16/9] border border-zinc-200 dark:border-white/10">
+                          <img src={formData.image} alt="" className="w-full h-full object-cover" />
                           <button
                             type="button"
-                            onClick={() => handleRestoreRevision(rev.version)}
-                            className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg font-bold text-[10px] hover:bg-indigo-100 flex items-center gap-1"
+                            onClick={() => setFormData((prev) => ({ ...prev, image: '' }))}
+                            className="absolute top-2 right-2 p-1 rounded-lg bg-black/60 text-white hover:bg-rose-600 transition-colors"
+                            title="Remove cover"
                           >
-                            <RotateCcw className="w-3 h-3" /> Restore this version
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      ))}
+                      ) : (
+                        <label className="border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-red-500 transition-colors">
+                          <Upload className="w-5 h-5 text-zinc-400 mb-1" />
+                          <span className="font-bold text-xs">Upload Cover Image</span>
+                          <span className="text-[10px] text-zinc-400">PNG, JPG, WebP up to 5MB</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e.target.files[0])}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+
+                      <div>
+                        <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Direct Image URL</label>
+                        <input
+                          type="text"
+                          value={formData.image}
+                          onChange={(e) => {
+                            setFormData((prev) => ({ ...prev, image: e.target.value }));
+                            setHasUnsavedChanges(true);
+                          }}
+                          placeholder="https://..."
+                          className="w-full p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Tab 5: SEO & Meta */}
-              {activeSidebarTab === 'seo' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-4 shadow-sm">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Custom Slug</label>
-                    <input
-                      type="text"
-                      value={formData.slug}
-                      onChange={(e) => {
-                        setIsSlugManual(true);
-                        setFormData((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }));
+                {/* 7. Revisions History */}
+                {id && (
+                  <div className="rounded-xl border border-zinc-200/80 dark:border-white/10 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toggleAccordion('revisions');
+                        if (!openSections.revisions) fetchRevisions();
                       }}
-                      className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs font-mono"
-                    />
-                  </div>
+                      className="w-full p-3 bg-zinc-50 dark:bg-white/[0.02] flex items-center justify-between font-bold text-zinc-900 dark:text-white text-xs"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <History className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Audit Revisions History</span>
+                      </div>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform ${openSections.revisions ? 'rotate-180' : ''}`} />
+                    </button>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">Meta Description (160 chars)</label>
-                    <textarea
-                      value={formData.seo.description}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, seo: { ...prev.seo, description: e.target.value } }))}
-                      rows={3}
-                      maxLength={180}
-                      className="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-zinc-950 text-xs"
-                    />
-                    <div className="text-[10px] text-right text-zinc-400 mt-1">{formData.seo.description.length}/180</div>
+                    {openSections.revisions && (
+                      <div className="p-3.5 space-y-2 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
+                        {loadingRevisions ? (
+                          <div className="text-center py-4 text-zinc-400">Loading audit log...</div>
+                        ) : revisionsList.length === 0 ? (
+                          <div className="text-center py-4 text-zinc-400">No revisions logged yet.</div>
+                        ) : (
+                          revisionsList.map((rev) => (
+                            <div key={rev.version} className="p-2 rounded-lg border border-zinc-200/60 dark:border-white/5 flex items-center justify-between">
+                              <div>
+                                <span className="font-mono font-bold text-[11px]">v{rev.version}</span>
+                                <p className="text-[10px] text-zinc-400">{new Date(rev.createdAt).toLocaleString()}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm(`Restore revision v${rev.version}?`)) {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      title: rev.title || prev.title,
+                                      content: rev.content || prev.content,
+                                    }));
+                                    addToast(`Restored version v${rev.version}`, 'info');
+                                  }
+                                }}
+                                className="px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] font-bold hover:bg-red-500 hover:text-white transition-colors"
+                              >
+                                Restore
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+      </main>
 
-              {/* Tab 6: Document Outline */}
-              {activeSidebarTab === 'outline' && (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-6 space-y-4 shadow-sm">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 font-display">
-                    Document Headings Outline ({headingsOutline.length})
-                  </h3>
-                  {headingsOutline.length === 0 ? (
-                    <p className="text-xs text-zinc-400 italic">No headings detected. Use # H1, ## H2, ### H3 in your markdown to generate the Table of Contents.</p>
-                  ) : (
-                    <div className="space-y-1.5 text-xs">
-                      {headingsOutline.map((h, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-2 py-1 text-zinc-600 dark:text-zinc-300"
-                          style={{ paddingLeft: `${(h.level - 1) * 12}px` }}
-                        >
-                          <span className="font-mono text-[10px] text-indigo-500 font-bold">H{h.level}</span>
-                          <span className="truncate">{h.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+      {/* 4. PERSISTENT BOTTOM STATUS BAR */}
+      <footer className="bg-white dark:bg-[#12151c] border-t border-zinc-200/80 dark:border-white/10 px-6 py-2 flex items-center justify-between text-xs text-zinc-400 font-mono select-none">
+        <div className="flex items-center gap-4">
+          <span>{wordCount.toLocaleString()} words</span>
+          <span>•</span>
+          <span>{charCount.toLocaleString()} characters</span>
+          <span>•</span>
+          <span>{readingTime} min read</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {hasUnsavedChanges ? (
+            <span className="text-amber-500 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Unsaved changes
+            </span>
+          ) : lastSavedTime ? (
+            <span className="text-emerald-500 font-bold flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Saved
+            </span>
+          ) : (
+            <span>Ready</span>
           )}
         </div>
-      </div>
+      </footer>
+
+      {/* 5. PUBLISH CONFIRMATION & HEALTH CHECK MODAL */}
+      <AnimatePresence>
+        {publishModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-6 shadow-2xl"
+            >
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-red-600">
+                  Editorial Confirmation
+                </span>
+                <h3 className="font-display text-xl font-bold text-zinc-900 dark:text-white">
+                  Publish Story to TeachyBlogs?
+                </h3>
+                <p className="text-xs text-zinc-500 leading-relaxed font-sans">
+                  This will make this article publicly readable across the frontpage, section verticals, and RSS feeds.
+                </p>
+              </div>
+
+              {/* Health checklist breakdown */}
+              <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/80 dark:border-white/10 space-y-2">
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-400 block mb-1">
+                  Pre-Flight Verification:
+                </span>
+                {healthCheck.items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between text-xs font-semibold">
+                    <span className={item.valid ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400'}>
+                      {item.label}
+                    </span>
+                    {item.valid ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <span className="text-[10px] text-amber-500 font-mono uppercase">Optional</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setPublishModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSave('published')}
+                  disabled={submitting}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider shadow-sm shadow-red-600/20 transition-all flex items-center gap-1.5"
+                >
+                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>Confirm & Publish</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
