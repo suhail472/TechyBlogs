@@ -172,6 +172,17 @@ export const postAPI = {
     });
     return response;
   },
+
+  getRevisions: async (id) => {
+    return apiCall(`/posts/${id}/revisions`, { method: 'GET' });
+  },
+
+  restoreRevision: async (id, version) => {
+    return apiCall(`/posts/${id}/revisions`, {
+      method: 'POST',
+      body: JSON.stringify({ version }),
+    });
+  },
 };
 
 // Taxonomy API
@@ -180,6 +191,9 @@ export const taxonomyAPI = {
     const query = new URLSearchParams(params).toString();
     const endpoint = `/taxonomy${query ? '?' + query : ''}`;
     return apiCall(endpoint, { method: 'GET' });
+  },
+  getHierarchy: async (kind = 'topic') => {
+    return apiCall(`/taxonomy/hierarchy?kind=${encodeURIComponent(kind)}`, { method: 'GET' });
   },
   create: async (data) => {
     return apiCall('/taxonomy', {

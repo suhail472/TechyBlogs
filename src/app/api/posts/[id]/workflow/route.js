@@ -8,8 +8,12 @@ export async function POST(req, { params }) {
     await connectToDatabase();
     const user = await verifyAuth(req);
     const { id } = await params;
-    const { status, note, scheduledAt } = await req.json();
-    const post = await editorialService.transition(id, status, user, note, scheduledAt);
+    const body = await req.json();
+    const targetStatus = body.nextStatus || body.status;
+    if (!targetStatus) {
+      return NextResponse.json({ success: false, message: 'Target status is required' }, { status: 400 });
+    }
+    const post = await editorialService.transition(id, targetStatus, user, body.note || '', body.scheduledAt);
     return NextResponse.json({ success: true, data: post });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });

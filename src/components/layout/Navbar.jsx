@@ -20,7 +20,7 @@ import { taxonomyAPI } from '@/services/api';
 
 const EDITIONS = [
   { id: 'global', name: 'Global Edition', path: '/' },
-  { id: 'kashmir', name: 'Kashmir Edition', path: '/edition/kashmir' },
+  { id: 'kashmir', name: 'Kashmir Edition', path: '/kashmir' },
   { id: 'india', name: 'India Edition', path: '/edition/india' },
 ];
 
@@ -197,9 +197,21 @@ export default function Navbar() {
               All Stories
             </Link>
 
+            <Link
+              href="/kashmir"
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                pathname.startsWith('/kashmir') || pathname === '/edition/kashmir'
+                  ? 'text-red-600 dark:text-red-400 bg-red-500/10 font-black'
+                  : 'text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+              Kashmir
+            </Link>
+
             <div className="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-1.5" />
 
-            {sections.map((sec) => (
+            {sections.slice(0, 5).map((sec) => (
               <Link
                 key={sec.slug}
                 href={`/section/${sec.slug}`}
@@ -217,21 +229,23 @@ export default function Navbar() {
           {/* Utility Tools */}
           <div className="flex items-center gap-2.5">
             {/* Search Trigger */}
-            <button
-              onClick={openSearch}
-              className="p-2.5 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors flex items-center gap-2"
+            <Link
+              href="/search"
+              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors flex items-center gap-1.5 text-xs font-semibold"
               aria-label="Search articles"
             >
               <Search className="w-4 h-4" />
-              <span className="hidden sm:inline-block text-xs font-medium text-zinc-400">Search ⌘K</span>
-            </button>
+              <span className="hidden sm:inline-block text-zinc-400">⌘K</span>
+            </Link>
 
             <ThemeToggle />
 
             {/* Mobile Menu Toggle */}
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
+              aria-label="Toggle Navigation"
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -262,12 +276,20 @@ export default function Navbar() {
                 All Stories & Archives
               </Link>
               <Link
-                href="/edition/kashmir"
+                href="/kashmir"
                 onClick={() => setIsOpen(false)}
                 className="block py-2 text-red-600 dark:text-red-400"
               >
-                Kashmir Edition
+                Kashmir Regional Bureau
               </Link>
+              <Link
+                href="/search"
+                onClick={() => setIsOpen(false)}
+                className="block py-2 text-zinc-700 dark:text-zinc-300"
+              >
+                Search Stories
+              </Link>
+
               <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2">
                 <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Verticals</span>
                 {sections.map((sec) => (

@@ -42,6 +42,7 @@ const adminSchema = new mongoose.Schema({
   avatar: String,
   bio: String,
   expertise: [String],
+  website: String,
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
@@ -82,7 +83,7 @@ const Post = mongoose.models.Post || mongoose.model('Post', postSchema);
 async function seed() {
   try {
     console.log('Connecting to database:', MONGODB_URI);
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });
     console.log('Connected successfully!');
 
     // 1. Seed Taxonomy Sections
@@ -94,6 +95,7 @@ async function seed() {
       { kind: 'section', name: 'Business', slug: 'business', description: 'Markets, startups, economy, entrepreneurship, and career opportunities.', order: 4, visibleInNavigation: true },
       { kind: 'section', name: 'Travel & Culture', slug: 'travel', description: 'Destinations, heritage, regional tourism, and cultural guides.', order: 5, visibleInNavigation: true },
       { kind: 'section', name: 'Lifestyle', slug: 'lifestyle', description: 'Living, health, productivity, and modern lifestyle analysis.', order: 6, visibleInNavigation: true },
+      { kind: 'section', name: 'Science', slug: 'science', description: 'Space exploration, quantum computing, and climate research.', order: 7, visibleInNavigation: true },
     ];
 
     const editionsData = [
@@ -107,6 +109,9 @@ async function seed() {
       { kind: 'topic', name: 'Kashmir Tourism', slug: 'kashmir-tourism', description: 'Travel guides and seasonal highlights for Kashmir valley.' },
       { kind: 'topic', name: 'University Admissions', slug: 'university-admissions', description: 'Higher education notices and admission entrance tests.' },
       { kind: 'topic', name: 'Next.js & React', slug: 'nextjs-react', description: 'Modern frontend engineering and full-stack development.' },
+      { kind: 'topic', name: 'Startups & Business', slug: 'startups', description: 'Venture capital, SaaS, and business execution.' },
+      { kind: 'topic', name: 'Backend Engineering', slug: 'backend-engineering', description: 'Rust, Go, microservices, and databases.' },
+      { kind: 'topic', name: 'Cloud Infrastructure', slug: 'cloud-infrastructure', description: 'Edge computing, serverless, and cloud platforms.' },
     ];
 
     await Taxonomy.deleteMany({});
@@ -116,14 +121,21 @@ async function seed() {
     const techSec = createdTaxonomies.find(t => t.slug === 'technology');
     const newsSec = createdTaxonomies.find(t => t.slug === 'news');
     const eduSec = createdTaxonomies.find(t => t.slug === 'education');
+    const bizSec = createdTaxonomies.find(t => t.slug === 'business');
     const travelSec = createdTaxonomies.find(t => t.slug === 'travel');
+    const lifestyleSec = createdTaxonomies.find(t => t.slug === 'lifestyle');
 
     const kashmirEd = createdTaxonomies.find(t => t.slug === 'kashmir');
     const globalEd = createdTaxonomies.find(t => t.slug === 'global');
+    const indiaEd = createdTaxonomies.find(t => t.slug === 'india');
 
     const aiTopic = createdTaxonomies.find(t => t.slug === 'artificial-intelligence');
     const tourismTopic = createdTaxonomies.find(t => t.slug === 'kashmir-tourism');
     const admTopic = createdTaxonomies.find(t => t.slug === 'university-admissions');
+    const nextTopic = createdTaxonomies.find(t => t.slug === 'nextjs-react');
+    const startupTopic = createdTaxonomies.find(t => t.slug === 'startups');
+    const backendTopic = createdTaxonomies.find(t => t.slug === 'backend-engineering');
+    const cloudTopic = createdTaxonomies.find(t => t.slug === 'cloud-infrastructure');
 
     // 2. Seed Authors
     console.log('Seeding authors...');
@@ -131,32 +143,57 @@ async function seed() {
       {
         name: 'Suheel Hilal',
         email: 'suheel@teachyblogs.com',
-        role: 'superadmin',
+        role: 'Editor-in-Chief & Principal Architect',
         username: 'suheel',
         slug: 'suheel-hilal',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Principal Software Architect and Lead Editor at TeachyBlogs. Specializes in distributed systems, Next.js, and web standards.',
-        expertise: ['Next.js', 'Software Architecture', 'Full-Stack Systems', 'Cloud'],
+        expertise: ['Next.js 15', 'React Server Components', 'Distributed Systems', 'Cloud Architecture'],
+        website: 'https://teachyblogs.com/about',
       },
       {
         name: 'Zehra Mir',
         email: 'zehra@teachyblogs.com',
-        role: 'editor',
+        role: 'Senior Regional Correspondent',
         username: 'zehra',
         slug: 'zehra-mir',
         avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Senior Regional Correspondent covering Jammu & Kashmir education, regional development, and cultural heritage.',
-        expertise: ['Higher Education', 'Kashmir Affairs', 'Policy Analysis', 'Tourism'],
+        expertise: ['Higher Education', 'Kashmir Affairs', 'Policy Analysis', 'Cultural Heritage'],
+        website: 'https://teachyblogs.com/about',
       },
       {
         name: 'Aarav Sharma',
         email: 'aarav@teachyblogs.com',
-        role: 'author',
+        role: 'Hardware & Tech Reviewer',
         username: 'aarav',
         slug: 'aarav-sharma',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Hardware and Consumer Technology reviewer with a decade of benchmarking experience across laptops, phones, and silicon.',
-        expertise: ['Hardware Benchmarks', 'Apple Silicon', 'Consumer Tech', 'Product Design'],
+        expertise: ['Apple Silicon', 'Hardware Benchmarks', 'Product Reviews', 'Developer Workflows'],
+        website: 'https://teachyblogs.com/about',
+      },
+      {
+        name: 'Priya Narang',
+        email: 'priya@teachyblogs.com',
+        role: 'Financial & Startup Analyst',
+        username: 'priya',
+        slug: 'priya-narang',
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400&h=400',
+        bio: 'Financial markets and venture capital analyst tracking deeptech, AI infrastructure, and macroeconomic trends.',
+        expertise: ['Venture Capital', 'DeepTech', 'Indian Economy', 'Micro-SaaS'],
+        website: 'https://teachyblogs.com/about',
+      },
+      {
+        name: 'Dr. Tariq Lone',
+        email: 'tariq@teachyblogs.com',
+        role: 'Academician & Alpine Guide',
+        username: 'tariqlone',
+        slug: 'dr-tariq-lone',
+        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400&h=400',
+        bio: 'Education researcher, mountaineer, and certified ski guide documenting Himalayan biodiversity and entrance preparation.',
+        expertise: ['GATE / Academic Strategy', 'Alpine Expeditions', 'Himalayan Ecology', 'Adventure Sports'],
+        website: 'https://teachyblogs.com/about',
       },
     ];
 
@@ -167,221 +204,79 @@ async function seed() {
     const authorSuheel = createdAuthors[0];
     const authorZehra = createdAuthors[1];
     const authorAarav = createdAuthors[2];
+    const authorPriya = createdAuthors[3];
+    const authorTariq = createdAuthors[4];
 
-    // 3. Seed Multi-Domain Articles
-    console.log('Seeding articles...');
-    const postsData = [
-      {
-        title: 'Optimizing Next.js 15 App Router Performance and Server Actions',
-        subtitle: 'A deep-dive into Partial Prerendering, streaming boundaries, and secure database transactions.',
-        slug: 'optimizing-nextjs-15-app-router-server-actions',
-        excerpt: 'Learn how to maximize performance in Next.js 15. This guide details React Server Components, server action security, client-side hydration, and dynamic edge rendering.',
-        content: `
-<h2>The Evolution of Full-Stack React</h2>
-<p>Next.js 15 marks a pivotal milestone in the evolution of full-stack JavaScript architectures. By combining Server Components, Streaming SSR, and granular Cache Controls, engineering teams can achieve instant First Contentful Paint while keeping client bundle weights to a minimum.</p>
+    // Import rich stories from defaultStories
+    const { DEFAULT_STORIES } = await import('../src/data/defaultStories.js');
 
-<h3>Core Principles of Server-First Data Fetching</h3>
-<p>Instead of fetching data inside <code>useEffect</code> hooks on the browser, Server Components query MongoDB directly behind firewall protections:</p>
-<pre><code>import Post from '@/lib/models/post.model';
+    const authorMap = {
+      'Suheel Hilal': authorSuheel,
+      'Zehra Mir': authorZehra,
+      'Aarav Sharma': authorAarav,
+      'Priya Narang': authorPriya,
+      'Dr. Tariq Lone': authorTariq,
+    };
 
-export default async function FeedPage() {
-  const posts = await Post.find({ status: 'published' }).lean();
-  return &lt;PostList items={posts} /&gt;;
-}</code></pre>
+    const sectionMap = {
+      'Technology': techSec?._id,
+      'News': newsSec?._id,
+      'Education': eduSec?._id,
+      'Business': bizSec?._id,
+      'Travel & Culture': travelSec?._id,
+      'Lifestyle': lifestyleSec?._id,
+    };
 
-<h3>Understanding Partial Prerendering (PPR)</h3>
-<p>Partial Prerendering dynamically marries static HTML shells with async dynamic micro-streams. The static masthead, sidebar, and layout render instantly from Edge CDNs, while personalized user feeds stream into view smoothly without layout shifts.</p>
-        `,
-        image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1200&h=630',
-        contentType: 'tutorial',
-        primarySection: techSec._id,
-        editions: [globalEd._id],
-        topics: [aiTopic._id],
-        primaryAuthor: authorSuheel._id,
-        author: authorSuheel.name,
-        categories: ['Technology', 'Next.js'],
-        tags: ['Next.js 15', 'React Server Components', 'Server Actions', 'Web Performance', 'SEO'],
+    const editionMap = {
+      'global': globalEd?._id,
+      'kashmir': kashmirEd?._id,
+      'india': indiaEd?._id,
+    };
+
+    const postsToInsert = DEFAULT_STORIES.map(s => {
+      const auth = authorMap[s.author] || authorSuheel;
+      const secId = sectionMap[s.primarySection?.name] || techSec?._id;
+      const edIds = (s.editions || []).map(e => editionMap[e.slug]).filter(Boolean);
+
+      return {
+        title: s.title,
+        subtitle: s.subtitle,
+        slug: s.slug,
+        excerpt: s.excerpt,
+        content: s.content,
+        image: s.image,
+        contentType: s.contentType || 'article',
+        primarySection: secId,
+        sections: [secId],
+        editions: edIds,
+        topics: s.topics ? [aiTopic?._id] : [],
+        primaryAuthor: auth._id,
+        author: auth.name,
+        categories: s.categories,
+        tags: s.tags,
         status: 'published',
-        featured: true,
-        views: 1420,
-        likes: 184,
-        contentMetadata: {
-          tutorialMetadata: {
-            difficulty: 'Intermediate',
-            prerequisites: ['React 19', 'Next.js App Router', 'JavaScript ES6'],
-            estimatedTime: '20 mins',
-          },
-        },
-        faqs: [
-          {
-            question: 'What is the main benefit of Server Actions?',
-            answer: 'Server Actions allow developers to mutate backend data directly from components without manually configuring boilerplate API routes.',
-          },
-          {
-            question: 'Is it safe to query databases inside Server Components?',
-            answer: 'Yes, because Server Components execute strictly on the server and are never included in the browser bundle.',
-          },
-        ],
-      },
-      {
-        title: 'University of Kashmir Announces New Admission & Entrance Schedule for 2026',
-        subtitle: 'Directorate of Admissions releases comprehensive guidelines, eligibility criteria, and application timelines for postgraduate courses.',
-        slug: 'university-of-kashmir-admissions-schedule-2026',
-        excerpt: 'The University of Kashmir has officially released the entrance examination calendar and application portal details for PG and professional programs.',
-        content: `
-<h2>Official Notification from Directorate of Admissions</h2>
-<p>The University of Kashmir, Hazratbal, Srinagar has announced the commencement of the online registration process for all Master's, PG Diploma, and professional degree programs for the upcoming academic session.</p>
-
-<h3>Key Dates and Timelines</h3>
-<ul>
-  <li><strong>Application Portal Opens:</strong> August 20, 2026</li>
-  <li><strong>Last Date for Online Submission:</strong> September 10, 2026</li>
-  <li><strong>Entrance Examination Window:</strong> September 25 – October 5, 2026</li>
-</ul>
-
-<h3>Eligibility Criteria and Instructions</h3>
-<p>Candidates holding a Bachelor's degree with at least 50% marks in the relevant subject disciplines (45% for reserved categories) are eligible to apply through the official university portal.</p>
-        `,
-        image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=1200&h=630',
-        contentType: 'news',
-        primarySection: eduSec._id,
-        editions: [kashmirEd._id],
-        topics: [admTopic._id],
-        primaryAuthor: authorZehra._id,
-        author: authorZehra.name,
-        categories: ['Education', 'News', 'Kashmir'],
-        tags: ['University of Kashmir', 'Admissions 2026', 'Higher Education', 'Srinagar'],
-        status: 'published',
-        featured: true,
-        breaking: true,
-        views: 3890,
-        likes: 412,
-        source: {
-          name: 'University of Kashmir Directorate of Admissions Notice #KU-2026/ADM',
-          url: 'https://kashmiruniversity.net',
-        },
-        editorNote: 'This report has been verified against the official university press release.',
-      },
-      {
-        title: '10 Best Places to Visit in Kashmir During Autumn: The Golden Season Guide',
-        subtitle: 'From the amber Chinars of Naseem Bagh to the alpine serenity of Pahalgam and Gulmarg, here is your essential autumn travel itinerary.',
-        slug: '10-best-places-to-visit-in-kashmir-during-autumn',
-        excerpt: 'Discover why autumn is Kashmir’s most enchanting season. Explore amber Chinar gardens, crisp mountain valleys, and cultural heritage trails.',
-        content: `
-<h2>The Magic of Autumn in Kashmir (Harud)</h2>
-<p>Autumn in Kashmir, locally celebrated as <em>Harud</em>, transforms the valley into a radiant tapestry of gold, amber, and deep russet. The majestic Chinar trees (Platanus orientalis) shed their fiery leaves, creating picturesque carpets across historic Mughal gardens.</p>
-
-<h3>1. Naseem Bagh, Srinagar</h3>
-<p>Known as the Garden of Morning Breezes, Naseem Bagh is the oldest Mughal garden planted on the banks of Dal Lake. In late October and November, thousands of Chinar trees illuminate the landscape in warm gold hues.</p>
-
-<h3>2. Betaab Valley, Pahalgam</h3>
-<p>Surrounded by snow-dusted pine forests and the crystalline Lidder River, Pahalgam in autumn offers unparalleled trekking, serene riverside strolls, and world-class trout fishing.</p>
-
-<h3>3. Gulmarg Meadow of Flowers</h3>
-<p>Before the winter snow blankets the Apharwat peak, Gulmarg during early autumn offers pristine cable car rides, horseback riding trails, and panoramic vistas of Nanga Parbat.</p>
-        `,
-        image: 'https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&q=80&w=1200&h=630',
-        contentType: 'guide',
-        primarySection: travelSec._id,
-        editions: [kashmirEd._id],
-        topics: [tourismTopic._id],
-        primaryAuthor: authorZehra._id,
-        author: authorZehra.name,
-        categories: ['Travel & Culture', 'Kashmir'],
-        tags: ['Kashmir Tourism', 'Autumn in Kashmir', 'Srinagar', 'Gulmarg', 'Pahalgam'],
-        status: 'published',
-        views: 2950,
-        likes: 310,
-        contentMetadata: {
-          tutorialMetadata: {
-            difficulty: 'Travel Guide',
-            prerequisites: ['Valid ID', 'Warm Clothing', 'Pre-booked Transport'],
-            estimatedTime: '5-Day Itinerary',
-          },
-        },
-      },
-      {
-        title: 'Apple M4 MacBook Pro Review: The Definitive Creator Workstation',
-        subtitle: 'Unrivaled single-core speeds, 24-hour battery endurance, and nano-texture display make this the apex laptop of 2026.',
-        slug: 'apple-m4-macbook-pro-review',
-        excerpt: 'We benchmarked the Apple M4 MacBook Pro across heavy Xcode compilations, 8K video renders, and local LLM inference. Here is our verdict.',
-        content: `
-<h2>The Silicon Mastery Continues</h2>
-<p>Apple’s transition to the M4 architecture represents another generational leap in energy efficiency and sheer compute throughput. Built on TSMC’s enhanced 3-nanometer node, the M4 processor delivers lightning-fast single-threaded response times while maintaining room-temperature silent operation.</p>
-
-<h3>Performance Benchmarks</h3>
-<p>Compiling the entire Next.js codebase took a staggering 38% less time compared to the previous M2 Pro generation. In multi-stream 8K ProRes export tests in DaVinci Resolve, hardware media engines chewed through footage without a single dropped frame.</p>
-
-<h3>Display & Battery Life</h3>
-<p>The optional nano-texture glass significantly cuts harsh ambient glare without sacrificing color contrast or peak 1,600 nits HDR brightness. Battery endurance easily topped 21 hours of mixed development and browsing tasks.</p>
-        `,
-        image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=1200&h=630',
-        contentType: 'review',
-        primarySection: techSec._id,
-        editions: [globalEd._id],
-        topics: [aiTopic._id],
-        primaryAuthor: authorAarav._id,
-        author: authorAarav.name,
-        categories: ['Technology', 'Reviews'],
-        tags: ['Apple M4', 'MacBook Pro', 'Hardware Review', 'Silicon', 'Tech Review'],
-        status: 'published',
-        views: 2180,
-        likes: 275,
-        contentMetadata: {
-          reviewMetadata: {
-            rating: 4.8,
-            verdict: 'The Apple M4 MacBook Pro is the most capable, power-efficient pro creator laptop ever engineered.',
-            pros: [
-              'Industry-leading single-core and multi-core performance',
-              'Astonishing 20+ hour real-world battery life',
-              'Superb nano-texture Liquid Retina XDR display',
-              'Whisper-quiet acoustics under intense loads',
-            ],
-            cons: [
-              'Expensive memory and storage upgrade tiers',
-              'Form factor remains largely unchanged from prior generation',
-            ],
-          },
-        },
-      },
-      {
-        title: 'Srinagar Smart City Project Completes Phase 3 Riverfront Development',
-        subtitle: 'Revamped Jhelum riverfront boardwalks, heritage walkways, and electric water-taxis transform Srinagar urban landscape.',
-        slug: 'srinagar-smart-city-riverfront-development',
-        excerpt: 'The Srinagar Smart City Mission has officially opened the third phase of the Jhelum riverfront beautification project to public visitors.',
-        content: `
-<h2>Urban Transformation Along the Historic Jhelum</h2>
-<p>Srinagar’s historic riverfront has undergone a breathtaking modernization under the Smart City Mission. Stretching across Rajbagh to Zero Bridge, the newly unveiled pedestrian corridors integrate eco-friendly solar illumination, cycling paths, and designated cultural performance pavilions.</p>
-
-<h3>Public Amenities and Water Transportation</h3>
-<p>The project also inaugurates electric water-taxis connecting Old City Ghats with modern commercial hubs, easing vehicular congestion on major city corridors while honoring Kashmir’s timeless river heritage.</p>
-        `,
-        image: 'https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&q=80&w=1200&h=630',
-        contentType: 'news',
-        primarySection: newsSec._id,
-        editions: [kashmirEd._id],
-        primaryAuthor: authorZehra._id,
-        author: authorZehra.name,
-        categories: ['News', 'Kashmir', 'Urban Development'],
-        tags: ['Srinagar', 'Smart City', 'Jhelum Riverfront', 'Infrastructure'],
-        status: 'published',
-        views: 1870,
-        likes: 195,
-        source: {
-          name: 'Srinagar Smart City Development Authority',
-          url: 'https://srinagarsmartcity.in',
-        },
-      },
-    ];
+        featured: s.featured || false,
+        breaking: s.breaking || false,
+        views: s.views || 1000,
+        likes: s.likes || 100,
+        trendingScore: s.trendingScore || 50,
+        publishedAt: new Date(s.publishedAt || Date.now()),
+        faqs: s.faqs || [],
+      };
+    });
 
     await Post.deleteMany({});
-    const createdPosts = await Post.insertMany(postsData);
+    const createdPosts = await Post.insertMany(postsToInsert);
     console.log(`Seeded ${createdPosts.length} rich articles successfully!`);
 
+    console.log('\n--- SEED SUMMARY ---');
+    console.log(`Taxonomies: ${createdTaxonomies.length}`);
+    console.log(`Authors: ${createdAuthors.length}`);
+    console.log(`Articles: ${createdPosts.length}`);
     console.log('Seeding completed successfully!');
     process.exit(0);
-  } catch (error) {
-    console.error('Seeding failed:', error);
+  } catch (err) {
+    console.error('Seeding failed:', err.message);
     process.exit(1);
   }
 }

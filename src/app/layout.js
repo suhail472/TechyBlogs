@@ -2,6 +2,7 @@ import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import ToastContainer from "@/components/shared/ToastContainer";
 import BackToTop from "@/components/shared/BackToTop";
 import "./globals.css";
+import "katex/dist/katex.min.css";
 
 export const metadata = {
   metadataBase: new URL('https://teachyblogs.com'),

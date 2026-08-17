@@ -11,7 +11,10 @@ export async function generateMetadata({ params }) {
   let blog = null;
   try {
     await connectToDatabase();
-    blog = await Post.findOne({ slug, status: 'published' }).lean();
+    blog = await Post.findOne({ slug, status: 'published' })
+      .populate('primaryTopic', 'name slug')
+      .populate('primaryRegion', 'name slug')
+      .lean();
   } catch (err) {
     // ignore
   }
@@ -29,14 +32,14 @@ export async function generateMetadata({ params }) {
 
   return {
     title: `${blog.title} | TeachyBlogs`,
-    description: blog.metaDescription || blog.excerpt,
+    description: blog.metaDescription || blog.seo?.description || blog.excerpt,
     keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'),
     alternates: {
       canonical: `https://teachyblogs.com/blog/${slug}`,
     },
     openGraph: {
-      title: `${blog.title} | TeachyBlogs`,
-      description: blog.metaDescription || blog.excerpt,
+      title: blog.seo?.socialTitle || blog.seo?.title || blog.title,
+      description: blog.seo?.socialDescription || blog.seo?.description || blog.excerpt,
       url: `https://teachyblogs.com/blog/${slug}`,
       type: 'article',
       publishedTime: blog.publishedAt || blog.createdAt,
@@ -44,7 +47,7 @@ export async function generateMetadata({ params }) {
       authors: [blog.author || 'Suheel Hilal'],
       images: [
         {
-          url: blog.image || 'https://teachyblogs.com/favicon.ico',
+          url: blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico',
           alt: blog.title,
           width: 1200,
           height: 630,
@@ -53,9 +56,9 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: blog.title,
-      description: blog.metaDescription || blog.excerpt,
-      images: [blog.image || 'https://teachyblogs.com/favicon.ico'],
+      title: blog.seo?.socialTitle || blog.title,
+      description: blog.seo?.socialDescription || blog.excerpt,
+      images: [blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico'],
     },
   };
 }
@@ -70,17 +73,29 @@ export default async function SingleBlogPage({ params }) {
   try {
     await connectToDatabase();
     blog = await Post.findOne({ slug, status: 'published' })
-      .populate('primaryAuthor', 'name slug avatar role')
-      .populate('primarySection', 'name slug')
-      .populate('editions', 'name slug')
+      .populate('primaryAuthor', 'name slug avatar bio role expertise')
+      .populate('primaryTopic', 'name slug ancestors')
+      .populate('primaryRegion', 'name slug isHub type ancestors')
+      .populate('topics', 'name slug')
+      .populate('regions', 'name slug')
+      .populate('entities', 'name slug type')
+      .populate('series', 'name slug title')
+      .populate('coverage', 'name slug title')
       .lean();
 
     if (blog) {
-      const relatedPosts = await Post.find({
+      const query = {
         status: 'published',
         slug: { $ne: slug },
-        categories: { $in: blog.categories || [] },
-      })
+      };
+
+      if (blog.primaryTopic) {
+        query.$or = [{ primaryTopic: blog.primaryTopic._id }, { topics: blog.primaryTopic._id }];
+      }
+
+      const relatedPosts = await Post.find(query)
+        .populate('primaryTopic', 'name slug')
+        .populate('primaryRegion', 'name slug')
         .sort({ publishedAt: -1 })
         .limit(4)
         .lean();
@@ -92,6 +107,8 @@ export default async function SingleBlogPage({ params }) {
           status: 'published',
           slug: { $nin: excludeSlugs },
         })
+          .populate('primaryTopic', 'name slug')
+          .populate('primaryRegion', 'name slug')
           .sort({ publishedAt: -1 })
           .limit(3 - allRelated.length)
           .lean();
@@ -124,8 +141,9 @@ export default async function SingleBlogPage({ params }) {
   const serializedRelated = JSON.parse(JSON.stringify(allRelated));
 
   // Determine structured data schema based on content type
-  const isNews = blog.contentType === 'news';
-  const schemaType = isNews ? 'NewsArticle' : 'Article';
+  let schemaType = 'Article';
+  if (blog.contentType === 'news') schemaType = 'NewsArticle';
+  else if (blog.contentType === 'tutorial') schemaType = 'TechArticle';
 
   const articleSchema = {
     '@context': 'https://schema.org',
@@ -135,10 +153,11 @@ export default async function SingleBlogPage({ params }) {
     image: blog.image,
     datePublished: blog.publishedAt || blog.createdAt,
     dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
+    inLanguage: blog.language || 'en',
     author: {
       '@type': 'Person',
       name: blog.author || 'Suheel Hilal',
-      url: 'https://teachyblogs.com',
+      url: `https://teachyblogs.com/author/${blog.primaryAuthor?.slug || 'suheel-hilal'}`,
     },
     publisher: {
       '@type': 'Organization',
@@ -155,17 +174,45 @@ export default async function SingleBlogPage({ params }) {
     keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : ''),
   };
 
+  // Breadcrumb List Schema
+  const breadcrumbItems = [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://teachyblogs.com' },
+  ];
+  if (blog.primaryTopic) {
+    breadcrumbItems.push({
+      '@type': 'ListItem',
+      position: 2,
+      name: blog.primaryTopic.name,
+      item: `https://teachyblogs.com/topic/${blog.primaryTopic.slug}`,
+    });
+  }
+  breadcrumbItems.push({
+    '@type': 'ListItem',
+    position: breadcrumbItems.length + 1,
+    name: blog.title,
+    item: `https://teachyblogs.com/blog/${slug}`,
+  });
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbItems,
+  };
+
   let faqSchema = null;
-  if (blog.faqs && blog.faqs.length > 0) {
+  const validFaqs = (blog.faqs || []).filter(
+    (f) => f && typeof f.question === 'string' && f.question.trim().length > 5 && typeof f.answer === 'string' && f.answer.trim().length > 5
+  );
+  if (validFaqs.length > 0) {
     faqSchema = {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: blog.faqs.map((faq) => ({
+      mainEntity: validFaqs.map((faq) => ({
         '@type': 'Question',
-        name: faq.question,
+        name: faq.question.trim(),
         acceptedAnswer: {
           '@type': 'Answer',
-          text: faq.answer,
+          text: faq.answer.trim(),
         },
       })),
     };
@@ -177,6 +224,10 @@ export default async function SingleBlogPage({ params }) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       {faqSchema && (
         <script

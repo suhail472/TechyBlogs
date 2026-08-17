@@ -1,168 +1,194 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Heart, Rss } from 'lucide-react';
+import { ArrowRight, Rss, Globe, MapPin, ShieldCheck, Mail, ArrowUp } from 'lucide-react';
+import useToastStore from '@/store/useToastStore';
 
-const Footer = () => {
-  const handleSubscribe = (e) => {
+export default function Footer() {
+  const { addToast } = useToastStore();
+  const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    alert('Subscribed successfully to newsletter!');
+    if (!email.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast('Subscribed! You are on the editorial dispatch list.', 'success');
+        setEmail('');
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      addToast(err.message || 'Subscription received!', 'info');
+      setEmail('');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const quickLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Blogs Archive', path: '/blogs' },
-    { name: 'Browse Tags', path: '/tags' },
-    { name: 'Saved Articles', path: '/saved' },
-    { name: 'About Author', path: '/about' },
-    { name: 'Contact Info', path: '/contact' },
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const editorialDesks = [
+    { name: 'Technology & AI', path: '/section/technology' },
+    { name: 'News & Reporting', path: '/section/news' },
+    { name: 'Education & Admissions', path: '/section/education' },
+    { name: 'Business & Economy', path: '/section/business' },
+    { name: 'Travel & Culture', path: '/section/travel' },
+    { name: 'Reviews & Gear Lab', path: '/blogs?contentType=review' },
   ];
 
-  const categories = [
-    { name: 'Design', path: '/blogs?category=Design' },
-    { name: 'Tech', path: '/blogs?category=Tech' },
-    { name: 'React', path: '/blogs?category=React' },
-    { name: 'CSS', path: '/blogs?category=CSS' },
+  const regionalEditions = [
+    { name: 'Global Edition', path: '/' },
+    { name: 'Kashmir Bureau', path: '/kashmir' },
+    { name: 'India Edition', path: '/edition/india' },
+    { name: 'Srinagar Coverage', path: '/edition/kashmir' },
+  ];
+
+  const readerTools = [
+    { name: 'All Stories & Archive', path: '/blogs' },
+    { name: 'Faceted Search (⌘K)', path: '/search' },
+    { name: 'Saved Bookmarks', path: '/saved' },
+    { name: 'Topic Directory', path: '/tags' },
+    { name: 'RSS Feed (XML)', path: '/feed.xml' },
   ];
 
   return (
-    <footer className="relative border-t transition-colors duration-300 border-zinc-200/80 dark:border-white/[0.04] bg-white dark:bg-[#070a12] text-zinc-600 dark:text-zinc-300">
-      {/* Gradient accent at top */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
-      
-      <div className="container mx-auto px-6 md:px-12 pt-20 pb-12 max-w-7xl relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16 mb-16">
-          
-          {/* Brand Column */}
-          <div className="md:col-span-4 space-y-6">
-            <Link href="/" className="group flex items-center gap-2.5 text-xl font-bold tracking-tight">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-sm transition-transform group-hover:scale-[1.05] shadow-lg shadow-blue-500/15">T</div>
-              <span className="text-zinc-900 dark:text-white font-display">Techy<span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent font-extrabold">Blogs</span></span>
+    <footer className="border-t border-zinc-200/80 dark:border-white/10 bg-zinc-50 dark:bg-[#070a12] text-zinc-600 dark:text-zinc-300 transition-colors">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 pt-16 pb-12">
+        {/* Top 4-Column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-14 border-b border-zinc-200/80 dark:border-white/10">
+          {/* Brand Column (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-black text-sm font-display shadow-md shadow-red-600/20 group-hover:scale-105 transition-transform">
+                TB
+              </div>
+              <span className="text-xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
+                Teachy<span className="text-red-600">Blogs</span>
+              </span>
             </Link>
-            
-            <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-              An editorial project sharing modern web architecture insights, React components development patterns, and CSS design tokens guides.
+
+            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 font-sans max-w-sm">
+              An independent digital publishing platform providing authoritative technical deep-dives, higher education guides, hardware reviews, and dedicated Kashmir regional journalism.
             </p>
 
-            {/* Social + RSS links */}
-            <div className="flex gap-2.5">
-              <a
+            <div className="flex items-center gap-2 pt-2">
+              <Link
                 href="/feed.xml"
                 target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 glass-card hover:-translate-y-0.5 hover:shadow-md hover:shadow-orange-500/5 text-zinc-500 hover:text-orange-500 dark:text-zinc-400 dark:hover:text-orange-400"
+                className="p-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-zinc-500 hover:text-amber-500 transition-colors"
                 aria-label="RSS Feed"
               >
                 <Rss className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 glass-card hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/5 text-zinc-500 hover:text-blue-500 dark:text-zinc-400 dark:hover:text-blue-400"
-                aria-label="Twitter"
+              </Link>
+              <Link
+                href="/kashmir"
+                className="px-3 py-1.5 rounded-xl bg-red-600/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 hover:bg-red-600/20 transition-colors"
               >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 glass-card hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/5 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
-                aria-label="GitHub"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482C19.138 20.193 22 16.44 22 12.017 22 6.484 17.522 2 12 2z"/>
-                </svg>
-              </a>
-              <a
-                href="#"
-                className="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 glass-card hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/5 text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400"
-                aria-label="LinkedIn"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                </svg>
-              </a>
+                <MapPin className="w-3.5 h-3.5" /> Kashmir Bureau
+              </Link>
             </div>
           </div>
 
-          {/* Quick links Column */}
-          <div className="md:col-span-2 sm:col-span-6">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-6">
-              Navigation
+          {/* Desks Column (2 cols) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-white">
+              Editorial Desks
             </h4>
-            <ul className="space-y-3.5 text-sm font-semibold">
-              {quickLinks.map((link) => (
-                <li key={link.name}>
-                  <Link 
-                    href={link.path} 
-                    className="inline-block transition-all duration-200 text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 hover:translate-x-1"
-                  >
-                    <span>{link.name}</span>
+            <ul className="space-y-2 text-xs font-semibold">
+              {editorialDesks.map((d) => (
+                <li key={d.name}>
+                  <Link href={d.path} className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                    {d.name}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Categories Column */}
-          <div className="md:col-span-2 sm:col-span-6">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-6">
-              Categories
+          {/* Regional & Tools Column (2 cols) */}
+          <div className="lg:col-span-2 space-y-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-white">
+              Regional & Tools
             </h4>
-            <ul className="space-y-3.5 text-sm font-semibold">
-              {categories.map((cat) => (
-                <li key={cat.name}>
-                  <Link 
-                    href={cat.path} 
-                    className="inline-block transition-all duration-200 text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-400 hover:translate-x-1"
-                  >
-                    <span>{cat.name}</span>
+            <ul className="space-y-2 text-xs font-semibold">
+              {regionalEditions.map((r) => (
+                <li key={r.name}>
+                  <Link href={r.path} className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                    {r.name}
+                  </Link>
+                </li>
+              ))}
+              {readerTools.slice(1, 3).map((t) => (
+                <li key={t.name}>
+                  <Link href={t.path} className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors">
+                    {t.name}
                   </Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Newsletter Column */}
-          <div className="md:col-span-4 space-y-6">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-6">
-              Author's Newsletter
+          {/* Newsletter Column (4 cols) */}
+          <div className="lg:col-span-4 space-y-3">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-900 dark:text-white">
+              The Morning Briefing
             </h4>
-            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              Join 5,000+ developers receiving our weekly digests of code layouts and design techniques.
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed font-sans">
+              Receive our weekend digest of long-form reporting, software architecture guides, and university alerts.
             </p>
-            <form onSubmit={handleSubscribe} className="relative flex items-center max-w-sm">
-              <input 
-                type="email" 
-                placeholder="email@example.com" 
-                className="w-full pl-4 pr-12 py-3.5 text-xs rounded-xl border outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white/80 border-zinc-200/80 text-zinc-900 placeholder-zinc-400 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-white dark:placeholder-zinc-500"
+            <form onSubmit={handleSubscribe} className="relative flex items-center pt-1">
+              <input
+                type="email"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="reader@example.com"
+                className="w-full px-4 py-2.5 pr-11 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-red-500"
               />
-              <button 
-                type="submit" 
-                className="absolute right-1.5 p-2.5 rounded-lg transition-all flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md shadow-blue-500/15 hover:shadow-lg"
+              <button
+                type="submit"
+                disabled={submitting}
+                className="absolute right-1 p-2 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors"
+                aria-label="Subscribe"
               >
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>
-
         </div>
 
-        {/* Bottom copyright legal row */}
-        <div className="pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold border-zinc-200/50 dark:border-white/[0.04] text-zinc-400 dark:text-zinc-500">
-          <div className="flex items-center gap-1">
-            &copy; {new Date().getFullYear()} TechyBlogs. Made with <Heart className="w-3 h-3 text-rose-500 fill-rose-500 inline mx-0.5" /> by Suheel Hilal.
+        {/* Bottom Masthead & Legal Bar */}
+        <div className="pt-8 flex flex-wrap items-center justify-between gap-4 text-xs text-zinc-400">
+          <div className="flex flex-wrap items-center gap-4">
+            <span>© {new Date().getFullYear()} TeachyBlogs. All rights reserved.</span>
+            <span className="hidden sm:inline">·</span>
+            <Link href="/about" className="hover:text-zinc-900 dark:hover:text-white">About Masthead</Link>
+            <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-white">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-white">Terms</Link>
+            <Link href="/contact" className="hover:text-zinc-900 dark:hover:text-white">Newsroom Contact</Link>
           </div>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors">Terms of Service</Link>
-            <Link href="/cookies" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors">Cookies Policy</Link>
-          </div>
+
+          <button
+            onClick={scrollToTop}
+            className="flex items-center gap-1.5 text-xs font-bold hover:text-zinc-900 dark:hover:text-white transition-colors"
+          >
+            <span>Back to top</span>
+            <ArrowUp className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </footer>
   );
-};
-
-export default Footer;
+}
