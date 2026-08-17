@@ -30,16 +30,43 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  const canonical = blog.seo?.canonicalUrl || `https://teachyblogs.com/blog/${slug}`;
+  const keywordsList = Array.isArray(blog.seo?.keywords) && blog.seo.keywords.length > 0
+    ? blog.seo.keywords.join(', ')
+    : (blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'));
+
+  const metaTitle = blog.seo?.title ? `${blog.seo.title} | TeachyBlogs` : `${blog.title} | TeachyBlogs`;
+  const metaDesc = blog.seo?.description || blog.metaDescription || blog.excerpt || blog.subtitle || '';
+
+  const ogTitle = blog.seo?.socialTitle || blog.seo?.title || blog.title;
+  const ogDesc = blog.seo?.socialDescription || blog.seo?.description || blog.excerpt || blog.subtitle || '';
+  const ogImage = blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico';
+
+  const twitterTitle = blog.seo?.twitterTitle || blog.seo?.socialTitle || blog.title;
+  const twitterDesc = blog.seo?.twitterDescription || blog.seo?.socialDescription || blog.excerpt || '';
+  const twitterImage = blog.seo?.twitterImage || blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico';
+
+  const robotsIndex = blog.seo?.robots?.index !== false && blog.seo?.indexable !== false;
+  const robotsFollow = blog.seo?.robots?.follow !== false;
+
   return {
-    title: `${blog.title} | TeachyBlogs`,
-    description: blog.metaDescription || blog.seo?.description || blog.excerpt,
-    keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'),
+    title: metaTitle,
+    description: metaDesc,
+    keywords: keywordsList,
+    robots: {
+      index: robotsIndex,
+      follow: robotsFollow,
+      googleBot: {
+        index: robotsIndex,
+        follow: robotsFollow,
+      },
+    },
     alternates: {
-      canonical: `https://teachyblogs.com/blog/${slug}`,
+      canonical,
     },
     openGraph: {
-      title: blog.seo?.socialTitle || blog.seo?.title || blog.title,
-      description: blog.seo?.socialDescription || blog.seo?.description || blog.excerpt,
+      title: ogTitle,
+      description: ogDesc,
       url: `https://teachyblogs.com/blog/${slug}`,
       type: 'article',
       publishedTime: blog.publishedAt || blog.createdAt,
@@ -47,7 +74,7 @@ export async function generateMetadata({ params }) {
       authors: [blog.author || 'Suheel Hilal'],
       images: [
         {
-          url: blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico',
+          url: ogImage,
           alt: blog.title,
           width: 1200,
           height: 630,
@@ -56,9 +83,9 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: 'summary_large_image',
-      title: blog.seo?.socialTitle || blog.title,
-      description: blog.seo?.socialDescription || blog.excerpt,
-      images: [blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico'],
+      title: twitterTitle,
+      description: twitterDesc,
+      images: [twitterImage],
     },
   };
 }

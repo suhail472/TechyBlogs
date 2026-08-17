@@ -70,32 +70,34 @@ class EditorialService {
       throw new Error('A post with this slug already exists');
     }
 
-    const revision = {
-      version: (post.revisions?.length || 0) + 1,
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content,
-      changedBy: serialiseActor(user),
-      changeSummary: data.changeSummary || 'Content updated',
-      createdAt: new Date(),
-    };
-
-    const blocked = ['status', 'publishedAt', 'scheduledAt', 'changeSummary'];
+    const blocked = ['status', 'publishedAt', 'scheduledAt', 'changeSummary', 'isAutosave'];
     for (const [key, value] of Object.entries(data)) {
       if (!blocked.includes(key)) post[key] = value;
     }
 
-    // Keep revisions capped at 50 to avoid unbounded document growth
-    if (post.revisions.length >= 50) {
-      post.revisions.shift();
+    // Only record a formal version milestone if NOT a background autosave
+    if (!data.isAutosave) {
+      const revision = {
+        version: (post.revisions?.length || 0) + 1,
+        title: post.title,
+        excerpt: post.excerpt,
+        content: post.content,
+        changedBy: serialiseActor(user),
+        changeSummary: data.changeSummary || 'Content updated',
+        createdAt: new Date(),
+      };
+
+      if (post.revisions.length >= 50) {
+        post.revisions.shift();
+      }
+      post.revisions.push(revision);
+      post.editorialHistory.push({
+        action: 'edited',
+        by: serialiseActor(user),
+        summary: data.changeSummary || '',
+        at: new Date(),
+      });
     }
-    post.revisions.push(revision);
-    post.editorialHistory.push({
-      action: 'edited',
-      by: serialiseActor(user),
-      summary: data.changeSummary || '',
-      at: new Date(),
-    });
 
     await post.save();
     return post;

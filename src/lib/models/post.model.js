@@ -204,6 +204,7 @@ const postSchema = new mongoose.Schema(
         {
           question: { type: String, required: true },
           answer: { type: String, required: true },
+          order: { type: Number, default: 0 },
         },
       ],
       default: [],
@@ -217,12 +218,20 @@ const postSchema = new mongoose.Schema(
       default: '',
     },
     seo: {
-      title: { type: String, maxlength: 70, default: '' },
-      description: { type: String, maxlength: 180, default: '' },
+      title: { type: String, maxlength: 100, default: '' },
+      description: { type: String, maxlength: 300, default: '' },
+      keywords: { type: [String], default: [] },
       canonicalUrl: { type: String, default: '' },
       socialTitle: { type: String, default: '' },
       socialDescription: { type: String, default: '' },
       socialImage: { type: String, default: '' },
+      twitterTitle: { type: String, default: '' },
+      twitterDescription: { type: String, default: '' },
+      twitterImage: { type: String, default: '' },
+      robots: {
+        index: { type: Boolean, default: true },
+        follow: { type: Boolean, default: true },
+      },
       indexable: { type: Boolean, default: true },
     },
 
