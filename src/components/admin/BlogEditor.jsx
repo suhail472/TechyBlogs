@@ -596,7 +596,7 @@ export default function BlogEditor({ id }) {
               {formData.title || 'Untitled Story'}
             </h1>
             <div className="flex items-center gap-2 text-[11px] text-zinc-400">
-              <span className="capitalize font-semibold text-indigo-500">{formData.contentType}</span>
+              <span className="capitalize font-mono font-bold text-red-600 dark:text-red-400">{formData.contentType}</span>
               <span>•</span>
               <span>{wordCount} words</span>
               <span>•</span>
@@ -604,8 +604,8 @@ export default function BlogEditor({ id }) {
               {lastSavedTime && (
                 <>
                   <span>•</span>
-                  <span className="text-emerald-500 flex items-center gap-1 font-medium">
-                    <CheckCircle2 className="w-3 h-3" /> Saved locally
+                  <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
+                    <CheckCircle2 className="w-3 h-3" /> Auto-saved
                   </span>
                 </>
               )}
@@ -642,7 +642,7 @@ export default function BlogEditor({ id }) {
           <button
             type="button"
             onClick={() => setZenMode(!zenMode)}
-            className={`p-2 rounded-xl border transition-colors ${zenMode ? 'bg-indigo-600 text-white border-indigo-600' : 'border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+            className={`p-2 rounded-xl border transition-colors ${zenMode ? 'bg-red-600 text-white border-red-600' : 'border-zinc-200 dark:border-white/10 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
             title="Zen Mode"
           >
             {zenMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -662,10 +662,10 @@ export default function BlogEditor({ id }) {
             type="button"
             onClick={() => handleSave('published')}
             disabled={submitting}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-indigo-500/25 transition-all flex items-center gap-1.5"
+            className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md shadow-red-600/20 transition-all flex items-center gap-1.5"
           >
             {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>Publish</span>
+            <span>Publish Story</span>
           </button>
         </div>
       </header>

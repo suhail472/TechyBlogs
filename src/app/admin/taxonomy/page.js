@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { taxonomyAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
+import AdminHeader from '@/components/admin/AdminHeader';
+import EmptyState from '@/components/admin/EmptyState';
 
 const KINDS = [
   { id: 'topic', label: 'Thematic Topics', icon: Tag, desc: 'Hierarchical subjects like AI, Web Dev, Higher Ed, Finance' },
@@ -162,25 +164,21 @@ export default function TaxonomyPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight font-display text-zinc-900 dark:text-white">
-            Taxonomy & Editorial Architecture
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            Multi-dimensional classification for topics, regional hubs, content types, series, and recognized entities.
-          </p>
-        </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-indigo-500/25 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add {KINDS.find((k) => k.id === activeKind)?.label.replace(/s$/, '') || 'Item'}
-        </button>
-      </div>
+      <AdminHeader
+        title="Taxonomy & Editorial Architecture"
+        breadcrumb={[{ label: 'Taxonomy Management' }]}
+        actions={
+          <button
+            onClick={() => handleOpenModal()}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-red-600/20"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add {KINDS.find((k) => k.id === activeKind)?.label.replace(/s$/, '') || 'Item'}</span>
+          </button>
+        }
+      />
 
       {/* Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
@@ -193,15 +191,15 @@ export default function TaxonomyPage() {
               onClick={() => setActiveKind(kind.id)}
               className={`p-3.5 rounded-2xl text-left border transition-all ${
                 isActive
-                  ? 'bg-white dark:bg-zinc-900 border-indigo-500 shadow-md shadow-indigo-500/10 ring-2 ring-indigo-500/20'
+                  ? 'bg-white dark:bg-zinc-900 border-red-500 shadow-sm shadow-red-500/10 ring-2 ring-red-500/20'
                   : 'bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20'
               }`}
             >
               <div className="flex items-center gap-2 mb-1.5">
-                <div className={`p-1.5 rounded-lg ${isActive ? 'bg-indigo-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}`}>
+                <div className={`p-1.5 rounded-lg ${isActive ? 'bg-red-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'}`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
-                <span className={`text-xs font-bold truncate ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
+                <span className={`text-xs font-bold truncate ${isActive ? 'text-red-600 dark:text-red-400' : 'text-zinc-700 dark:text-zinc-300'}`}>
                   {kind.label}
                 </span>
               </div>
@@ -215,23 +213,18 @@ export default function TaxonomyPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 overflow-hidden shadow-sm">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Loading items...</p>
+            <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Loading taxonomy architecture...</p>
           </div>
         ) : items.length === 0 ? (
-          <div className="py-20 text-center px-4">
-            <Layers className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
-            <h3 className="text-base font-bold">No {activeKind.replace('_', ' ')}s configured</h3>
-            <p className="text-xs text-zinc-400 mt-1 max-w-sm mx-auto">
-              Create your first {activeKind.replace('_', ' ')} to structure your publications and multi-dimensional discovery.
-            </p>
-            <button
-              onClick={() => handleOpenModal()}
-              className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-500 transition-colors"
-            >
-              Create {activeKind.replace('_', ' ')}
-            </button>
-          </div>
+          <EmptyState
+            icon={Layers}
+            title={`No ${activeKind.replace('_', ' ')}s configured`}
+            description={`Create your first ${activeKind.replace('_', ' ')} to structure your publications and multi-dimensional discovery.`}
+            actionLabel={`Create ${activeKind.replace('_', ' ')}`}
+            onAction={() => handleOpenModal()}
+            className="m-6"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">

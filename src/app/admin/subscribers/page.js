@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Trash2, Loader2, Mail, Search, UserMinus, Download } from 'lucide-react';
+import { Trash2, Loader2, Mail, Search, Download } from 'lucide-react';
 import useToastStore from '@/store/useToastStore';
+import AdminHeader from '@/components/admin/AdminHeader';
+import EmptyState from '@/components/admin/EmptyState';
 
 export default function SubscribersDashboard() {
   const [subscribers, setSubscribers] = useState([]);
@@ -18,13 +20,14 @@ export default function SubscribersDashboard() {
       return;
     }
     const headers = ['ID', 'Email', 'Joined Date'];
-    const rows = subscribers.map(sub => [
+    const rows = subscribers.map((sub) => [
       sub._id,
       sub.email,
-      new Date(sub.createdAt).toLocaleDateString('en-US')
+      new Date(sub.createdAt).toLocaleDateString('en-US'),
     ]);
-    const csvContent = 'data:text/csv;charset=utf-8,' 
-      + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((e) => e.map((val) => `"${val}"`).join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -66,8 +69,8 @@ export default function SubscribersDashboard() {
       const data = await res.json();
       if (data.success) {
         addToast('Subscriber removed successfully', 'success');
-        setSubscribers(subscribers.filter(sub => sub._id !== id));
-        setTotalSubscribers(prev => prev - 1);
+        setSubscribers(subscribers.filter((sub) => sub._id !== id));
+        setTotalSubscribers((prev) => prev - 1);
       } else {
         throw new Error(data.message);
       }
@@ -78,91 +81,93 @@ export default function SubscribersDashboard() {
   };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2 font-display text-slate-900 dark:text-white">Subscribers</h1>
-          <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            View mailing lists, active newsletter subscriptions, and subscriber counts.
-          </p>
-        </div>
-        
-        <div className="flex gap-2 shrink-0">
+    <div className="space-y-6">
+      {/* Header */}
+      <AdminHeader
+        title="Morning Briefing & Newsletter CRM"
+        breadcrumb={[{ label: 'Subscribers' }]}
+        actions={
           <button
             onClick={handleExportCSV}
-            className="px-5 py-3.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/[0.03] dark:hover:bg-white/[0.06] text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-white/[0.06] font-black text-xs uppercase tracking-wider rounded-2xl flex items-center gap-2 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-white/5 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-colors border border-zinc-200 dark:border-white/10"
           >
-            <Download className="w-4 h-4" />
-            Export CSV
+            <Download className="w-3.5 h-3.5" />
+            <span>Export CSV</span>
           </button>
-          
-          {/* Total Subscribers Count Widget */}
-          <div className="px-6 py-3.5 bg-blue-500/10 text-blue-600 dark:bg-blue-500/5 dark:text-blue-400 font-black text-xs uppercase tracking-wider rounded-2xl border border-blue-500/15 flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            <span>{totalSubscribers} Subscribers</span>
-          </div>
+        }
+      />
+
+      {/* Filter & Metric Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search email subscribers..."
+            className="w-full pl-10 pr-4 py-2 rounded-xl text-xs bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 outline-none focus:ring-2 focus:ring-red-500/20"
+          />
+        </div>
+
+        <div className="px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 font-black text-xs uppercase tracking-wider rounded-xl border border-red-500/20 flex items-center gap-2 font-mono">
+          <Mail className="w-4 h-4" />
+          <span>{totalSubscribers} Verified Subscribers</span>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative mb-8 max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          placeholder="Search subscriber emails..."
-          className="w-full pl-11 pr-4 py-3 rounded-2xl text-xs border outline-none transition-all focus:border-blue-400/40 focus:ring-2 focus:ring-blue-500/10 dark:focus:border-blue-500/30 bg-white border-zinc-200 text-zinc-900 placeholder-zinc-400 dark:bg-zinc-800/10 dark:border-zinc-800 dark:text-white dark:placeholder-zinc-500"
-        />
-      </div>
-
-      {/* Subscribers List Grid / Table */}
-      <div className="rounded-[2rem] border overflow-hidden bg-white border-zinc-200 shadow-xl shadow-zinc-200/30 dark:bg-zinc-800/20 dark:border-zinc-800 dark:shadow-none">
-        {loading && subscribers.length === 0 ? (
-          <div className="p-16 text-center flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span className="text-slate-400 font-bold text-sm">Retrieving subscriber listings...</span>
+      {/* Table */}
+      <div className="rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs overflow-hidden">
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
+              Loading subscriber database...
+            </p>
           </div>
         ) : subscribers.length === 0 ? (
-          <div className="p-16 text-center text-slate-500 font-bold text-sm flex flex-col items-center gap-3">
-            <Mail className="w-8 h-8 opacity-40 text-slate-400" />
-            <span>No subscribers found matching search.</span>
-          </div>
+          <EmptyState
+            icon={Mail}
+            title="No newsletter subscribers found"
+            description="When readers subscribe through the Daily Briefing modules, they will appear here."
+            className="m-6"
+          />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-zinc-100 dark:border-zinc-800/80">
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500">Email Address</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500">Subscription Status</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500">Joined Date</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Actions</th>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/50 border-b border-zinc-200/80 dark:border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-400 font-mono">
+                <tr>
+                  <th className="py-3.5 px-6">Subscriber Email</th>
+                  <th className="py-3.5 px-6">Joined Date</th>
+                  <th className="py-3.5 px-6">Status</th>
+                  <th className="py-3.5 px-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80 text-sm font-medium">
+              <tbody className="divide-y divide-zinc-200/60 dark:divide-white/5">
                 {subscribers.map((sub) => (
-                  <tr
-                    key={sub._id}
-                    className="hover:bg-blue-500/5 transition-colors"
-                  >
-                    <td className="px-6 py-4.5 font-bold text-slate-900 dark:text-white">
+                  <tr key={sub._id} className="hover:bg-zinc-50/70 dark:hover:bg-white/[0.02] transition-colors">
+                    <td className="py-4 px-6 font-bold text-zinc-900 dark:text-white">
                       {sub.email}
                     </td>
-                    <td className="px-6 py-4.5">
-                      <span className="px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border text-emerald-500 bg-emerald-500/5 border-emerald-500/10">
+                    <td className="py-4 px-6 font-mono text-zinc-500">
+                      {new Date(sub.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
                         Active
                       </span>
                     </td>
-                    <td className="px-6 py-4.5 text-slate-500 text-xs" suppressHydrationWarning>
-                      {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                    <td className="px-6 py-4.5 text-right">
+                    <td className="py-4 px-6 text-right">
                       <button
                         onClick={() => handleDelete(sub._id)}
-                        className="p-2.5 hover:bg-red-500/10 text-red-500 rounded-xl transition-all"
-                        title="Unsubscribe / Remove Email"
+                        className="p-1.5 rounded-lg border border-zinc-200 hover:bg-rose-50 hover:text-rose-600 dark:border-white/10 dark:hover:bg-rose-500/10 text-zinc-400 transition-colors"
+                        title="Remove Subscriber"
                       >
-                        <UserMinus className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>

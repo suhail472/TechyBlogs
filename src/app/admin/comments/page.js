@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X as RejectIcon, Trash2, Loader2, MessageSquare, AlertCircle } from 'lucide-react';
+import { Check, X as RejectIcon, Trash2, Loader2, MessageSquare, AlertCircle, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
 import useToastStore from '@/store/useToastStore';
+import AdminHeader from '@/components/admin/AdminHeader';
+import EmptyState from '@/components/admin/EmptyState';
 
 export default function CommentsModeration() {
   const [comments, setComments] = useState([]);
@@ -25,9 +28,9 @@ export default function CommentsModeration() {
       if (data.success) {
         setComments(data.comments || []);
         if (data.pagination) {
-          setStats(prev => ({
+          setStats((prev) => ({
             ...prev,
-            total: data.pagination.total
+            total: data.pagination.total,
           }));
         }
       }
@@ -66,7 +69,7 @@ export default function CommentsModeration() {
       const data = await res.json();
       if (data.success) {
         addToast('Comment deleted successfully', 'success');
-        setComments(comments.filter(c => c._id !== id));
+        setComments(comments.filter((c) => c._id !== id));
       } else {
         throw new Error(data.message);
       }
@@ -77,35 +80,34 @@ export default function CommentsModeration() {
   };
 
   const statusColors = {
-    pending: 'text-amber-500 bg-amber-500/5 border-amber-500/10',
-    approved: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10',
-    rejected: 'text-rose-500 bg-rose-500/5 border-rose-500/10',
+    pending: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    approved: 'text-emerald-600 bg-emerald-500/10 border-emerald-500/20',
+    rejected: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
   };
 
   return (
-    <div>
-      <div className="mb-12">
-        <h1 className="text-4xl font-black tracking-tight mb-2 font-display text-slate-900 dark:text-white">Comments</h1>
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          Moderate discussions and filter comment postings.
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <AdminHeader
+        title="Discussion Moderation Queue"
+        breadcrumb={[{ label: 'Comment Queue' }]}
+      />
 
       {/* Tabs Filter */}
-      <div className="flex gap-2 mb-8 border-b border-zinc-200 dark:border-zinc-800/80 pb-4">
+      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-zinc-200/80 dark:border-white/10">
         {[
           { label: 'All Discussions', value: '' },
           { label: 'Pending Approval', value: 'pending' },
           { label: 'Approved', value: 'approved' },
-          { label: 'Rejected', value: 'rejected' },
+          { label: 'Rejected / Spam', value: 'rejected' },
         ].map((tab) => (
           <button
             key={tab.value}
             onClick={() => setFilter(tab.value)}
-            className={`px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
               filter === tab.value
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/10'
-                : 'text-zinc-550 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/40'
+                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
+                : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5'
             }`}
           >
             {tab.label}
@@ -113,103 +115,101 @@ export default function CommentsModeration() {
         ))}
       </div>
 
-      {/* Comment List */}
-      <div className="rounded-[2rem] border overflow-hidden bg-white border-zinc-200 shadow-xl shadow-zinc-200/30 dark:bg-zinc-800/20 dark:border-zinc-800 dark:shadow-none">
+      {/* Comments List */}
+      <div className="space-y-4">
         {loading ? (
-          <div className="p-16 text-center flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span className="text-slate-400 font-bold text-sm">Loading comments...</span>
+          <div className="py-20 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
+              Loading comment moderation queue...
+            </p>
           </div>
         ) : comments.length === 0 ? (
-          <div className="p-16 text-center text-slate-500 font-bold text-sm flex flex-col items-center gap-3">
-            <MessageSquare className="w-8 h-8 opacity-40 text-slate-400" />
-            <span>No comments found under this filter.</span>
-          </div>
+          <EmptyState
+            icon={MessageSquare}
+            title="No reader comments in this queue"
+            description="All reader discussions have been reviewed or no comments match your active filter."
+          />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-zinc-100 dark:border-zinc-800/80">
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 w-1/4">Author</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 w-1/3">Comment</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 w-1/6">Article Slug</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 w-1/12">Status</th>
-                  <th className="px-6 py-4.5 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right w-1/6">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80 text-sm font-medium">
-                <AnimatePresence>
-                  {comments.map((comment) => (
-                    <motion.tr
-                      key={comment._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="hover:bg-blue-500/5 transition-colors"
+          comments.map((comment) => (
+            <motion.div
+              key={comment._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-4"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100 dark:border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 flex items-center justify-center font-bold text-xs font-display">
+                    {comment.name ? comment.name[0] : 'R'}
+                  </div>
+                  <div>
+                    <span className="font-bold text-xs text-zinc-900 dark:text-white font-display">
+                      {comment.name}
+                    </span>
+                    <span className="text-[11px] text-zinc-400 ml-2">
+                      {new Date(comment.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border font-mono ${
+                      statusColors[comment.status] || statusColors.pending
+                    }`}
+                  >
+                    {comment.status}
+                  </span>
+
+                  {comment.postSlug && (
+                    <Link
+                      href={`/blog/${comment.postSlug}`}
+                      target="_blank"
+                      className="p-1 text-zinc-400 hover:text-red-600 transition-colors"
+                      title="View Article"
                     >
-                      <td className="px-6 py-4.5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-xs shrink-0">
-                            {comment.name.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div className="truncate max-w-[150px]">
-                            <p className="font-bold text-slate-900 dark:text-white">{comment.name}</p>
-                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
-                              {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4.5">
-                        <p className="text-xs text-slate-650 dark:text-zinc-300 font-medium max-w-xs break-words">
-                          {comment.text}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4.5">
-                        <span className="text-[10px] font-bold font-mono text-zinc-500 truncate max-w-[120px] block">
-                          {comment.slug}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4.5">
-                        <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full border ${statusColors[comment.status]}`}>
-                          {comment.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {comment.status !== 'approved' && (
-                            <button
-                              onClick={() => handleUpdateStatus(comment._id, 'approved')}
-                              className="p-2 text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all"
-                              title="Approve Comment"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
-                          {comment.status !== 'rejected' && (
-                            <button
-                              onClick={() => handleUpdateStatus(comment._id, 'rejected')}
-                              className="p-2 text-amber-500 hover:bg-amber-500/10 rounded-xl transition-all"
-                              title="Reject Comment"
-                            >
-                              <RejectIcon className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDelete(comment._id)}
-                            className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-                            title="Delete Comment"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
-          </div>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans">
+                {comment.content}
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                {comment.status !== 'approved' && (
+                  <button
+                    onClick={() => handleUpdateStatus(comment._id, 'approved')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Approve</span>
+                  </button>
+                )}
+
+                {comment.status !== 'rejected' && (
+                  <button
+                    onClick={() => handleUpdateStatus(comment._id, 'rejected')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <RejectIcon className="w-3.5 h-3.5" />
+                    <span>Reject</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleDelete(comment._id)}
+                  className="p-1.5 rounded-xl hover:bg-rose-500/10 text-zinc-400 hover:text-rose-600 transition-colors"
+                  title="Delete Comment"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          ))
         )}
       </div>
     </div>

@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
+import AdminHeader from '@/components/admin/AdminHeader';
+import EmptyState from '@/components/admin/EmptyState';
 
 const ROLES = [
   { id: 'contributor', label: 'Contributor', desc: 'Can create and submit drafts' },
@@ -134,30 +136,36 @@ export default function AuthorsPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight font-display">Editorial Team & Authors</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            Manage writer profiles, byline bios, expertise areas, and publishing permissions.
-          </p>
-        </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-500/25 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Add Team Member
-        </button>
-      </div>
+      <AdminHeader
+        title="Editorial Team & Staff Correspondents"
+        breadcrumb={[{ label: 'Staff Correspondents' }]}
+        actions={
+          <button
+            onClick={() => handleOpenModal()}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-red-600/20 shrink-0"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add Correspondent</span>
+          </button>
+        }
+      />
 
       {/* Author Cards Grid */}
       {loading ? (
         <div className="py-20 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Loading team members...</p>
+          <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+          <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Loading correspondents...</p>
         </div>
+      ) : authors.length === 0 ? (
+        <EmptyState
+          icon={Users}
+          title="No staff correspondents registered"
+          description="Add writers, editors, and correspondents to assign bylines and publishing permissions."
+          actionLabel="Add Correspondent"
+          onAction={() => handleOpenModal()}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {authors.map((author) => (
@@ -178,7 +186,7 @@ export default function AuthorsPage() {
                       <p className="text-xs text-zinc-400 mt-0.5">{author.email}</p>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 font-mono">
                     {author.role}
                   </span>
                 </div>

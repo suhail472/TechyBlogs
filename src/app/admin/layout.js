@@ -17,6 +17,9 @@ import {
   Users,
   Calendar,
   Sparkles,
+  FileText,
+  Compass,
+  Radio,
 } from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
 import TopLoader from '@/components/shared/TopLoader';
@@ -75,10 +78,12 @@ export default function AdminLayout({ children }) {
 
   if (verifying && !isAuthPage) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
-          <span className="text-zinc-500 font-bold text-sm">Authenticating editorial session...</span>
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA] dark:bg-[#0c0e12]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-red-600 border-t-transparent animate-spin" />
+          <span className="text-zinc-500 font-bold text-xs font-mono uppercase tracking-wider">
+            Authenticating Newsroom Session...
+          </span>
         </div>
       </div>
     );
@@ -90,44 +95,51 @@ export default function AdminLayout({ children }) {
 
   const menuSections = [
     {
-      title: 'Editorial',
+      title: 'OVERVIEW',
       items: [
-        { icon: LayoutDashboard, label: 'Workspace', path: '/admin' },
-        { icon: PlusCircle, label: 'New Story', path: '/admin/create' },
-        { icon: Calendar, label: 'Calendar', path: '/admin/calendar' },
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
       ],
     },
     {
-      title: 'Organization',
+      title: 'EDITORIAL',
       items: [
-        { icon: Layers, label: 'Taxonomy', path: '/admin/taxonomy' },
-        { icon: Users, label: 'Authors & Team', path: '/admin/authors' },
+        { icon: PlusCircle, label: 'Article Studio', path: '/admin/create' },
+        { icon: Calendar, label: 'Publishing Calendar', path: '/admin/calendar' },
       ],
     },
     {
-      title: 'Audience & Growth',
+      title: 'AUDIENCE & CRM',
       items: [
+        { icon: BarChart3, label: 'Editorial Analytics', path: '/admin/analytics' },
         {
           icon: MessageSquare,
-          label: 'Comments',
+          label: 'Comment Queue',
           path: '/admin/comments',
           badge: pendingCommentsCount > 0 ? pendingCommentsCount : null,
         },
-        { icon: Mail, label: 'Subscribers', path: '/admin/subscribers' },
-        { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
+        { icon: Mail, label: 'Briefing Subscribers', path: '/admin/subscribers' },
+      ],
+    },
+    {
+      title: 'PUBLICATION IA',
+      items: [
+        { icon: Layers, label: 'Taxonomy Architecture', path: '/admin/taxonomy' },
+        { icon: Users, label: 'Staff Correspondents', path: '/admin/authors' },
       ],
     },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 relative overflow-x-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#FAFAFA] text-zinc-900 dark:bg-[#0c0e12] dark:text-zinc-100 relative overflow-x-hidden font-sans">
       <TopLoader />
 
       {/* Mobile Top Bar */}
       <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-white/10 sticky top-0 z-20 w-full backdrop-blur-xl">
-        <Link href="/admin" className="text-xl font-black tracking-tight font-display text-zinc-900 dark:text-white flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-black">TB</span>
-          <span>Editorial <span className="text-blue-500 font-extrabold text-xs uppercase tracking-widest px-2 py-0.5 bg-blue-500/10 rounded-full">CMS</span></span>
+        <Link href="/admin" className="text-lg font-black tracking-tight font-display text-zinc-900 dark:text-white flex items-center gap-2">
+          <span className="w-7 h-7 rounded-lg bg-red-600 text-white flex items-center justify-center text-xs font-black shadow-sm shadow-red-600/20">
+            TB
+          </span>
+          <span>TeachyBlogs <span className="text-red-600 dark:text-red-400 text-[10px] uppercase font-mono tracking-wider ml-1">Newsroom</span></span>
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -140,23 +152,25 @@ export default function AdminLayout({ children }) {
 
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-zinc-900/95 border-r border-zinc-200/80 dark:border-white/10 p-6 flex flex-col justify-between transition-transform duration-300 backdrop-blur-xl lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 w-68 bg-white dark:bg-[#12151c] border-r border-zinc-200/80 dark:border-white/10 p-5 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:static'
         }`}
       >
         <div className="flex flex-col h-full overflow-y-auto pr-1">
-          {/* Logo & Role */}
+          {/* Logo & Newsroom Identity */}
           <div className="mb-8 hidden lg:block">
             <Link href="/admin" className="text-xl font-black tracking-tight font-display text-zinc-900 dark:text-white flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-lg shadow-blue-500/20">
+              <span className="w-8 h-8 rounded-xl bg-red-600 text-white flex items-center justify-center text-xs font-black shadow-md shadow-red-600/20">
                 TB
               </span>
               <div>
                 <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-bold">TeachyBlogs</span>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded">CMS</span>
+                  <span className="font-bold text-sm">TeachyBlogs</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-mono">
+                    Newsroom
+                  </span>
                 </div>
-                <p className="text-[11px] text-zinc-400 mt-1 font-medium">Publishing Newsroom</p>
+                <p className="text-[10px] text-zinc-400 mt-1 font-medium">Publishing Operating System</p>
               </div>
             </Link>
           </div>
@@ -165,10 +179,10 @@ export default function AdminLayout({ children }) {
           <div className="space-y-6 flex-1">
             {menuSections.map((section) => (
               <div key={section.title}>
-                <p className="text-[10px] uppercase font-black tracking-[0.18em] text-zinc-400 dark:text-zinc-500 mb-2 px-3">
+                <p className="text-[9px] uppercase font-black tracking-[0.2em] text-zinc-400 dark:text-zinc-500 mb-2 px-3 font-mono">
                   {section.title}
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {section.items.map((item) => {
                     const isActive = pathname === item.path;
                     const Icon = item.icon;
@@ -177,22 +191,22 @@ export default function AdminLayout({ children }) {
                         key={item.path}
                         href={item.path}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                           isActive
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
+                            ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-l-2 border-red-600 shadow-xs'
                             : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-4 h-4" />
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 ${isActive ? 'text-red-600 dark:text-red-400' : 'text-zinc-400'}`} />
                           <span>{item.label}</span>
                         </div>
                         {item.badge && (
                           <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                            className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono font-black ${
                               isActive
-                                ? 'bg-white text-blue-600'
-                                : 'bg-rose-500 text-white animate-pulse'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-red-500 text-white animate-pulse'
                             }`}
                           >
                             {item.badge}
@@ -206,15 +220,31 @@ export default function AdminLayout({ children }) {
             ))}
           </div>
 
-          {/* User Profile & Back to Site */}
-          <div className="pt-6 mt-6 border-t border-zinc-200/80 dark:border-white/10 space-y-2">
+          {/* User Profile & Back to Public Site */}
+          <div className="pt-5 mt-5 border-t border-zinc-200/80 dark:border-white/10 space-y-1.5">
+            <div className="px-3 py-2 rounded-xl bg-zinc-50 dark:bg-white/5 border border-zinc-200/60 dark:border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center text-[10px] font-black font-display shrink-0">
+                  {user?.name ? user.name[0] : 'E'}
+                </div>
+                <div className="truncate">
+                  <p className="text-[11px] font-bold text-zinc-900 dark:text-white truncate">
+                    {user?.name || 'Editor in Chief'}
+                  </p>
+                  <p className="text-[9px] text-zinc-400 uppercase font-mono">
+                    {user?.role || 'Admin'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <Link
               href="/"
               target="_blank"
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white transition-all"
             >
-              <HomeIcon className="w-4 h-4" />
-              <span>Public Live Site</span>
+              <HomeIcon className="w-3.5 h-3.5" />
+              <span>Public Live Site ↗</span>
             </Link>
 
             <button
@@ -222,9 +252,9 @@ export default function AdminLayout({ children }) {
                 logout();
                 router.push('/admin/login');
               }}
-              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-all"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
             </button>
           </div>

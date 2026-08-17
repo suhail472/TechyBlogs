@@ -17,6 +17,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { calendarAPI } from '@/services/api';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -97,30 +98,27 @@ export default function EditorialCalendarPage() {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight font-display">Editorial Publishing Calendar</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-            Track scheduled deadlines, upcoming stories, and publication cadence across all editions.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+      <AdminHeader
+        title="Editorial Publishing Calendar"
+        breadcrumb={[{ label: 'Publishing Calendar' }]}
+        actions={
           <Link
             href="/admin/create"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-blue-500/25 shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm shadow-red-600/20 shrink-0"
           >
-            <Plus className="w-4 h-4" /> Schedule New Story
+            <Plus className="w-3.5 h-3.5" />
+            <span>Schedule Story</span>
           </Link>
-        </div>
-      </div>
+        }
+      />
 
       {/* Calendar Controls */}
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-white/10 p-6 mb-8 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
-            {MONTH_NAMES[month]} <span className="text-blue-600">{year}</span>
+            {MONTH_NAMES[month]} <span className="text-red-600">{year}</span>
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -147,8 +145,8 @@ export default function EditorialCalendarPage() {
         {/* Calendar Grid */}
         {loading ? (
           <div className="py-24 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Syncing editorial schedule...</p>
+            <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+            <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">Syncing editorial schedule...</p>
           </div>
         ) : (
           <div>
@@ -185,13 +183,13 @@ export default function EditorialCalendarPage() {
                     onClick={() => setSelectedDay(d.day)}
                     className={`min-h-[120px] rounded-2xl p-2.5 border transition-all cursor-pointer flex flex-col justify-between ${
                       isToday
-                        ? 'border-blue-500 bg-blue-50/30 dark:bg-blue-500/5 ring-2 ring-blue-500/20'
+                        ? 'border-red-500 bg-red-50/30 dark:bg-red-500/5 ring-2 ring-red-500/20'
                         : 'border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900/60 hover:border-zinc-300 dark:hover:border-white/20'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
                       <span className={`text-xs font-black rounded-lg w-6 h-6 flex items-center justify-center ${
-                        isToday ? 'bg-blue-600 text-white' : 'text-zinc-700 dark:text-zinc-300'
+                        isToday ? 'bg-red-600 text-white' : 'text-zinc-700 dark:text-zinc-300'
                       }`}>
                         {d.day}
                       </span>
