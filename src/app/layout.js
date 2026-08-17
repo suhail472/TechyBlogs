@@ -1,8 +1,38 @@
+import { Manrope, Plus_Jakarta_Sans, Lora, Bodoni_Moda } from 'next/font/google';
 import ThemeInitializer from "@/components/shared/ThemeInitializer";
 import ToastContainer from "@/components/shared/ToastContainer";
 import BackToTop from "@/components/shared/BackToTop";
 import "./globals.css";
 import "katex/dist/katex.min.css";
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+  weight: ['500', '600', '700', '800'],
+});
+
+const lora = Lora({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  style: ['normal', 'italic'],
+});
+
+const bodoniModa = Bodoni_Moda({
+  subsets: ['latin'],
+  variable: '--font-accent',
+  display: 'swap',
+  weight: ['700', '800', '900'],
+});
 
 export const metadata = {
   metadataBase: new URL('https://teachyblogs.com'),
@@ -27,14 +57,12 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${manrope.variable} ${plusJakartaSans.variable} ${lora.variable} ${bodoniModa.variable} scroll-smooth`}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
         <script dangerouslySetInnerHTML={{ __html: `
           try {
             const storage = localStorage.getItem('theme-storage');
@@ -48,23 +76,14 @@ export default function RootLayout({ children }) {
             } else {
               document.documentElement.classList.add('dark');
             }
-          } catch (_) {}
+          } catch (e) {
+            document.documentElement.classList.add('dark');
+          }
         `}} />
       </head>
-      <body
-        className="antialiased min-h-screen transition-colors duration-300 bg-zinc-50 dark:bg-[#0b0f19] text-zinc-900 dark:text-zinc-100 relative overflow-x-hidden"
-        suppressHydrationWarning
-      >
+      <body className="min-h-screen bg-white dark:bg-[#0c0e12] text-zinc-900 dark:text-zinc-100 antialiased selection:bg-red-500/20 selection:text-red-600 dark:selection:text-red-400 font-sans">
         <ThemeInitializer />
-        
-        {/* Animated background blobs for premium depth */}
-        <div className="absolute top-0 left-[-10%] w-[50%] h-[500px] bg-gradient-to-br from-blue-500/8 via-indigo-500/5 to-transparent dark:from-blue-500/4 dark:via-indigo-500/3 blur-[120px] rounded-full pointer-events-none -z-10 animate-blob-drift" />
-        <div className="absolute top-[30%] right-[-10%] w-[45%] h-[500px] bg-gradient-to-br from-indigo-500/8 via-violet-500/5 to-transparent dark:from-indigo-500/4 dark:via-indigo-500/2 blur-[120px] rounded-full pointer-events-none -z-10 animate-blob-drift-reverse" />
-        <div className="absolute bottom-0 left-[-5%] w-[45%] h-[500px] bg-gradient-to-br from-violet-500/8 via-fuchsia-500/5 to-transparent dark:from-violet-500/3 dark:via-fuchsia-500/2 blur-[120px] rounded-full pointer-events-none -z-10 animate-blob-drift" />
-        
-        <div className="relative z-10 flex flex-col min-h-screen">
-          {children}
-        </div>
+        {children}
         <ToastContainer />
         <BackToTop />
       </body>

@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Mail,
   ChevronRight,
+  Feather,
 } from 'lucide-react';
 import EditorialCard from '@/components/shared/EditorialCard';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -101,7 +102,7 @@ export default function EditorialHome({ posts = [] }) {
       {breaking.length > 0 && (
         <div className="bg-zinc-950 text-white border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 overflow-x-auto no-scrollbar">
-            <span className="shrink-0 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 px-2 py-0.5 rounded-md shadow-sm">
+            <span className="shrink-0 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 px-2.5 py-0.5 rounded-md shadow-sm">
               <Flame className="w-3 h-3" /> Breaking
             </span>
             <div className="h-3.5 w-px bg-white/20 shrink-0" />
@@ -124,11 +125,12 @@ export default function EditorialHome({ posts = [] }) {
       )}
 
       <div className="max-w-7xl mx-auto px-6 md:px-10">
-        {/* 2. Tightened, High-Information Publication Masthead */}
+        {/* 2. High-Information Publication Masthead */}
         <div className="py-4 md:py-6 border-b border-zinc-200/80 dark:border-white/10 flex flex-wrap justify-between items-center gap-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] font-black text-zinc-500 dark:text-zinc-400">
-              Independent Digital Publishing · Technology, General Desks & Regional Bureaus
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-red-600" />
+            <p className="text-[11px] uppercase tracking-[0.24em] font-black text-zinc-600 dark:text-zinc-400">
+              Independent Digital Publishing · Global Desks & Regional Bureaus
             </p>
           </div>
           <div className="text-[11px] font-mono font-medium text-zinc-400 dark:text-zinc-500">
@@ -136,7 +138,7 @@ export default function EditorialHome({ posts = [] }) {
           </div>
         </div>
 
-        {/* 3. Hero Ensemble: 7 cols Lead (Dominant) + 5 cols Most Read (Scannable) */}
+        {/* 3. Hero Ensemble: 7 cols Dominant Lead + 5 cols Most Read */}
         {heroStory && (
           <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 pt-6 pb-10 border-b border-zinc-200/80 dark:border-white/10">
             {/* Primary Lead Story (7 cols) */}
@@ -144,7 +146,7 @@ export default function EditorialHome({ posts = [] }) {
               <EditorialCard blog={heroStory} variant="lead" priority={true} />
             </div>
 
-            {/* Most Read / Trending Sidebar (5 cols) */}
+            {/* Most Read Sidebar (5 cols) */}
             <aside className="lg:col-span-5 space-y-4">
               <div className="flex items-center justify-between pb-2.5 border-b-2 border-zinc-950 dark:border-white">
                 <div className="flex items-center gap-2">
@@ -153,8 +155,8 @@ export default function EditorialHome({ posts = [] }) {
                     Most Read Stories
                   </h2>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
-                  Popular Feed
+                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 font-mono">
+                  Trending Feed
                 </span>
               </div>
 
@@ -192,10 +194,12 @@ export default function EditorialHome({ posts = [] }) {
                   <Cpu className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-black text-zinc-900 dark:text-white">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 block">
+                    Engineering Desk
+                  </span>
+                  <h2 className="font-display text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
                     Technology & AI Systems
                   </h2>
-                  <p className="text-xs text-zinc-500 font-medium">Software engineering, Next.js architecture, and hardware benchmarks</p>
                 </div>
               </div>
               <Link
@@ -226,7 +230,7 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 6. Kashmir Regional Bureau Section (Seamlessly Matching Site Theme) */}
+        {/* 6. Kashmir Regional Bureau Section */}
         {kashmirLayout.shouldRender && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
@@ -235,10 +239,12 @@ export default function EditorialHome({ posts = [] }) {
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-black text-zinc-900 dark:text-white">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 block">
+                    Regional Bureau
+                  </span>
+                  <h2 className="font-display text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
                     Kashmir Regional Bureau
                   </h2>
-                  <p className="text-xs text-zinc-500 font-medium">Srinagar Smart City, higher education notifications, Dal Lake heritage, and valley economics</p>
                 </div>
               </div>
               <Link
@@ -278,10 +284,12 @@ export default function EditorialHome({ posts = [] }) {
                   <GraduationCap className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-black text-zinc-900 dark:text-white">
-                    Education & Admissions
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 block">
+                    Admissions & Academic Notices
+                  </span>
+                  <h2 className="font-display text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
+                    Education & Academia
                   </h2>
-                  <p className="text-xs text-zinc-500 font-medium">Entrance exam notifications, university guides, and academic insights</p>
                 </div>
               </div>
               <Link
@@ -321,10 +329,12 @@ export default function EditorialHome({ posts = [] }) {
                   <Star className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="font-display text-2xl font-black text-zinc-900 dark:text-white">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 block">
+                    Hardware Scorecards & Testing
+                  </span>
+                  <h2 className="font-display text-2xl md:text-3xl font-black text-zinc-900 dark:text-white">
                     Gear Lab & Reviews
                   </h2>
-                  <p className="text-xs text-zinc-500 font-medium">Hardware benchmarks, software analysis, and hands-on scorecards</p>
                 </div>
               </div>
               <Link
@@ -347,12 +357,15 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 9. Columns, Opinions & Analysis + Newsletter Dispatch */}
+        {/* 9. Columns, Opinions & Cultural Perspective */}
         <section className="py-12 grid lg:grid-cols-12 gap-10">
           <div className="lg:col-span-7 space-y-6">
             <div className="pb-3 border-b-2 border-zinc-950 dark:border-white">
-              <h2 className="font-display font-black text-2xl text-zinc-900 dark:text-white">
-                Opinions & Cultural Columns
+              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-red-600 dark:text-red-400 block mb-1">
+                Columnists & Analysis
+              </span>
+              <h2 className="font-serif text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">
+                Opinions & Perspective
               </h2>
             </div>
             <div className="space-y-4">
@@ -363,9 +376,12 @@ export default function EditorialHome({ posts = [] }) {
           </div>
 
           <aside className="lg:col-span-5 rounded-3xl bg-zinc-950 text-white p-8 self-start border border-white/10 shadow-2xl space-y-5">
-            <span className="text-[10px] uppercase tracking-[0.24em] text-red-400 font-black">
-              The Morning Briefing
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-600" />
+              <span className="text-[10px] uppercase tracking-[0.24em] text-red-400 font-black">
+                The Morning Briefing
+              </span>
+            </div>
             <h2 className="font-display text-2xl sm:text-3xl font-black leading-tight text-white">
               Essential journalism, directly in your inbox.
             </h2>

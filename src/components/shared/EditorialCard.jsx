@@ -32,7 +32,7 @@ const getCategoryLabel = (blog) => {
 };
 
 /**
- * EditorialCard — Composable publication card system
+ * EditorialCard — 10/10 World-Class Publication Card System
  * Supports variants: 'lead', 'spotlight-single', 'featured', 'horizontal', 'compact', 'trending', 'review', 'review-spotlight', 'opinion'
  */
 export default function EditorialCard({
@@ -53,7 +53,7 @@ export default function EditorialCard({
 
   if (!blog) return null;
 
-  // 1. LEAD HERO VARIANT
+  // 1. LEAD HERO VARIANT (Commanding visual hero)
   if (variant === 'lead') {
     return (
       <article className={`group relative flex flex-col justify-between ${className}`}>
@@ -65,32 +65,32 @@ export default function EditorialCard({
               category={category}
               title={blog.title}
               priority={priority}
-              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             {badge && (
-              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full ${badge.classes}`}>
+              <span className={`absolute top-4 left-4 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-md ${badge.classes}`}>
                 {badge.type === 'breaking' && <Flame className="w-3 h-3" />}
                 {badge.type === 'developing' && <Activity className="w-3 h-3" />}
                 <span>{badge.label}</span>
               </span>
             )}
-            <div className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-zinc-950/80 text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md">
-              <ArrowUpRight className="w-3.5 h-3.5" />
+            <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-zinc-950/80 text-white backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md">
+              <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 dark:text-red-400">
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[11px] font-black uppercase tracking-[0.22em] text-red-600 dark:text-red-400">
                 {category}
               </span>
-              <span className="text-zinc-300 dark:text-zinc-700 text-xs">/</span>
-              <span className="text-xs text-zinc-500 font-medium">{dateText}</span>
-              <span className="text-zinc-300 dark:text-zinc-700 text-xs">/</span>
-              <span className="text-xs text-zinc-500 font-medium">{readingTime} min read</span>
+              <span className="text-zinc-300 dark:text-zinc-700">/</span>
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium">{dateText}</span>
+              <span className="text-zinc-300 dark:text-zinc-700">/</span>
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium">{readingTime} min read</span>
             </div>
 
-            <h2 className="font-display text-2xl sm:text-3xl lg:text-[2.25rem] font-black leading-[1.14] tracking-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+            <h2 className="font-display text-2xl sm:text-3xl lg:text-[2.4rem] font-black leading-[1.12] tracking-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">
               {blog.title}
             </h2>
 
@@ -107,7 +107,7 @@ export default function EditorialCard({
                 </div>
                 <div className="text-xs">
                   <span className="font-bold text-zinc-900 dark:text-white">{blog.author || 'Editorial Bureau'}</span>
-                  <span className="text-zinc-400 text-[11px] ml-1.5 font-medium">· Staff Writer</span>
+                  <span className="text-zinc-400 text-[11px] ml-1.5 font-medium">· Staff Correspondent</span>
                 </div>
               </div>
             )}
@@ -117,7 +117,7 @@ export default function EditorialCard({
     );
   }
 
-  // 2. SPOTLIGHT SINGLE VARIANT (For desk sections with exactly 1 story)
+  // 2. SPOTLIGHT SINGLE VARIANT (For desk sections with 1 story)
   if (variant === 'spotlight-single') {
     return (
       <article className={`group rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-white/10 p-6 md:p-8 transition-all hover:shadow-xl ${className}`}>
@@ -128,10 +128,10 @@ export default function EditorialCard({
               alt={blog.title}
               category={category}
               title={blog.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             {badge && (
-              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-full ${badge.classes}`}>
+              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-md ${badge.classes}`}>
                 <span>{badge.label}</span>
               </span>
             )}
@@ -148,7 +148,7 @@ export default function EditorialCard({
               <span className="text-zinc-500 font-medium">{readingTime} min read</span>
             </div>
 
-            <h3 className="font-display text-2xl sm:text-3xl font-black leading-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+            <h3 className="font-display text-2xl sm:text-3xl font-black leading-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">
               {blog.title}
             </h3>
 
@@ -160,8 +160,8 @@ export default function EditorialCard({
 
             <div className="flex items-center justify-between pt-3 border-t border-zinc-200/80 dark:border-white/10 text-xs">
               <span className="font-bold text-zinc-800 dark:text-zinc-200">{blog.author || 'Staff Writer'}</span>
-              <span className="text-red-600 dark:text-red-400 font-bold flex items-center gap-1">
-                Read Story <ChevronRight className="w-4 h-4" />
+              <span className="text-red-600 dark:text-red-400 font-bold flex items-center gap-1 group-hover:gap-1.5 transition-all">
+                Read Full Story <ChevronRight className="w-4 h-4" />
               </span>
             </div>
           </div>
@@ -170,12 +170,12 @@ export default function EditorialCard({
     );
   }
 
-  // 3. TRENDING / MOST READ VARIANT (01 to 05, subtle number, strong headline)
+  // 3. TRENDING / MOST READ VARIANT (Interactive numbered ranking)
   if (variant === 'trending') {
     const formattedRank = rank < 10 ? `0${rank}` : `${rank}`;
     return (
       <article className={`group flex items-start gap-3.5 py-3.5 border-b border-zinc-100 dark:border-white/5 last:border-0 ${className}`}>
-        <span className="font-mono text-xs font-bold text-zinc-400 dark:text-zinc-500 select-none shrink-0 w-6 pt-0.5">
+        <span className="font-mono text-sm font-bold text-zinc-400 dark:text-zinc-500 group-hover:text-red-600 transition-colors duration-200 select-none shrink-0 w-7 pt-0.5">
           {formattedRank}
         </span>
         <div className="space-y-1 flex-1 min-w-0">
@@ -183,7 +183,7 @@ export default function EditorialCard({
             {category}
           </span>
           <Link href={`/blog/${blog.slug}`} className="block">
-            <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
+            <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200 line-clamp-2">
               {blog.title}
             </h4>
           </Link>
@@ -210,7 +210,7 @@ export default function EditorialCard({
               <span className="text-xs text-zinc-500 font-medium">{dateText}</span>
             </div>
 
-            <h3 className="font-display text-base sm:text-lg font-bold leading-snug text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+            <h3 className="font-display text-base sm:text-lg font-bold leading-snug text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">
               {blog.title}
             </h3>
 
@@ -237,7 +237,7 @@ export default function EditorialCard({
               alt={blog.title}
               category={category}
               title={blog.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
           </div>
         </Link>
@@ -245,7 +245,7 @@ export default function EditorialCard({
     );
   }
 
-  // 5. REVIEW SPOTLIGHT VARIANT (Full width 2-column layout when 1 review is present)
+  // 5. REVIEW SPOTLIGHT VARIANT (Rich scorecard benchmark)
   if (variant === 'review-spotlight') {
     const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
     const pros = blog.contentMetadata?.reviewMetadata?.pros || [];
@@ -261,7 +261,7 @@ export default function EditorialCard({
               alt={blog.title}
               category={category}
               title={blog.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             <div className="absolute top-4 right-4 bg-zinc-950/90 text-white backdrop-blur-md px-3 py-1.5 rounded-xl text-sm font-black font-display flex items-center gap-1.5 shadow-lg border border-white/10">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
@@ -279,12 +279,12 @@ export default function EditorialCard({
               <span className="text-xs text-zinc-500 font-medium">{dateText}</span>
             </div>
 
-            <h3 className="font-display text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">
               {blog.title}
             </h3>
 
             {verdict && (
-              <p className="text-sm text-zinc-600 dark:text-zinc-300 italic leading-relaxed border-l-2 border-amber-500 pl-3.5">
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 italic leading-relaxed border-l-2 border-amber-500 pl-3.5 font-serif">
                 "{verdict}"
               </p>
             )}
@@ -320,7 +320,7 @@ export default function EditorialCard({
     );
   }
 
-  // 6. STANDARD REVIEW SCORECARD VARIANT (For 2+ review items in grid)
+  // 6. STANDARD REVIEW SCORECARD VARIANT (For 2+ reviews)
   if (variant === 'review') {
     const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
     return (
@@ -332,7 +332,7 @@ export default function EditorialCard({
               alt={blog.title}
               category={category}
               title={blog.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             <div className="absolute top-3 right-3 bg-zinc-950/90 text-white backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-black font-display flex items-center gap-1 shadow-md">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -343,11 +343,11 @@ export default function EditorialCard({
             <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">
               Gear Review
             </span>
-            <h3 className="font-display text-base font-bold text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 mt-1 line-clamp-2">
+            <h3 className="font-display text-base font-bold text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 mt-1 line-clamp-2 transition-colors duration-200">
               {blog.title}
             </h3>
             {blog.contentMetadata?.reviewMetadata?.verdict && (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic mt-2 line-clamp-2">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 italic mt-2 line-clamp-2 font-serif">
                 "{blog.contentMetadata.reviewMetadata.verdict}"
               </p>
             )}
@@ -357,7 +357,7 @@ export default function EditorialCard({
     );
   }
 
-  // 7. OPINION / COLUMNIST VARIANT
+  // 7. OPINION / COLUMNIST VARIANT (Literary Serif Voice)
   if (variant === 'opinion') {
     return (
       <article className={`group border-l-2 border-red-600 pl-4 py-2 space-y-2 ${className}`}>
@@ -367,14 +367,14 @@ export default function EditorialCard({
           </span>
         </div>
         <Link href={`/blog/${blog.slug}`} className="block">
-          <h3 className="font-serif text-lg font-bold leading-snug text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+          <h3 className="font-serif text-lg sm:text-xl font-bold leading-snug text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">
             {blog.title}
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
             {blog.excerpt}
           </p>
         </Link>
-        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 pt-1">
+        <p className="text-xs font-bold text-zinc-700 dark:text-zinc-300 pt-1 font-sans">
           By {blog.author || 'Editorial Columnist'}
         </p>
       </article>
@@ -393,7 +393,7 @@ export default function EditorialCard({
             <span className="text-zinc-400 text-[10px]">·</span>
             <span className="text-[10px] text-zinc-400">{dateText}</span>
           </div>
-          <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
+          <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200 line-clamp-2">
             {blog.title}
           </h4>
         </Link>
@@ -401,29 +401,9 @@ export default function EditorialCard({
     );
   }
 
-  // 9. DEFAULT: FEATURED CARD (With high-contrast support for dark sections)
-  const containerClasses = isDarkSection
-    ? 'bg-zinc-950/80 border-white/15 text-white shadow-md shadow-black/40'
-    : 'bg-white dark:bg-zinc-900/60 border-zinc-200/80 dark:border-white/10 text-zinc-900 dark:text-white';
-
-  const headingClasses = isDarkSection
-    ? 'text-white group-hover:text-red-400'
-    : 'text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400';
-
-  const excerptClasses = isDarkSection
-    ? 'text-zinc-300 font-medium'
-    : 'text-zinc-500 dark:text-zinc-400';
-
-  const metaClasses = isDarkSection
-    ? 'text-zinc-400 border-white/10'
-    : 'text-zinc-400 border-zinc-100 dark:border-white/5';
-
-  const authorClasses = isDarkSection
-    ? 'text-zinc-200 font-bold'
-    : 'text-zinc-600 dark:text-zinc-400 font-bold';
-
+  // 9. DEFAULT: FEATURED CARD
   return (
-    <article className={`group flex flex-col justify-between rounded-2xl border overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${containerClasses} ${className}`}>
+    <article className={`group flex flex-col justify-between rounded-2xl border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl bg-white dark:bg-zinc-900/60 border-zinc-200/80 dark:border-white/10 text-zinc-900 dark:text-white ${className}`}>
       <Link href={`/blog/${blog.slug}`} className="block">
         <div className="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative">
           <EditorialImage
@@ -431,10 +411,10 @@ export default function EditorialCard({
             alt={blog.title}
             category={category}
             title={blog.title}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
           />
           {badge && (
-            <span className={`absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${badge.classes}`}>
+            <span className={`absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${badge.classes}`}>
               <span>{badge.label}</span>
             </span>
           )}
@@ -442,24 +422,24 @@ export default function EditorialCard({
 
         <div className="p-5 sm:p-6 space-y-2.5">
           <div className="flex items-center justify-between gap-2 text-xs">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500 dark:text-red-400">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
               {category}
             </span>
-            <span className="text-[11px] font-medium opacity-70">{dateText}</span>
+            <span className="text-[11px] text-zinc-400 font-medium">{dateText}</span>
           </div>
 
-          <h3 className={`font-display text-lg font-bold leading-snug transition-colors line-clamp-2 ${headingClasses}`}>
+          <h3 className="font-display text-lg font-bold leading-snug transition-colors duration-200 line-clamp-2 text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">
             {blog.title}
           </h3>
 
           {showExcerpt && (
-            <p className={`text-xs sm:text-sm line-clamp-2 leading-relaxed font-sans ${excerptClasses}`}>
+            <p className="text-xs sm:text-sm line-clamp-2 leading-relaxed font-sans text-zinc-500 dark:text-zinc-400">
               {blog.excerpt}
             </p>
           )}
 
-          <div className={`flex items-center justify-between pt-3 border-t text-[11px] font-medium ${metaClasses}`}>
-            <span className={`truncate max-w-[150px] ${authorClasses}`}>
+          <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-white/5 text-[11px] text-zinc-400 font-medium">
+            <span className="truncate max-w-[150px] font-bold text-zinc-700 dark:text-zinc-300">
               {blog.author || 'Staff Writer'}
             </span>
             <span className="flex items-center gap-1 opacity-80">
