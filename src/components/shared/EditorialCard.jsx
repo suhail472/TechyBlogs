@@ -32,7 +32,7 @@ const getCategoryLabel = (blog) => {
 
 /**
  * EditorialCard — Composable card system for TeachyBlogs
- * Supports variants: 'lead', 'featured', 'horizontal', 'compact', 'trending', 'review', 'opinion'
+ * Supports variants: 'lead', 'featured', 'horizontal', 'compact', 'trending', 'review', 'review-spotlight', 'opinion'
  */
 export default function EditorialCard({
   blog,
@@ -41,6 +41,7 @@ export default function EditorialCard({
   showExcerpt = true,
   showAuthor = true,
   priority = false,
+  isDarkSection = false,
   className = '',
 }) {
   const readingTime = useMemo(() => getReadingTime(blog?.content || blog?.excerpt || ''), [blog]);
@@ -189,27 +190,82 @@ export default function EditorialCard({
     );
   }
 
-  // 4. COMPACT FEED VARIANT
-  if (variant === 'compact') {
+  // 4. REVIEW SPOTLIGHT VARIANT (Full width 2-column layout when 1 review is present)
+  if (variant === 'review-spotlight') {
+    const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
+    const pros = blog.contentMetadata?.reviewMetadata?.pros || [];
+    const cons = blog.contentMetadata?.reviewMetadata?.cons || [];
+    const verdict = blog.contentMetadata?.reviewMetadata?.verdict;
+
     return (
-      <article className={`group py-3 border-b border-zinc-200/60 dark:border-white/5 last:border-0 ${className}`}>
-        <Link href={`/blog/${blog.slug}`} className="block space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black uppercase tracking-[0.16em] text-red-600 dark:text-red-400">
-              {category}
-            </span>
-            <span className="text-zinc-400 text-[10px]">·</span>
-            <span className="text-[10px] text-zinc-400">{dateText}</span>
+      <article className={`group rounded-3xl bg-zinc-50 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 p-6 md:p-8 transition-all hover:shadow-xl ${className}`}>
+        <Link href={`/blog/${blog.slug}`} className="grid lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-6 aspect-[16/10] rounded-2xl overflow-hidden bg-zinc-200 dark:bg-zinc-800 relative">
+            <EditorialImage
+              src={blog.image}
+              alt={blog.title}
+              category={category}
+              title={blog.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute top-4 right-4 bg-zinc-950/90 text-white backdrop-blur-md px-3 py-1.5 rounded-xl text-sm font-black font-display flex items-center gap-1.5 shadow-lg border border-white/10">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span>{rating}</span>
+              <span className="text-zinc-400 text-[10px]">/ 5.0</span>
+            </div>
           </div>
-          <h4 className="font-display text-sm font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
-            {blog.title}
-          </h4>
+
+          <div className="lg:col-span-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">
+                Editorial Review Spotlight
+              </span>
+              <span className="text-zinc-300 dark:text-zinc-700 text-xs">/</span>
+              <span className="text-xs text-zinc-500 font-medium">{dateText}</span>
+            </div>
+
+            <h3 className="font-display text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+              {blog.title}
+            </h3>
+
+            {verdict && (
+              <p className="text-sm text-zinc-600 dark:text-zinc-300 italic leading-relaxed border-l-2 border-amber-500 pl-3.5">
+                "{verdict}"
+              </p>
+            )}
+
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+              {blog.excerpt}
+            </p>
+
+            {(pros.length > 0 || cons.length > 0) && (
+              <div className="grid sm:grid-cols-2 gap-3 pt-2">
+                {pros.slice(0, 2).map((p, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="font-bold">+</span>
+                    <span className="truncate">{p}</span>
+                  </div>
+                ))}
+                {cons.slice(0, 2).map((c, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400 font-medium">
+                    <span className="font-bold">−</span>
+                    <span className="truncate">{c}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pt-2 text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5 group-hover:gap-2 transition-all">
+              <span>Read complete scorecard & benchmarks</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
         </Link>
       </article>
     );
   }
 
-  // 5. REVIEW SCORECARD VARIANT
+  // 5. STANDARD REVIEW SCORECARD VARIANT (For 2+ review items in grid)
   if (variant === 'review') {
     const rating = blog.contentMetadata?.reviewMetadata?.rating || 4.8;
     return (
@@ -270,9 +326,29 @@ export default function EditorialCard({
     );
   }
 
-  // DEFAULT: FEATURED CARD
+  // 7. FEATURED CARD (With high-contrast support for dark sections)
+  const containerClasses = isDarkSection
+    ? 'bg-zinc-950/80 border-white/15 text-white shadow-md shadow-black/40'
+    : 'bg-white dark:bg-zinc-900/60 border-zinc-200/80 dark:border-white/10 text-zinc-900 dark:text-white';
+
+  const headingClasses = isDarkSection
+    ? 'text-white group-hover:text-red-400'
+    : 'text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400';
+
+  const excerptClasses = isDarkSection
+    ? 'text-zinc-300 font-medium'
+    : 'text-zinc-500 dark:text-zinc-400';
+
+  const metaClasses = isDarkSection
+    ? 'text-zinc-400 border-white/10'
+    : 'text-zinc-400 border-zinc-100 dark:border-white/5';
+
+  const authorClasses = isDarkSection
+    ? 'text-zinc-200 font-bold'
+    : 'text-zinc-600 dark:text-zinc-400 font-bold';
+
   return (
-    <article className={`group flex flex-col justify-between bg-white dark:bg-zinc-900/60 rounded-2xl border border-zinc-200/80 dark:border-white/10 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-zinc-950/5 dark:hover:shadow-black/20 ${className}`}>
+    <article className={`group flex flex-col justify-between rounded-2xl border overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${containerClasses} ${className}`}>
       <Link href={`/blog/${blog.slug}`} className="block">
         <div className="aspect-[16/10] overflow-hidden bg-zinc-100 dark:bg-zinc-800 relative">
           <EditorialImage
@@ -291,27 +367,27 @@ export default function EditorialCard({
 
         <div className="p-5 sm:p-6 space-y-2.5">
           <div className="flex items-center justify-between gap-2 text-xs">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-red-500 dark:text-red-400">
               {category}
             </span>
-            <span className="text-zinc-400 text-[11px] font-medium">{dateText}</span>
+            <span className="text-[11px] font-medium opacity-70">{dateText}</span>
           </div>
 
-          <h3 className="font-display text-lg font-bold leading-snug text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors line-clamp-2">
+          <h3 className={`font-display text-lg font-bold leading-snug transition-colors line-clamp-2 ${headingClasses}`}>
             {blog.title}
           </h3>
 
           {showExcerpt && (
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed font-sans">
+            <p className={`text-xs sm:text-sm line-clamp-2 leading-relaxed font-sans ${excerptClasses}`}>
               {blog.excerpt}
             </p>
           )}
 
-          <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-white/5 text-[11px] text-zinc-400 font-medium">
-            <span className="font-bold text-zinc-600 dark:text-zinc-400 truncate max-w-[150px]">
+          <div className={`flex items-center justify-between pt-3 border-t text-[11px] font-medium ${metaClasses}`}>
+            <span className={`truncate max-w-[150px] ${authorClasses}`}>
               {blog.author || 'Staff Writer'}
             </span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 opacity-80">
               <Clock className="w-3 h-3" /> {readingTime}m
             </span>
           </div>

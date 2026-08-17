@@ -9,67 +9,62 @@ import {
   Star,
   BookOpen,
   FileText,
-  Sparkles,
   Newspaper,
-  Layers,
 } from 'lucide-react';
 
-/**
- * Category-based fallback motifs and color palettes
- */
 const CATEGORY_THEMES = {
   education: {
     icon: GraduationCap,
     label: 'Education & Admissions',
-    bg: 'from-blue-950/80 via-slate-900 to-indigo-950',
+    bg: 'from-slate-900 via-blue-950/50 to-zinc-950',
     border: 'border-blue-500/20',
-    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    badge: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
     accent: 'text-blue-400',
   },
   technology: {
     icon: Cpu,
     label: 'Technology & AI',
-    bg: 'from-zinc-950 via-slate-900 to-zinc-900',
+    bg: 'from-zinc-900 via-slate-950 to-zinc-950',
     border: 'border-cyan-500/20',
-    badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
     accent: 'text-cyan-400',
   },
   kashmir: {
     icon: MapPin,
     label: 'Kashmir Bureau',
-    bg: 'from-zinc-950 via-emerald-950/40 to-slate-900',
+    bg: 'from-zinc-950 via-emerald-950/30 to-zinc-900',
     border: 'border-emerald-500/20',
-    badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
     accent: 'text-emerald-400',
   },
   travel: {
     icon: Compass,
     label: 'Travel & Heritage',
-    bg: 'from-amber-950/40 via-stone-900 to-zinc-950',
+    bg: 'from-stone-900 via-amber-950/30 to-zinc-950',
     border: 'border-amber-500/20',
-    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
     accent: 'text-amber-400',
   },
   review: {
     icon: Star,
     label: 'Gear Lab & Review',
-    bg: 'from-zinc-950 via-neutral-900 to-zinc-900',
+    bg: 'from-zinc-900 via-neutral-950 to-zinc-950',
     border: 'border-amber-500/20',
-    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
     accent: 'text-amber-400',
   },
   news: {
     icon: Newspaper,
     label: 'News & Reporting',
-    bg: 'from-zinc-950 via-slate-900 to-zinc-900',
+    bg: 'from-zinc-900 via-red-950/30 to-zinc-950',
     border: 'border-red-500/20',
-    badge: 'bg-red-500/10 text-red-400 border-red-500/20',
+    badge: 'bg-red-500/10 text-red-400 border-red-500/30',
     accent: 'text-red-400',
   },
   default: {
     icon: FileText,
     label: 'Editorial Feature',
-    bg: 'from-zinc-950 via-slate-900 to-zinc-900',
+    bg: 'from-zinc-900 via-zinc-950 to-black',
     border: 'border-white/10',
     badge: 'bg-white/10 text-zinc-300 border-white/15',
     accent: 'text-zinc-400',
@@ -89,8 +84,8 @@ const resolveTheme = (category = '', title = '') => {
 
 /**
  * EditorialImage Component
- * Robust image loader that automatically handles missing, broken, or failed remote images
- * by rendering an intentional, category-driven editorial placeholder instead of a broken browser icon.
+ * Clean, restrained image loader with automatic onError fallback that renders
+ * a quiet, non-competing editorial backdrop instead of broken-image states.
  */
 export default function EditorialImage({
   src,
@@ -98,9 +93,7 @@ export default function EditorialImage({
   category = '',
   title = '',
   className = 'w-full h-full object-cover',
-  aspectRatio = '',
   priority = false,
-  showTitleInFallback = true,
 }) {
   const [imageError, setImageError] = useState(!src || src.trim() === '');
   const theme = resolveTheme(category, title);
@@ -109,41 +102,37 @@ export default function EditorialImage({
   if (imageError) {
     return (
       <div
-        className={`w-full h-full min-h-[160px] bg-gradient-to-br ${theme.bg} ${theme.border} border p-6 flex flex-col justify-between relative overflow-hidden select-none`}
+        className={`w-full h-full min-h-[140px] bg-gradient-to-br ${theme.bg} ${theme.border} border p-5 flex flex-col justify-between relative overflow-hidden select-none`}
         role="img"
         aria-label={alt || title || theme.label}
       >
-        {/* Subtle geometric background watermark */}
-        <div className="absolute -right-8 -bottom-8 opacity-10 pointer-events-none">
-          <IconComponent className="w-48 h-48 text-white" />
-        </div>
+        {/* Subtle, non-intrusive top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
-        {/* Top Kicker / Badge */}
+        {/* Minimalist Top Category Badge */}
         <div className="flex items-center justify-between z-10">
           <span
-            className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border ${theme.badge}`}
+            className={`inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-0.5 rounded-md border ${theme.badge}`}
           >
-            <IconComponent className="w-3.5 h-3.5" />
+            <IconComponent className="w-3 h-3" />
             <span>{category || theme.label}</span>
           </span>
-          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500 font-display">
-            TeachyBlogs Dispatch
+          <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">
+            Dispatch
           </span>
         </div>
 
-        {/* Center / Bottom Editorial Watermark Text */}
-        {showTitleInFallback && title && (
-          <div className="z-10 mt-4 max-w-lg">
-            <p className="font-display font-black text-white/90 text-sm md:text-base leading-snug line-clamp-2">
-              {title}
-            </p>
+        {/* Quiet, minimalist icon seal in center */}
+        <div className="flex items-center justify-center my-auto py-2 opacity-25">
+          <div className="w-10 h-10 rounded-xl border border-white/10 flex items-center justify-center">
+            <IconComponent className="w-5 h-5 text-white" />
           </div>
-        )}
+        </div>
 
-        {/* Bottom subtle rule */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/5 text-[10px] text-zinc-400 z-10">
-          <span className="font-semibold text-zinc-400 font-sans">Editorial Coverage</span>
-          <span className="text-zinc-500 font-mono">TeachyBlogs Bureau</span>
+        {/* Bottom subtle masthead rule */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[9px] text-zinc-500 z-10 font-mono">
+          <span>TeachyBlogs</span>
+          <span>Editorial Bureau</span>
         </div>
       </div>
     );

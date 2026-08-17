@@ -91,7 +91,7 @@ export default function EditorialHome({ posts = [] }) {
 
   return (
     <main className="pt-24 pb-20">
-      {/* 1. Restrained Breaking / Developing Ticker */}
+      {/* 1. Restrained Breaking Ticker (Only renders if genuinely breaking stories exist) */}
       {breaking.length > 0 && (
         <div className="bg-zinc-950 text-white border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 overflow-x-auto no-scrollbar">
@@ -200,7 +200,7 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={`grid gap-6 ${techStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
               {techStories.slice(0, 3).map((post) => (
                 <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
               ))}
@@ -208,18 +208,18 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 6. Kashmir Regional Bureau Spotlight */}
+        {/* 6. Kashmir Regional Bureau Spotlight (High-Contrast Presentation) */}
         {kashmirStories.length > 0 && (
-          <section className="my-12 rounded-3xl bg-zinc-900 text-white p-6 sm:p-10 relative overflow-hidden border border-white/10 shadow-2xl">
+          <section className="my-12 rounded-3xl bg-zinc-950 text-white p-6 sm:p-10 relative overflow-hidden border border-white/15 shadow-2xl">
             <div className="flex flex-wrap items-end justify-between gap-4 mb-8 pb-6 border-b border-white/15">
               <div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-red-400 mb-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.24em] text-emerald-400 mb-2">
                   <MapPin className="w-3.5 h-3.5" /> Regional Bureau Spotlight
                 </span>
                 <h2 className="font-display text-3xl sm:text-4xl font-black tracking-tight text-white">
                   Kashmir Edition Dispatch
                 </h2>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1 font-sans">
+                <p className="text-xs sm:text-sm text-zinc-300 mt-1 font-sans">
                   Srinagar Smart City, higher education notifications, Dal Lake heritage, and valley economics.
                 </p>
               </div>
@@ -231,13 +231,13 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={`grid gap-6 ${kashmirStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
               {kashmirStories.slice(0, 3).map((post) => (
                 <EditorialCard
                   key={String(post._id || post.slug)}
                   blog={post}
                   variant="featured"
-                  className="bg-zinc-950/70 border-white/10 text-white"
+                  isDarkSection={true}
                 />
               ))}
             </div>
@@ -267,7 +267,7 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className={`grid gap-6 ${educationStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
               {educationStories.slice(0, 3).map((post) => (
                 <EditorialCard key={String(post._id || post.slug)} blog={post} variant="featured" />
               ))}
@@ -275,7 +275,7 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 8. Gear Lab & Product Reviews */}
+        {/* 8. Gear Lab & Product Reviews (Adaptive Density: Spotlight if 1, Grid if 2+) */}
         {reviewStories.length > 0 && (
           <section className="py-12 border-b border-zinc-200/80 dark:border-white/10">
             <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b-2 border-zinc-950 dark:border-white">
@@ -298,11 +298,16 @@ export default function EditorialHome({ posts = [] }) {
               </Link>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reviewStories.slice(0, 3).map((post) => (
-                <EditorialCard key={String(post._id || post.slug)} blog={post} variant="review" />
-              ))}
-            </div>
+            {/* Adaptive layout: if only 1 review, render full spotlight; if 2+, render grid */}
+            {reviewStories.length === 1 ? (
+              <EditorialCard blog={reviewStories[0]} variant="review-spotlight" />
+            ) : (
+              <div className={`grid gap-6 ${reviewStories.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+                {reviewStories.slice(0, 3).map((post) => (
+                  <EditorialCard key={String(post._id || post.slug)} blog={post} variant="review" />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
