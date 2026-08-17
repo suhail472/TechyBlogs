@@ -206,6 +206,9 @@ export const taxonomyAPI = {
     const endpoint = `/taxonomy${query ? '?' + query : ''}`;
     return apiCall(endpoint, { method: 'GET' });
   },
+  getOverview: async () => {
+    return apiCall('/taxonomy/overview', { method: 'GET' });
+  },
   getHierarchy: async (kind = 'topic') => {
     return apiCall(`/taxonomy/hierarchy?kind=${encodeURIComponent(kind)}`, { method: 'GET' });
   },
@@ -224,6 +227,18 @@ export const taxonomyAPI = {
   delete: async (id) => {
     return apiCall(`/taxonomy/${id}`, {
       method: 'DELETE',
+    });
+  },
+  mergeTags: async (sourceTag, targetTag) => {
+    return apiCall('/taxonomy/merge-tags', {
+      method: 'POST',
+      body: JSON.stringify({ sourceTag, targetTag }),
+    });
+  },
+  reassignArticles: async (sourceId, targetId) => {
+    return apiCall('/taxonomy/reassign', {
+      method: 'POST',
+      body: JSON.stringify({ sourceId, targetId }),
     });
   },
 };
