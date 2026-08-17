@@ -327,7 +327,36 @@ export const calendarAPI = {
       method: 'POST',
       body: JSON.stringify({ action: 'update_planning', postId, data }),
     });
+// Community Comments Moderation API
+export const commentAPI = {
+  getMetrics: async () => {
+    return apiCall('/admin/comments/metrics', { method: 'GET' });
+  },
+  getQueue: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/comments${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+  getThread: async (id) => {
+    return apiCall(`/comments/${id}/thread`, { method: 'GET' });
+  },
+  moderate: async (id, action, note = '') => {
+    return apiCall(`/comments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ action, note }),
+    });
+  },
+  report: async (id, reason) => {
+    return apiCall(`/comments/${id}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+  bulkModerate: async (commentIds, action) => {
+    return apiCall('/comments/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ commentIds, action }),
+    });
   },
 };
 
-export default { authAPI, postAPI, taxonomyAPI, authorAPI, workflowAPI, searchAPI, calendarAPI };
+export default { authAPI, postAPI, taxonomyAPI, authorAPI, workflowAPI, searchAPI, calendarAPI, commentAPI };
