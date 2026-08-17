@@ -54,6 +54,11 @@ import {
   Activity,
   Trash2,
   GripVertical,
+  Image as ImageIcon,
+  Link2,
+  Terminal,
+  Play,
+  FileCode,
 } from 'lucide-react';
 import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
@@ -80,7 +85,6 @@ export default function BlogEditor({ id }) {
   const { addToast } = useToastStore();
   const [loading, setLoading] = useState(!!id);
   const [submitting, setSubmitting] = useState(false);
-  const [tagInput, setTagInput] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
   const [isSlugManual, setIsSlugManual] = useState(false);
 
@@ -88,8 +92,12 @@ export default function BlogEditor({ id }) {
   const [viewMode, setViewMode] = useState('write');
   const [inspectorOpen, setInspectorOpen] = useState(false); // Closed by default
   const [focusMode, setFocusMode] = useState(false);
-  const [splitRatio, setSplitRatio] = useState(50); // percentage for editor in split mode (30-70)
+  const [splitRatio, setSplitRatio] = useState(50); // percentage for editor in split mode (25-75)
   const isDraggingSplitRef = useRef(false);
+
+  // Inserter Modals: null, 'image', 'link', 'table', 'math', 'mermaid', 'callout', 'quiz', 'code'
+  const [activeModal, setActiveModal] = useState(null);
+  const [modalInput, setModalInput] = useState({ url: '', alt: '', text: '', title: '', code: '' });
 
   // Accordion open states inside inspector
   const [openSections, setOpenSections] = useState({
@@ -116,7 +124,6 @@ export default function BlogEditor({ id }) {
   // Autosave & Validation State
   const [lastSavedTime, setLastSavedTime] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [localBackupAvailable, setLocalBackupAvailable] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
 
   const textareaRef = useRef(null);
@@ -292,14 +299,15 @@ export default function BlogEditor({ id }) {
       }
       // Escape: close modals / inspector
       if (e.key === 'Escape') {
-        if (inspectorOpen) setInspectorOpen(false);
-        if (publishModalOpen) setPublishModalOpen(false);
+        if (activeModal) setActiveModal(null);
+        else if (inspectorOpen) setInspectorOpen(false);
+        else if (publishModalOpen) setPublishModalOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [formData, inspectorOpen, publishModalOpen]);
+  }, [formData, inspectorOpen, publishModalOpen, activeModal]);
 
   // Auto-generate slug from title if not manual
   const handleTitleChange = (e) => {
@@ -394,6 +402,23 @@ export default function BlogEditor({ id }) {
     }, 10);
   };
 
+  // Modal Inserter Submit Handlers
+  const handleInsertImage = () => {
+    if (!modalInput.url) return;
+    const alt = modalInput.alt || 'Article visual';
+    insertTextAtCursor(`\n![${alt}](${modalInput.url})\n`);
+    setActiveModal(null);
+    setModalInput({ url: '', alt: '', text: '', title: '', code: '' });
+  };
+
+  const handleInsertLink = () => {
+    if (!modalInput.url) return;
+    const text = modalInput.text || 'Link description';
+    insertTextAtCursor(`[${text}](${modalInput.url})`);
+    setActiveModal(null);
+    setModalInput({ url: '', alt: '', text: '', title: '', code: '' });
+  };
+
   // Save handler
   const handleSave = async (targetStatus = 'draft') => {
     if (!formData.title?.trim()) {
@@ -478,6 +503,85 @@ export default function BlogEditor({ id }) {
       </div>
     );
   }
+
+  // Render Toolbar Component (shared between Write and Split modes)
+  const renderToolbar = () => (
+    <div className="sticky top-0 z-10 bg-white/95 dark:bg-[#12151c]/95 backdrop-blur-md py-2 px-1 border-y border-zinc-200/80 dark:border-white/10 flex flex-wrap items-center gap-1">
+      {/* Headings */}
+      <div className="flex items-center gap-0.5 pr-1.5 border-r border-zinc-200 dark:border-white/10">
+        <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
+      </div>
+
+      {/* Inline Formatting */}
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+        <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('~~', '~~')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Strikethrough"><Strikethrough className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Inline Code"><Code className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Blockquote"><Quote className="w-3.5 h-3.5" /></button>
+      </div>
+
+      {/* Media & Link Inserts */}
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+        <button
+          type="button"
+          onClick={() => setActiveModal('image')}
+          className="p-1.5 rounded-lg hover:bg-red-500/10 hover:text-red-600 text-zinc-700 dark:text-zinc-300 flex items-center gap-1 font-bold text-xs transition-colors"
+          title="Insert Article Image"
+        >
+          <ImageIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+          <span className="hidden sm:inline">Image</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveModal('link')}
+          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 flex items-center gap-1 text-xs"
+          title="Insert Hyperlink"
+        >
+          <Link2 className="w-3.5 h-3.5 text-blue-500" />
+          <span className="hidden sm:inline">Link</span>
+        </button>
+      </div>
+
+      {/* Lists & Dividers */}
+      <div className="flex items-center gap-0.5 px-1.5 border-r border-zinc-200 dark:border-white/10">
+        <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-3.5 h-3.5" /></button>
+        <button type="button" onClick={() => insertTextAtCursor('\n---\n\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Horizontal Divider"><Minus className="w-3.5 h-3.5" /></button>
+      </div>
+
+      {/* Rich Component Inserters */}
+      <div className="flex items-center gap-1 pl-1 text-xs text-zinc-500 font-bold">
+        <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <TableIcon className="w-3 h-3 text-purple-500" /> Table
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor('```javascript\n// Code snippet\nconsole.log("TeachyBlogs Engineering");\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <FileCode className="w-3 h-3 text-amber-500" /> Code Block
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor('$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <Sigma className="w-3 h-3 text-emerald-500" /> Math LaTeX
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor('```mermaid\ngraph TD\n  A[Input] --> B[Processing]\n  B --> C[Result]\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <GitBranch className="w-3 h-3 text-indigo-500" /> Diagram
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor(':::note\nImportant editorial takeaway or context note.\n:::\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <Info className="w-3 h-3 text-blue-500" /> Callout
+        </button>
+
+        <button type="button" onClick={() => insertTextAtCursor('```js playground\n// Interactive executable sandbox\nconst msg = "Welcome to TeachyBlogs Sandbox";\nconsole.log(msg);\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
+          <Play className="w-3 h-3 text-rose-500" /> Sandbox
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className={`min-h-screen bg-[#FAFAFA] dark:bg-[#0c0e12] text-zinc-900 dark:text-zinc-100 flex flex-col font-sans ${focusMode ? 'fixed inset-0 z-50 overflow-hidden' : ''}`}>
@@ -636,42 +740,8 @@ export default function BlogEditor({ id }) {
                 />
               </div>
 
-              {/* Restrained Markdown Toolbar */}
-              <div className="sticky top-0 z-10 bg-white/90 dark:bg-[#12151c]/90 backdrop-blur-md py-2 border-y border-zinc-200/80 dark:border-white/10 flex flex-wrap items-center gap-1">
-                <div className="flex items-center gap-0.5 pr-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('# ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 1"><Heading1 className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('## ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 2"><Heading2 className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('### ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Heading 3"><Heading3 className="w-3.5 h-3.5" /></button>
-                </div>
-
-                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('**', '**')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bold (Ctrl+B)"><Bold className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('*', '*')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Italic (Ctrl+I)"><Italic className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('`', '`')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Inline Code"><Code className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('> ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Blockquote"><Quote className="w-3.5 h-3.5" /></button>
-                </div>
-
-                <div className="flex items-center gap-0.5 px-2 border-r border-zinc-200 dark:border-white/10">
-                  <button type="button" onClick={() => insertTextAtCursor('- ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Bullet List"><List className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('1. ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Numbered List"><ListOrdered className="w-3.5 h-3.5" /></button>
-                  <button type="button" onClick={() => insertTextAtCursor('- [ ] ', '\n')} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300" title="Task List"><CheckSquare className="w-3.5 h-3.5" /></button>
-                </div>
-
-                <div className="flex items-center gap-1 pl-2 text-xs text-zinc-500 font-bold">
-                  <button type="button" onClick={() => insertTextAtCursor('\n| Column 1 | Column 2 |\n|---|---|\n| Item 1 | Item 2 |\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
-                    <TableIcon className="w-3 h-3" /> Table
-                  </button>
-                  <button type="button" onClick={() => insertTextAtCursor('$$\n', '\n$$')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
-                    <Sigma className="w-3 h-3" /> Math
-                  </button>
-                  <button type="button" onClick={() => insertTextAtCursor('```mermaid\ngraph TD\n  A[Start] --> B[Finish]\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
-                    <GitBranch className="w-3 h-3" /> Diagram
-                  </button>
-                  <button type="button" onClick={() => insertTextAtCursor(':::note\n', '\n:::')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1">
-                    <Info className="w-3 h-3" /> Callout
-                  </button>
-                </div>
-              </div>
+              {/* Toolbar */}
+              {renderToolbar()}
 
               {/* Full-width Markdown Body Textarea */}
               <textarea
@@ -716,6 +786,10 @@ export default function BlogEditor({ id }) {
                   className="w-full text-xs font-medium text-zinc-500 bg-transparent border-none outline-none"
                 />
               </div>
+
+              {/* Toolbar inside split pane */}
+              {renderToolbar()}
+
               <textarea
                 ref={textareaRef}
                 value={formData.content}
@@ -1168,7 +1242,143 @@ export default function BlogEditor({ id }) {
         </div>
       </footer>
 
-      {/* 5. PUBLISH CONFIRMATION & HEALTH CHECK MODAL */}
+      {/* 5. MODAL: INSERT IMAGE */}
+      <AnimatePresence>
+        {activeModal === 'image' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-red-600" />
+                  <h3 className="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                    Insert Image in Story
+                  </h3>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Image URL</label>
+                  <input
+                    type="text"
+                    value={modalInput.url}
+                    onChange={(e) => setModalInput((prev) => ({ ...prev, url: e.target.value }))}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Alt Text / Description</label>
+                  <input
+                    type="text"
+                    value={modalInput.alt}
+                    onChange={(e) => setModalInput((prev) => ({ ...prev, alt: e.target.value }))}
+                    placeholder="Brief description of the graphic or photo..."
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleInsertImage}
+                  disabled={!modalInput.url}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  Insert Image
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 6. MODAL: INSERT LINK */}
+      <AnimatePresence>
+        {activeModal === 'link' && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-[#12151c] border border-zinc-200 dark:border-white/10 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-white/10">
+                <div className="flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-blue-500" />
+                  <h3 className="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                    Insert Hyperlink
+                  </h3>
+                </div>
+                <button onClick={() => setActiveModal(null)} className="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Destination URL</label>
+                  <input
+                    type="text"
+                    value={modalInput.url}
+                    onChange={(e) => setModalInput((prev) => ({ ...prev, url: e.target.value }))}
+                    placeholder="https://example.com/..."
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono font-bold text-zinc-400 uppercase block mb-1">Link Anchor Text</label>
+                  <input
+                    type="text"
+                    value={modalInput.text}
+                    onChange={(e) => setModalInput((prev) => ({ ...prev, text: e.target.value }))}
+                    placeholder="Display text..."
+                    className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModal(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleInsertLink}
+                  disabled={!modalInput.url}
+                  className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                >
+                  Insert Link
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 7. PUBLISH CONFIRMATION & HEALTH CHECK MODAL */}
       <AnimatePresence>
         {publishModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
