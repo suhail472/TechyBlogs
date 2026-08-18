@@ -433,6 +433,35 @@ export const campaignAPI = {
   },
 };
 
+// Newsroom Intelligence & Analytics API
+export const analyticsAPI = {
+  getOverview: async (range = '30d') => {
+    return apiCall(`/admin/analytics?range=${range}`, { method: 'GET' });
+  },
+  getContent: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/admin/analytics/content${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+  getDesks: async (range = '30d') => {
+    return apiCall(`/admin/analytics/desks?range=${range}`, { method: 'GET' });
+  },
+  getAuthors: async (range = '30d') => {
+    return apiCall(`/admin/analytics/authors?range=${range}`, { method: 'GET' });
+  },
+  getTiming: async () => {
+    return apiCall('/admin/analytics/timing', { method: 'GET' });
+  },
+  getArticleDetail: async (id) => {
+    return apiCall(`/admin/analytics/article/${id}`, { method: 'GET' });
+  },
+  recordEvent: async (eventData) => {
+    return apiCall('/analytics/events', {
+      method: 'POST',
+      body: JSON.stringify(eventData),
+    });
+  },
+};
+
 export default {
   authAPI,
   postAPI,
@@ -444,4 +473,5 @@ export default {
   commentAPI,
   subscriberAPI,
   campaignAPI,
+  analyticsAPI,
 };

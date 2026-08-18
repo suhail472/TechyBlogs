@@ -11,18 +11,13 @@ export async function GET(req) {
     await verifyAuth(req);
 
     const { searchParams } = new URL(req.url);
-    const range = searchParams.get('range') || '30d';
+    const desk = searchParams.get('desk') || 'all';
+    const sortBy = searchParams.get('sortBy') || 'views';
+    const page = parseInt(searchParams.get('page'), 10) || 1;
+    const limit = parseInt(searchParams.get('limit'), 10) || 10;
 
-    const [overview, traffic] = await Promise.all([
-      analyticsService.getOverviewMetrics(range),
-      analyticsService.getTrafficTimeSeries(range),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      ...overview,
-      ...traffic,
-    }, { status: 200 });
+    const data = await analyticsService.getContentPerformance({ desk }, sortBy, page, limit);
+    return NextResponse.json({ success: true, ...data }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }

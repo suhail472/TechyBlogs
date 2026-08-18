@@ -10,19 +10,8 @@ export async function GET(req) {
     await connectToDatabase();
     await verifyAuth(req);
 
-    const { searchParams } = new URL(req.url);
-    const range = searchParams.get('range') || '30d';
-
-    const [overview, traffic] = await Promise.all([
-      analyticsService.getOverviewMetrics(range),
-      analyticsService.getTrafficTimeSeries(range),
-    ]);
-
-    return NextResponse.json({
-      success: true,
-      ...overview,
-      ...traffic,
-    }, { status: 200 });
+    const data = await analyticsService.getPublishingTimingInsights();
+    return NextResponse.json({ success: true, ...data }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error.message }, { status: 400 });
   }
