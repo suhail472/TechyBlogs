@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import BlogsClient from '@/components/pages/BlogsClient';
 
 export const metadata = {
@@ -25,7 +25,7 @@ export default async function BlogsPage(props) {
 
   try {
     await connectToDatabase();
-    const posts = await Post.find({ status: 'published' })
+    const posts = await Post.find(getPublicPostFilter())
       .sort({ publishedAt: -1 })
       .populate('primarySection', 'name slug')
       .populate('editions', 'name slug')

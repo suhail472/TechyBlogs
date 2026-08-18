@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import TagsClient from '@/components/pages/TagsClient';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
@@ -24,7 +24,7 @@ export default async function TagsPage() {
   try {
     await connectToDatabase();
 
-    const posts = await Post.find({ status: 'published' })
+    const posts = await Post.find(getPublicPostFilter())
       .select('tags categories')
       .lean();
 

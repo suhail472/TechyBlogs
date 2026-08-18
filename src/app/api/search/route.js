@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import Admin from '@/lib/models/admin.model';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -23,59 +23,71 @@ export async function GET(req) {
     try {
       await connectToDatabase();
 
-      const query = { status: 'published' };
+      const extra = {};
+      const andConditions = [];
 
       if (q) {
         const regex = new RegExp(q.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'i');
-        query.$or = [
-          { title: regex },
-          { excerpt: regex },
-          { tags: regex },
-          { categories: regex },
-          { author: regex },
-        ];
+        andConditions.push({
+          $or: [
+            { title: regex },
+            { excerpt: regex },
+            { tags: regex },
+            { categories: regex },
+            { author: regex },
+          ],
+        });
       }
 
       if (section) {
         const secDoc = await Taxonomy.findOne({ slug: section, kind: 'section' });
         if (secDoc) {
-          query.$or = [{ primarySection: secDoc._id }, { sections: secDoc._id }, { categories: secDoc.name }];
+          andConditions.push({
+            $or: [{ primarySection: secDoc._id }, { sections: secDoc._id }, { categories: secDoc.name }],
+          });
         } else {
-          query.categories = new RegExp(section, 'i');
+          extra.categories = new RegExp(section, 'i');
         }
       }
 
       if (edition) {
         const edDoc = await Taxonomy.findOne({ slug: edition, kind: 'edition' });
         if (edDoc) {
-          query.editions = edDoc._id;
+          extra.editions = edDoc._id;
         }
       }
 
       if (contentType && contentType !== 'all') {
-        query.contentType = contentType;
+        extra.contentType = contentType;
       }
 
       if (tag) {
-        query.tags = tag;
+        extra.tags = tag;
       }
 
       if (author) {
-        query.author = new RegExp(author, 'i');
+        extra.author = new RegExp(author, 'i');
       }
+
+      // Build the final query with embargo protection
+      const baseFilter = getPublicPostFilter(extra);
+      const query = andConditions.length > 0
+        ? { $and: [baseFilter, ...andConditions] }
+        : baseFilter;
 
       let sort = { publishedAt: -1 };
       if (sortBy === 'oldest') sort = { publishedAt: 1 };
       if (sortBy === 'popular') sort = { views: -1, likes: -1 };
       if (sortBy === 'trending') sort = { trendingScore: -1, publishedAt: -1 };
 
-      const skip = (page - 1) * limit;
+      const boundedLimit = Math.min(Math.max(1, limit), 50);
+      const skip = (page - 1) * boundedLimit;
 
       const [posts, total] = await Promise.all([
         Post.find(query)
           .sort(sort)
           .skip(skip)
-          .limit(limit)
+          .limit(boundedLimit)
           .populate('primarySection', 'name slug')
           .populate('editions', 'name slug')
           .populate('primaryAuthor', 'name slug avatar')

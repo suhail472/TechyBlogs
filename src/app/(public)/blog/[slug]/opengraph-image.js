@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 
 export const runtime = 'nodejs';
 
@@ -16,7 +16,7 @@ export default async function Image({ params }) {
   const { slug } = await params;
   
   await connectToDatabase();
-  const post = await Post.findOne({ slug, status: 'published' }).lean();
+  const post = await Post.findOne(getPublicPostFilter({ slug })).lean();
 
   if (!post) {
     return new ImageResponse(
