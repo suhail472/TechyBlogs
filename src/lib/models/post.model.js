@@ -287,4 +287,15 @@ postSchema.index(
 );
 
 const Post = mongoose.models.Post || mongoose.model('Post', postSchema);
+
+export function getPublicPostFilter(extra = {}) {
+  const now = new Date();
+  return {
+    status: { $in: ['published', 'updated'] },
+    publishedAt: { $lte: now },
+    $or: [{ embargoUntil: null }, { embargoUntil: { $lte: now } }],
+    ...extra,
+  };
+}
+
 export default Post;

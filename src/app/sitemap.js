@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import Admin from '@/lib/models/admin.model';
 import { DEFAULT_STORIES, DEFAULT_AUTHORS } from '@/data/defaultStories';
@@ -24,7 +24,7 @@ export default async function sitemap() {
     await connectToDatabase();
 
     const [posts, sections, editions, topics, regions, authors] = await Promise.all([
-      Post.find({ status: 'published' })
+      Post.find(getPublicPostFilter({ 'seo.indexable': { $ne: false } }))
         .select('slug updatedAt publishedAt')
         .sort({ publishedAt: -1 })
         .lean(),

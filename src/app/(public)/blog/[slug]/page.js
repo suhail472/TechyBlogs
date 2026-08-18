@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import PostClient from '@/components/pages/PostClient';
 import { notFound } from 'next/navigation';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -11,7 +11,7 @@ export async function generateMetadata({ params }) {
   let blog = null;
   try {
     await connectToDatabase();
-    blog = await Post.findOne({ slug, status: 'published' })
+    blog = await Post.findOne(getPublicPostFilter({ slug }))
       .populate('primaryTopic', 'name slug')
       .populate('primaryRegion', 'name slug')
       .lean();
@@ -99,7 +99,7 @@ export default async function SingleBlogPage({ params }) {
 
   try {
     await connectToDatabase();
-    blog = await Post.findOne({ slug, status: 'published' })
+    blog = await Post.findOne(getPublicPostFilter({ slug }))
       .populate('primaryAuthor', 'name slug avatar bio role expertise')
       .populate('primaryTopic', 'name slug ancestors')
       .populate('primaryRegion', 'name slug isHub type ancestors')
@@ -111,10 +111,9 @@ export default async function SingleBlogPage({ params }) {
       .lean();
 
     if (blog) {
-      const query = {
-        status: 'published',
+      const query = getPublicPostFilter({
         slug: { $ne: slug },
-      };
+      });
 
       if (blog.primaryTopic) {
         query.$or = [{ primaryTopic: blog.primaryTopic._id }, { topics: blog.primaryTopic._id }];
@@ -130,10 +129,11 @@ export default async function SingleBlogPage({ params }) {
       allRelated = relatedPosts;
       if (allRelated.length < 3) {
         const excludeSlugs = [slug, ...allRelated.map((p) => p.slug)];
-        const extraPosts = await Post.find({
-          status: 'published',
-          slug: { $nin: excludeSlugs },
-        })
+        const extraPosts = await Post.find(
+          getPublicPostFilter({
+            slug: { $nin: excludeSlugs },
+          })
+        )
           .populate('primaryTopic', 'name slug')
           .populate('primaryRegion', 'name slug')
           .sort({ publishedAt: -1 })

@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import EditorialHome from '@/components/pages/EditorialHome';
 
 export const metadata = {
@@ -28,10 +28,10 @@ export default async function HomePage() {
   try {
     await connectToDatabase();
     
-    // Fetch published articles
-    const posts = await Post.find({ status: 'published' })
+    // Fetch published non-embargoed articles
+    const posts = await Post.find(getPublicPostFilter())
       .sort({ publishedAt: -1 })
-      .limit(12)
+      .limit(18)
       .populate('primarySection', 'name slug')
       .populate('editions', 'name slug')
       .populate('primaryAuthor', 'name slug avatar')

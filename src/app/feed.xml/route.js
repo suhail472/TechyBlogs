@@ -1,15 +1,27 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 
 const SITE_URL = 'https://teachyblogs.com';
+
+function escapeXml(unsafe) {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+    }
+  });
+}
 
 export async function GET() {
   let posts = [];
   try {
     await connectToDatabase();
 
-    posts = await Post.find({ status: 'published' })
+    posts = await Post.find(getPublicPostFilter())
       .sort({ publishedAt: -1 })
       .select('title slug excerpt author publishedAt image')
       .lean();
