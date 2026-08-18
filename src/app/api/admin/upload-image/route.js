@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import authService from '@/lib/services/auth.service';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export async function POST(req) {
@@ -11,7 +11,7 @@ export async function POST(req) {
     }
     const token = authHeader.split(' ')[1];
     try {
-      jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+      authService.verifyToken(token);
     } catch (err) {
       return NextResponse.json({ success: false, message: 'Invalid or expired session token' }, { status: 401 });
     }
