@@ -38,6 +38,26 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans), system-ui, sans-serif !important;
 }
 
+/* Force Prose and Typography to fill 100% of the allocated column width */
+.prose,
+.prose-sm,
+.prose-base,
+.prose-lg,
+.prose-xl,
+.prose-2xl {
+  max-width: 100% !important;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose table,
+.prose pre,
+.prose div {
+  max-width: 100% !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

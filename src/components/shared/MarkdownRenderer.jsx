@@ -284,7 +284,7 @@ export default function MarkdownRenderer({
   return (
     <div
       ref={containerRef}
-      className={`prose prose-zinc dark:prose-invert max-w-none ${typographyClass} ${className}`}
+      className={`prose prose-zinc dark:prose-invert ${typographyClass} !max-w-none w-full ${className}`}
       dangerouslySetInnerHTML={{ __html: htmlContent }}
     />
   );

@@ -404,18 +404,18 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
       {/* Body Content Grid */}
       <article className="container mx-auto px-6 md:px-12 max-w-[1400px]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Main prose column filling full allocated width */}
-          <div className="lg:col-span-8 w-full">
+          <div className="lg:col-span-8 xl:col-span-9 w-full min-w-0">
             {/* Collapsible Reading Toolbar */}
-            <div className="mb-10">
+            <div className="mb-10 w-full">
               <ReaderSettings content={blog.content} />
             </div>
 
             {/* Tutorial & Guide Meta Bar */}
             {(blog.contentType === 'tutorial' || blog.contentType === 'guide') &&
               blog.contentMetadata?.tutorialMetadata && (
-                <div className="mb-8 p-5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 grid sm:grid-cols-3 gap-4 text-xs">
+                <div className="mb-8 p-5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 grid sm:grid-cols-3 gap-4 text-xs w-full">
                   <div>
                     <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-1">
                       Difficulty Level
@@ -445,14 +445,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
             {/* News & Reporting Note */}
             {blog.contentType === 'news' && blog.editorNote && (
-              <div className="mb-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300">
+              <div className="mb-8 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-300 w-full">
                 <span className="font-black uppercase tracking-wider text-[10px] block mb-1">Editor's Note</span>
                 <p className="leading-relaxed">{blog.editorNote}</p>
               </div>
             )}
 
             {/* Main Long-form Prose Body */}
-            <div ref={contentRef} className="text-zinc-800 dark:text-zinc-200 font-serif leading-[1.8] text-[17px] sm:text-[18px]">
+            <div ref={contentRef} className="w-full text-zinc-800 dark:text-zinc-200 font-serif leading-[1.8] text-[17px] sm:text-[18px]">
               <MarkdownRenderer
                 content={blog.content}
                 typography={typography}
@@ -673,7 +673,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
           </div>
 
           {/* Sidebar Supporting Rail */}
-          <aside className="lg:col-span-4 space-y-3.5 w-full">
+          <aside className="lg:col-span-4 xl:col-span-3 space-y-3.5 w-full">
             {/* Unified Article Utility Actions Rail */}
             <div className="p-2.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
               <button
