@@ -404,9 +404,9 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
       {/* Body Content Grid */}
       <article className="container mx-auto px-6 md:px-12 max-w-[1400px]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          {/* Main prose column with comfortable measure (680-760px) */}
-          <div className="lg:col-span-8 max-w-[760px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+          {/* Main prose column filling full allocated width */}
+          <div className="lg:col-span-8 w-full">
             {/* Collapsible Reading Toolbar */}
             <div className="mb-10">
               <ReaderSettings content={blog.content} />
@@ -622,7 +622,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             {/* Dynamic FAQs accordion */}
             {blog.faqs && blog.faqs.length > 0 && (
               <section className="mt-16 border-t border-zinc-200/80 dark:border-white/10 pt-14">
-                <div className="max-w-3xl">
+                <div className="w-full">
                   <h2 className="text-2xl font-black font-display tracking-tight text-zinc-900 dark:text-white mb-2">
                     Frequently Asked Questions
                   </h2>
@@ -673,7 +673,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
           </div>
 
           {/* Sidebar Supporting Rail */}
-          <aside className="lg:col-span-4 space-y-3.5 max-w-sm ml-auto w-full">
+          <aside className="lg:col-span-4 space-y-3.5 w-full">
             {/* Unified Article Utility Actions Rail */}
             <div className="p-2.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
               <button
