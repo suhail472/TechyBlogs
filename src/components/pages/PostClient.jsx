@@ -404,9 +404,9 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
       {/* Body Content Grid */}
       <article className="container mx-auto px-6 md:px-12 max-w-[1400px]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
           {/* Main prose column with comfortable measure (680-760px) */}
-          <div className="lg:col-span-8 max-w-[740px]">
+          <div className="lg:col-span-8 max-w-[760px]">
             {/* Collapsible Reading Toolbar */}
             <div className="mb-10">
               <ReaderSettings content={blog.content} />
@@ -673,72 +673,72 @@ export default function PostClient({ blog, relatedPosts = [] }) {
           </div>
 
           {/* Sidebar Supporting Rail */}
-          <aside className="lg:col-span-4 space-y-6">
+          <aside className="lg:col-span-4 space-y-3.5 max-w-sm ml-auto w-full">
             {/* Unified Article Utility Actions Rail */}
-            <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
+            <div className="p-2.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
               <button
                 onClick={handleLikeClick}
-                className={`flex flex-col items-center gap-1 transition-all group ${
+                className={`flex flex-col items-center gap-0.5 transition-all group ${
                   liked ? 'text-rose-500' : 'text-zinc-500 hover:text-rose-500'
                 }`}
               >
-                <Heart className={`w-4 h-4 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
-                <span className="text-[9px] font-black tracking-wider uppercase">{likesCount} Likes</span>
+                <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
+                <span className="text-[8.5px] font-black tracking-wider uppercase">{likesCount} Likes</span>
               </button>
-              <div className="h-6 w-px bg-zinc-200 dark:border-white/10" />
+              <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
 
               <button
                 onClick={handleCopyLink}
-                className="flex flex-col items-center gap-1 transition-all text-zinc-500 hover:text-red-500 group"
+                className="flex flex-col items-center gap-0.5 transition-all text-zinc-500 hover:text-red-500 group"
               >
-                <Share2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] font-black tracking-wider uppercase">Share</span>
+                <Share2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                <span className="text-[8.5px] font-black tracking-wider uppercase">Share</span>
               </button>
-              <div className="h-6 w-px bg-zinc-200 dark:border-white/10" />
+              <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
 
               <button
                 onClick={toggleBookmark}
-                className={`flex flex-col items-center gap-1 transition-all group ${
+                className={`flex flex-col items-center gap-0.5 transition-all group ${
                   bookmarked ? 'text-amber-500' : 'text-zinc-500 hover:text-amber-500'
                 }`}
               >
                 <Bookmark
-                  className={`w-4 h-4 ${
+                  className={`w-3.5 h-3.5 ${
                     bookmarked ? 'fill-current scale-110 text-amber-500' : 'group-hover:scale-110 transition-transform'
                   }`}
                 />
-                <span className="text-[9px] font-black tracking-wider uppercase">{bookmarked ? 'Saved' : 'Save'}</span>
+                <span className="text-[8.5px] font-black tracking-wider uppercase">{bookmarked ? 'Saved' : 'Save'}</span>
               </button>
             </div>
 
             {/* Sticky Reading Supporting Elements */}
-            <div className="lg:sticky lg:top-24 space-y-6">
+            <div className="lg:sticky lg:top-24 space-y-3.5">
               <TableOfContents headings={headings} />
 
               {/* Publication Newsletter Module */}
-              <div className="p-6 rounded-2xl bg-zinc-950 text-white border border-white/10 space-y-3.5 shadow-xl">
-                <div className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
-                  <h3 className="font-display font-black text-xs uppercase tracking-[0.2em] text-white">
+              <div className="p-4 rounded-xl bg-zinc-950 text-white border border-white/10 space-y-2.5 shadow-lg">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                  <h3 className="font-display font-black text-[11px] uppercase tracking-[0.16em] text-white">
                     The Daily Briefing
                   </h3>
                 </div>
-                <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                  Get our weekly digest of software architecture, engineering explainers, and regional news.
+                <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
+                  Weekly software architecture, engineering explainers, and regional reports.
                 </p>
-                <form onSubmit={handleNewsletterSubmit} className="space-y-2 pt-1">
+                <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-1.5 pt-0.5">
                   <input
                     type="email"
-                    placeholder="Enter email address"
-                    className="w-full px-3 py-2.5 rounded-xl text-xs bg-zinc-900 border border-white/15 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="Enter email..."
+                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg text-xs bg-zinc-900 border border-white/15 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-red-500"
                     required
                   />
                   <button
                     type="submit"
-                    className="w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md shadow-red-600/20"
+                    className="px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors shrink-0 flex items-center gap-1 shadow-sm"
                   >
-                    <Mail className="w-3.5 h-3.5" />
-                    Subscribe
+                    <Mail className="w-3 h-3" />
+                    <span>Join</span>
                   </button>
                 </form>
               </div>
