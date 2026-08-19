@@ -21,7 +21,7 @@
     "marked": "^18.0.9",
     "mermaid": "^11.16.1",
     "mongoose": "^9.6.3",
-    "next": "15.1.4",
+    "next": "15.1.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-quill-new": "^3.8.3",
