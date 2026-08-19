@@ -119,11 +119,10 @@ const subscriberSchema = new mongoose.Schema(
 );
 
 // Generate unsubscribe token automatically before saving if not present
-subscriberSchema.pre('save', function (next) {
+subscriberSchema.pre('save', function () {
   if (!this.unsubscribeToken) {
     this.unsubscribeToken = crypto.randomBytes(24).toString('hex');
   }
-  next();
 });
 
 // Indexes for high-speed audience queries

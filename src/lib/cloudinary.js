@@ -1,22 +1,28 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-const isConfigured = !!(
-  process.env.CLOUDINARY_CLOUD_NAME &&
-  process.env.CLOUDINARY_API_KEY &&
-  process.env.CLOUDINARY_API_SECRET
-);
+function getCloudinary() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
-if (isConfigured) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
+  if (cloudName && apiKey && apiSecret) {
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+    });
+    return cloudinary;
+  }
+  return null;
 }
 
 export async function uploadToCloudinary(base64Image) {
-  if (!isConfigured) {
-    console.warn('⚠️ Cloudinary is not configured. Falling back to placeholder image.');
+  const client = getCloudinary();
+  if (!client) {
+    console.warn('⚠️ Cloudinary is not configured in local environment. Using local image data URL fallback.');
+    if (base64Image && (base64Image.startsWith('data:image/') || base64Image.startsWith('http'))) {
+      return base64Image;
+    }
     const placeholders = [
       'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1200',
       'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=1200',
@@ -27,8 +33,12 @@ export async function uploadToCloudinary(base64Image) {
   }
 
   try {
-    const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+    const uploadResponse = await client.uploader.upload(base64Image, {
       folder: 'teachyblogs',
+      resource_type: 'auto',
+      transformation: [
+        { width: 1200, height: 630, crop: 'limit', quality: 'auto', fetch_format: 'auto' }
+      ]
     });
     return uploadResponse.secure_url;
   } catch (error) {

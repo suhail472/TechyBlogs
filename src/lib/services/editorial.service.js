@@ -1,7 +1,80 @@
+import mongoose from 'mongoose';
 import Post from '../models/post.model.js';
+import Taxonomy from '../models/taxonomy.model.js';
 
 const EDITORIAL_ROLES = new Set(['editor', 'admin', 'superadmin']);
 const MODERATION_ROLES = new Set(['moderator', 'admin', 'superadmin']);
+
+async function sanitizeTaxonomyFields(data) {
+  const sanitized = { ...data };
+
+  // Ensure categories is a non-empty array of strings
+  if (!Array.isArray(sanitized.categories) || sanitized.categories.length === 0) {
+    if (sanitized.primarySection && typeof sanitized.primarySection === 'string') {
+      sanitized.categories = [sanitized.primarySection];
+    } else {
+      sanitized.categories = ['Technology'];
+    }
+  }
+
+  // Helper to resolve an ObjectId or Taxonomy reference
+  const resolveTaxonomy = async (val, kind) => {
+    if (!val) return null;
+    if (typeof val === 'object' && val._id) {
+      return mongoose.Types.ObjectId.isValid(val._id) ? val._id : null;
+    }
+    if (typeof val === 'string') {
+      if (mongoose.Types.ObjectId.isValid(val) && val.length === 24) {
+        return val;
+      }
+      // String name or slug -> lookup in Taxonomy
+      try {
+        const slug = val.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').trim();
+        const found = await Taxonomy.findOne({
+          $or: [{ name: new RegExp(`^${val}$`, 'i') }, { slug }],
+          ...(kind ? { kind } : {}),
+        });
+        if (found) return found._id;
+      } catch (err) {
+        // Ignore lookup errors
+      }
+    }
+    return null;
+  };
+
+  // Resolve primarySection
+  if (sanitized.primarySection !== undefined) {
+    const rawSec = typeof sanitized.primarySection === 'string' ? sanitized.primarySection : sanitized.primarySection?.name;
+    if (rawSec && !sanitized.categories.includes(rawSec)) {
+      sanitized.categories.unshift(rawSec);
+    }
+    sanitized.primarySection = await resolveTaxonomy(sanitized.primarySection, 'section');
+  }
+
+  // Resolve primaryTopic
+  if (sanitized.primaryTopic !== undefined) {
+    sanitized.primaryTopic = await resolveTaxonomy(sanitized.primaryTopic, 'topic');
+  }
+
+  // Resolve primaryRegion
+  if (sanitized.primaryRegion !== undefined) {
+    sanitized.primaryRegion = await resolveTaxonomy(sanitized.primaryRegion, 'region');
+  }
+
+  // Ensure excerpt is populated and <= 500 characters
+  if (!sanitized.excerpt || !sanitized.excerpt.trim()) {
+    sanitized.excerpt = (
+      sanitized.subtitle ||
+      sanitized.seo?.description ||
+      sanitized.metaDescription ||
+      (sanitized.content ? sanitized.content.replace(/```[\s\S]*?```/g, ' ').replace(/[#*`~\[\]()>-]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 180) : '') ||
+      sanitized.title ||
+      'Article dispatch'
+    ).trim().slice(0, 500);
+  }
+
+  return sanitized;
+}
 
 const transitions = {
   draft: ['in_review', 'archived', 'published'],
@@ -93,20 +166,22 @@ class EditorialService {
       }
     }
 
+    const sanitizedData = await sanitizeTaxonomyFields(data);
+
     const post = await Post.create({
-      ...data,
+      ...sanitizedData,
       status,
-      author: data.author || user?.name || 'Editorial Bureau',
-      primaryAuthor: data.primaryAuthor || user?._id,
-      authors: data.authors?.length ? data.authors : [{ authorId: user?._id, name: user?.name || 'Editorial Bureau', role: 'writer' }],
-      publishedAt: ['published', 'updated'].includes(status) ? (data.publishedAt || new Date()) : data.publishedAt,
+      author: sanitizedData.author || user?.name || 'Editorial Bureau',
+      primaryAuthor: sanitizedData.primaryAuthor || user?._id,
+      authors: sanitizedData.authors?.length ? sanitizedData.authors : [{ authorId: user?._id, name: user?.name || 'Editorial Bureau', role: 'writer' }],
+      publishedAt: ['published', 'updated'].includes(status) ? (sanitizedData.publishedAt || new Date()) : sanitizedData.publishedAt,
       editorialHistory: [{ action: 'created', by: serialiseActor(user), at: new Date() }],
       revisions: [
         {
           version: 1,
-          title: data.title,
-          excerpt: data.excerpt || data.subtitle || '',
-          content: data.content,
+          title: sanitizedData.title,
+          excerpt: sanitizedData.excerpt || sanitizedData.subtitle || '',
+          content: sanitizedData.content,
           changedBy: serialiseActor(user),
           changeSummary: 'Initial creation',
           createdAt: new Date(),
@@ -124,43 +199,45 @@ class EditorialService {
       throw new Error('A post with this slug already exists');
     }
 
+    const sanitizedData = await sanitizeTaxonomyFields(data);
+
     const isEditor = EDITORIAL_ROLES.has(user?.role);
     const blocked = ['status', 'publishedAt', 'scheduledAt', 'changeSummary', 'isAutosave'];
 
-    for (const [key, value] of Object.entries(data)) {
+    for (const [key, value] of Object.entries(sanitizedData)) {
       if (!blocked.includes(key)) post[key] = value;
     }
 
     // Handle status transitions if editor requested
-    if (data.status && isEditor) {
-      if (['published', 'updated'].includes(data.status)) {
+    if (sanitizedData.status && isEditor) {
+      if (['published', 'updated'].includes(sanitizedData.status)) {
         const validation = validatePublicationIntegrity(post);
         if (!validation.isValid) {
           throw new Error(`Cannot publish article due to integrity issues: ${validation.issues.join('; ')}`);
         }
         post.status = 'published';
-        post.publishedAt = post.publishedAt || data.publishedAt || new Date();
-      } else if (data.status === 'scheduled') {
+        post.publishedAt = post.publishedAt || sanitizedData.publishedAt || new Date();
+      } else if (sanitizedData.status === 'scheduled') {
         const validation = validatePublicationIntegrity(post);
         if (!validation.isValid) {
           throw new Error(`Cannot schedule article due to integrity issues: ${validation.issues.join('; ')}`);
         }
         post.status = 'scheduled';
-        post.scheduledAt = data.scheduledAt ? new Date(data.scheduledAt) : post.scheduledAt;
+        post.scheduledAt = sanitizedData.scheduledAt ? new Date(sanitizedData.scheduledAt) : post.scheduledAt;
       } else {
-        post.status = data.status;
+        post.status = sanitizedData.status;
       }
     }
 
     // Only record a formal version milestone if NOT a background autosave
-    if (!data.isAutosave) {
+    if (!sanitizedData.isAutosave) {
       const revision = {
         version: (post.revisions?.length || 0) + 1,
         title: post.title,
         excerpt: post.excerpt || post.subtitle || '',
         content: post.content,
         changedBy: serialiseActor(user),
-        changeSummary: data.changeSummary || (data.status === 'published' ? 'Published story' : 'Content updated'),
+        changeSummary: sanitizedData.changeSummary || (sanitizedData.status === 'published' ? 'Published story' : 'Content updated'),
         createdAt: new Date(),
       };
 
@@ -169,9 +246,9 @@ class EditorialService {
       }
       post.revisions.push(revision);
       post.editorialHistory.push({
-        action: data.status === 'published' ? 'published' : 'edited',
+        action: sanitizedData.status === 'published' ? 'published' : 'edited',
         by: serialiseActor(user),
-        summary: data.changeSummary || '',
+        summary: sanitizedData.changeSummary || '',
         at: new Date(),
       });
     }

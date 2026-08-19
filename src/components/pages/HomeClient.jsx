@@ -37,13 +37,13 @@ export default function HomeClient({ initialBlogs = [] }) {
   const remainingBlogs = filteredBlogs.slice(1);
 
   return (
-    <div className="pb-12 pt-20 lg:pt-22 relative">
+    <div className="pb-12 pt-16 sm:pt-20 lg:pt-22 relative">
       <TopLoader />
       
       {/* Featured Hero Section */}
-      <section className="py-6 px-6 md:px-12 lg:px-16 max-w-[1440px] mx-auto">
+      <section className="py-4 sm:py-6 px-4 sm:px-6 md:px-12 lg:px-16 max-w-[1440px] mx-auto">
         {latestBlog ? (
-          <div className="relative p-8 md:py-10 md:px-12 lg:py-12 lg:px-16 rounded-[2.5rem] overflow-hidden glass-card shadow-2xl shadow-zinc-200/20 dark:shadow-black/30">
+          <div className="relative p-5 sm:p-8 md:py-10 md:px-12 lg:py-12 lg:px-16 rounded-2xl sm:rounded-[2.5rem] overflow-hidden glass-card shadow-2xl shadow-zinc-200/20 dark:shadow-black/30">
             {/* Grid pattern background */}
             <div className="absolute inset-0 grid-pattern pointer-events-none" />
             
@@ -86,7 +86,7 @@ export default function HomeClient({ initialBlogs = [] }) {
                   </div>
                 </div>
                 
-                <h1 className="text-2xl md:text-3xl lg:text-[2.4rem] font-black leading-[1.15] text-zinc-900 dark:text-white tracking-tight font-display">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[2.4rem] font-black leading-[1.18] sm:leading-[1.15] text-zinc-900 dark:text-white tracking-tight font-display">
                   <Link href={`/blog/${latestBlog.slug}`} className="transition-colors hover:text-zinc-900 dark:hover:text-white">
                     {latestBlog.title}
                   </Link>
@@ -136,14 +136,14 @@ export default function HomeClient({ initialBlogs = [] }) {
       </section>
 
       {/* Categories & Search */}
-      <section className="py-6 px-6 md:px-12 max-w-7xl mx-auto">
+      <section className="py-4 sm:py-6 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row gap-6 items-center justify-between border-y border-zinc-200/80 dark:border-white/[0.06] py-8">
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+          <div className="flex overflow-x-auto no-scrollbar scroll-shadow-x gap-2 w-full lg:w-auto pb-2 lg:pb-0">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
+                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border whitespace-nowrap shrink-0 ${
                   selectedCategory === cat
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-500 text-white shadow-md shadow-blue-500/15 dark:shadow-blue-500/10'
                     : 'bg-white/60 border-zinc-200/80 text-zinc-500 hover:text-zinc-900 hover:bg-white hover:border-zinc-300 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.06] dark:hover:border-white/10'
@@ -168,13 +168,13 @@ export default function HomeClient({ initialBlogs = [] }) {
       </section>
 
       {/* Articles Grid */}
-      <section className="px-6 md:px-12 max-w-7xl mx-auto pt-4">
+      <section className="px-4 sm:px-6 md:px-12 max-w-7xl mx-auto pt-4">
         {remainingBlogs.length === 0 ? (
-          <div className="py-24 text-center text-zinc-400 dark:text-zinc-500 font-bold text-sm">
+          <div className="py-16 sm:py-24 text-center text-zinc-400 dark:text-zinc-500 font-bold text-sm">
             No matching articles found. Try another query or category.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8 lg:gap-10">
             {remainingBlogs.map((blog, index) => (
               <motion.div
                 key={blog._id || blog.id}

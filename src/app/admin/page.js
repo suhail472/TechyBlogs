@@ -620,9 +620,9 @@ export default function NewsroomCommandCenter() {
           </div>
 
           {/* Filter Dropdowns & Status Tabs */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-white/5">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-zinc-100 dark:border-white/5">
             {/* Status Pills */}
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
               {['all', 'published', 'draft', 'in_review', 'scheduled', 'archived'].map((tab) => (
                 <button
                   key={tab}
@@ -631,7 +631,7 @@ export default function NewsroomCommandCenter() {
                     setStatusFilter(tab);
                     setPage(1);
                   }}
-                  className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all ${
+                  className={`px-3 py-1 rounded-xl text-xs font-bold capitalize transition-all whitespace-nowrap shrink-0 ${
                     statusFilter === tab
                       ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs'
                       : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5'
@@ -643,7 +643,7 @@ export default function NewsroomCommandCenter() {
             </div>
 
             {/* Dimensional Selectors: Desk, Content Type, Author */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
               {/* Desk Filter */}
               <select
                 value={sectionFilter}
@@ -706,7 +706,7 @@ export default function NewsroomCommandCenter() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-zinc-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-700 shadow-md z-10"
+              className="bg-zinc-900 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-700 shadow-md z-10 lg:relative fixed bottom-0 left-0 right-0 lg:static safe-area-bottom"
             >
               <div className="flex items-center gap-2 text-xs font-bold">
                 <span className="w-5 h-5 rounded-full bg-red-600 flex items-center justify-center text-[10px]">
@@ -794,7 +794,109 @@ export default function NewsroomCommandCenter() {
             className="m-6"
           />
         ) : (
-          <div className="overflow-x-auto">
+          <div>
+            {/* MOBILE CARD VIEW — visible on <lg screens */}
+            <div className="lg:hidden divide-y divide-zinc-200/60 dark:divide-white/5">
+              {stories.map((story) => {
+                const isChecked = selectedIds.includes(story._id);
+                return (
+                  <div
+                    key={story._id}
+                    className={`p-4 space-y-3 ${isChecked ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleToggleSelect(story._id)}
+                        className="w-4 h-4 text-red-600 rounded mt-1 shrink-0"
+                      />
+                      {story.image ? (
+                        <img
+                          src={story.image}
+                          alt=""
+                          className="w-14 h-14 rounded-xl object-cover border border-zinc-200 dark:border-white/10 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0 font-mono text-xs">
+                          TB
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/admin/edit/${story._id}`}
+                          className="font-bold text-sm text-zinc-900 dark:text-white hover:text-red-600 dark:hover:text-red-400 line-clamp-2 transition-colors block"
+                        >
+                          {story.title}
+                        </Link>
+                        <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5">
+                          {story.subtitle || story.excerpt || 'No subtitle dek'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pl-7">
+                      <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                        <StatusBadge status={story.status || 'published'} />
+                        <span className="text-zinc-500 font-medium">
+                          {story.primarySection?.name || story.categories?.[0] || 'General'}
+                        </span>
+                        <span className="text-zinc-400">·</span>
+                        <span className="text-zinc-400 font-medium">
+                          {story.author || 'Editorial Bureau'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          href={`/admin/edit/${story._id}`}
+                          className="touch-target p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                        {story.status === 'published' && (
+                          <Link
+                            href={`/blog/${story.slug}`}
+                            target="_blank"
+                            className="touch-target p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-600 dark:text-zinc-300"
+                            title="View"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteModal({ open: true, story })}
+                          className="touch-target p-1.5 rounded-lg border border-zinc-200 dark:border-white/10 text-zinc-400 hover:text-rose-600"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 pl-7 text-[10px] text-zinc-400 font-mono">
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" /> {story.views || 0}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Heart className="w-3 h-3 text-rose-500" /> {story.likes || 0}
+                      </span>
+                      <span>
+                        {new Date(story.updatedAt || story.createdAt || Date.now()).toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP TABLE VIEW — visible on lg+ screens */}
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-[10px] font-black uppercase tracking-widest text-zinc-400 border-b border-zinc-200/80 dark:border-white/10 font-mono">
                 <tr>
@@ -931,6 +1033,7 @@ export default function NewsroomCommandCenter() {
               </tbody>
             </table>
           </div>
+        </div>
         )}
 
         {/* Table Pagination Bar */}

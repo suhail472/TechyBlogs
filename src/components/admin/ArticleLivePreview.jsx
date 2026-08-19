@@ -29,6 +29,7 @@ import { getReadingTime } from '@/utils/readingTime';
 export default function ArticleLivePreview({ formData, className = '' }) {
   const [deviceViewport, setDeviceViewport] = useState('desktop'); // 'desktop', 'tablet', 'mobile'
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [focusMode, setFocusMode] = useState(false);
 
   const headings = useMemo(() => {
     return extractHeadings(formData?.content || '');
@@ -49,7 +50,7 @@ export default function ArticleLivePreview({ formData, className = '' }) {
       ? 'max-w-[390px] border-x border-zinc-200 dark:border-white/10 shadow-2xl my-4 mx-auto rounded-3xl overflow-hidden'
       : deviceViewport === 'tablet'
       ? 'max-w-[768px] border-x border-zinc-200 dark:border-white/10 shadow-2xl my-4 mx-auto rounded-3xl overflow-hidden'
-      : 'w-full';
+      : 'w-full max-w-[1536px] mx-auto';
 
   return (
     <div className={`flex flex-col bg-[#FAFAFA] dark:bg-[#0c0e12] ${className}`}>
@@ -205,7 +206,7 @@ export default function ArticleLivePreview({ formData, className = '' }) {
 
         {/* Hero Cover Image */}
         {formData?.image && (
-          <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900 shadow-sm mb-12">
+          <div className="aspect-[1200/630] rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900 shadow-sm mb-12">
             <EditorialImage
               src={formData.image}
               alt={formData.title}
@@ -217,11 +218,23 @@ export default function ArticleLivePreview({ formData, className = '' }) {
         )}
 
         {/* Main Body Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className={deviceViewport === 'desktop' ? 'lg:col-span-8 max-w-[740px]' : 'w-full'}>
+        <div
+          className={`grid grid-cols-1 ${
+            deviceViewport === 'desktop' && !focusMode
+              ? 'lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]'
+              : deviceViewport === 'desktop' && focusMode
+              ? 'max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto'
+              : ''
+          } gap-8 xl:gap-12 items-start w-full transition-all duration-300`}
+        >
+          <div className="min-w-0 w-full">
             {/* Reading Toolbar Simulation */}
             <div className="mb-8">
-              <ReaderSettings content={formData?.content || ''} />
+              <ReaderSettings
+                content={formData?.content || ''}
+                focusMode={focusMode}
+                onToggleFocusMode={() => setFocusMode(!focusMode)}
+              />
             </div>
 
             {/* Tutorial Metadata */}
@@ -264,7 +277,7 @@ export default function ArticleLivePreview({ formData, className = '' }) {
             )}
 
             {/* Rendered Prose Body */}
-            <div className="text-zinc-800 dark:text-zinc-200 font-serif leading-[1.8] text-[17px] sm:text-[18px]">
+            <div className="w-full text-zinc-800 dark:text-zinc-200 font-sans leading-loose text-[17px] sm:text-[18px]">
               <MarkdownRenderer content={formData?.content || ''} />
             </div>
 
@@ -402,30 +415,28 @@ export default function ArticleLivePreview({ formData, className = '' }) {
             )}
           </div>
 
-          {/* Supporting Sidebar Column (Desktop only) */}
-          {deviceViewport === 'desktop' && (
-            <aside className="lg:col-span-4 space-y-6">
-              <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center text-zinc-400 text-xs">
+          {/* Supporting Sidebar Column (Desktop only & when not in Focus Mode) */}
+          {deviceViewport === 'desktop' && !focusMode && (
+            <aside className="w-full lg:sticky lg:top-4 self-start space-y-4">
+              <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center text-zinc-400 text-xs shadow-xs">
                 <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5" /> 0 Likes</span>
                 <span className="flex items-center gap-1"><Share2 className="w-3.5 h-3.5" /> Share</span>
                 <span className="flex items-center gap-1"><Bookmark className="w-3.5 h-3.5" /> Save</span>
               </div>
 
-              <div className="sticky top-20 space-y-6">
-                <TableOfContents headings={headings} />
+              <TableOfContents headings={headings} />
 
-                {/* Newsletter Box */}
-                <div className="p-6 rounded-2xl bg-zinc-950 text-white border border-white/10 space-y-3 shadow-xl">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
-                    <h3 className="font-display font-black text-xs uppercase tracking-[0.2em]">
-                      The Daily Briefing
-                    </h3>
-                  </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-sans">
-                    Get weekly software architecture, engineering explainers, and regional reports.
-                  </p>
+              {/* Newsletter Box (Editorial Slate - Not Black) */}
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#181d28] text-zinc-900 dark:text-zinc-100 border border-slate-200/90 dark:border-white/10 space-y-2.5 shadow-2xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                  <h3 className="font-display font-black text-xs uppercase tracking-[0.16em] text-zinc-900 dark:text-zinc-100">
+                    The Daily Briefing
+                  </h3>
                 </div>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+                  Get weekly software architecture, engineering explainers, and regional reports.
+                </p>
               </div>
             </aside>
           )}

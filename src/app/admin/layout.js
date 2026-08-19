@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -32,6 +32,40 @@ export default function AdminLayout({ children }) {
   const [verifying, setVerifying] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCommentsCount, setPendingCommentsCount] = useState(0);
+  const scrollYRef = useRef(0);
+
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  // Close sidebar on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // Body scroll lock for mobile sidebar
+  useEffect(() => {
+    if (sidebarOpen) {
+      scrollYRef.current = window.scrollY;
+      document.body.classList.add('body-scroll-locked');
+      document.body.style.top = `-${scrollYRef.current}px`;
+    } else {
+      document.body.classList.remove('body-scroll-locked');
+      document.body.style.top = '';
+      if (scrollYRef.current) window.scrollTo(0, scrollYRef.current);
+    }
+    return () => {
+      document.body.classList.remove('body-scroll-locked');
+      document.body.style.top = '';
+    };
+  }, [sidebarOpen]);
+
+  // Escape key handler
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && sidebarOpen) closeSidebar();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [sidebarOpen, closeSidebar]);
 
   const isAuthPage = pathname === '/admin/login' || pathname === '/admin/forgot';
 
@@ -143,17 +177,27 @@ export default function AdminLayout({ children }) {
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
+          className="touch-target p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300"
           aria-label="Toggle Navigation"
+          aria-expanded={sidebarOpen}
         >
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </header>
 
+      {/* Sidebar Backdrop Overlay (Mobile) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-25 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar Navigation */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-68 bg-white dark:bg-[#12151c] border-r border-zinc-200/80 dark:border-white/10 p-5 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:static'
+        className={`fixed inset-y-0 left-0 z-30 w-68 bg-white dark:bg-[#12151c] border-r border-zinc-200/80 dark:border-white/10 p-4 sm:p-5 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 safe-area-top ${
+          sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:static'
         }`}
       >
         <div className="flex flex-col h-full overflow-y-auto pr-1">
@@ -191,7 +235,7 @@ export default function AdminLayout({ children }) {
                         key={item.path}
                         href={item.path}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                        className={`flex items-center justify-between px-3 py-2.5 sm:py-2 rounded-xl text-xs font-bold transition-all ${
                           isActive
                             ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-l-2 border-red-600 shadow-xs'
                             : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
@@ -262,7 +306,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full overflow-y-auto">
         {children}
       </main>
     </div>

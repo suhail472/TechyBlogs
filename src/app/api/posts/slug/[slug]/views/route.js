@@ -7,8 +7,16 @@ export async function POST(req, { params }) {
     await connectToDatabase();
     const { slug } = await params;
 
+    const normalizedSlug = decodeURIComponent(slug).trim();
+    const cleanSlug = normalizedSlug.replace(/^-+/, '');
+    const slugVariants = [
+      normalizedSlug,
+      cleanSlug,
+      `-${cleanSlug}`,
+    ];
+
     const post = await Post.findOneAndUpdate(
-      { slug, status: 'published' },
+      { slug: { $in: slugVariants }, status: 'published' },
       { $inc: { views: 1 } },
       { new: true, select: 'views' }
     );

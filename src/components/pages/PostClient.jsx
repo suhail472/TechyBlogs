@@ -21,6 +21,8 @@ import {
   Sparkles,
   ExternalLink,
   Check,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import TopLoader from '@/components/shared/TopLoader';
 import TableOfContents from '@/components/shared/TableOfContents';
@@ -33,6 +35,7 @@ import EditorialImage from '@/components/shared/EditorialImage';
 import { extractHeadings } from '@/utils/markdownEngine';
 import { getReadingTime } from '@/utils/readingTime';
 import useToastStore from '@/store/useToastStore';
+import AiReaderDrawer from '@/components/ai/AiReaderDrawer';
 
 function formatViews(num) {
   if (!num || num === 0) return '0';
@@ -48,13 +51,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   const [bookmarked, setBookmarked] = useState(false);
   const [viewCount, setViewCount] = useState(blog?.views || 0);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
 
   // Sharing & customizer state
   const [shareUrl, setShareUrl] = useState('');
   const [typography, setTypography] = useState({
-    fontFamily: 'font-serif',
+    fontFamily: 'font-sans',
     fontSize: 'prose-lg',
-    lineHeight: 'leading-relaxed',
+    lineHeight: 'leading-loose',
   });
 
   // Code playground states
@@ -67,19 +71,36 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   const { addToast } = useToastStore();
   const maxProgressRef = useRef(0);
 
-  // Typography customizer listener
+  // Typography customizer and Focus Mode listener
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-serif';
+      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
       const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
+      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-loose';
       setTypography({ fontFamily: savedFamily, fontSize: savedSize, lineHeight: savedHeight });
+
+      const savedFocus = localStorage.getItem('teachyblogs-reader-focus-mode');
+      if (savedFocus === 'true') {
+        setFocusMode(true);
+      }
 
       const handleTypeChange = (e) => {
         setTypography(e.detail);
       };
+      const handleFocusToggleEvent = () => {
+        setFocusMode((prev) => {
+          const next = !prev;
+          localStorage.setItem('teachyblogs-reader-focus-mode', String(next));
+          return next;
+        });
+      };
+
       window.addEventListener('teachyblogs-typography-change', handleTypeChange);
-      return () => window.removeEventListener('teachyblogs-typography-change', handleTypeChange);
+      window.addEventListener('teachyblogs-focus-mode-toggle', handleFocusToggleEvent);
+      return () => {
+        window.removeEventListener('teachyblogs-typography-change', handleTypeChange);
+        window.removeEventListener('teachyblogs-focus-mode-toggle', handleFocusToggleEvent);
+      };
     }
   }, []);
 
@@ -154,6 +175,15 @@ export default function PostClient({ blog, relatedPosts = [] }) {
 
   if (!blog) return null;
 
+  const toggleFocusMode = () => {
+    const next = !focusMode;
+    setFocusMode(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('teachyblogs-reader-focus-mode', String(next));
+    }
+    addToast(next ? 'Zen Focus Mode active — distraction-free reading canvas' : 'Focus Mode exited — standard layout restored', 'info');
+  };
+
   const toggleBookmark = () => {
     if (typeof window === 'undefined') return;
     const bookmarks = JSON.parse(localStorage.getItem('techy-blogs-bookmarks') || '[]');
@@ -171,17 +201,32 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   };
 
   const handleLikeClick = async () => {
-    if (liked) return;
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    setLikesCount((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)));
+
+    if (nextLiked) {
+      localStorage.setItem(`techy-liked-${blog.slug}`, 'true');
+      addToast('Thanks for your appreciation!', 'success');
+    } else {
+      localStorage.removeItem(`techy-liked-${blog.slug}`);
+      addToast('Like removed', 'info');
+    }
+
     try {
-      const res = await fetch(`/api/posts/slug/${blog.slug}/likes`, { method: 'POST' });
+      const res = await fetch(`/api/posts/slug/${blog.slug}/likes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: nextLiked ? 'like' : 'unlike' }),
+      });
       const data = await res.json();
       if (data.success) {
         setLikesCount(data.likes);
-        setLiked(true);
-        localStorage.setItem(`techy-liked-${blog.slug}`, 'true');
-        addToast('Thanks for your appreciation!', 'success');
       }
     } catch (err) {
+      // Revert if network failed
+      setLiked(!nextLiked);
+      setLikesCount((prev) => (nextLiked ? Math.max(0, prev - 1) : prev + 1));
       addToast('Could not record like', 'error');
     }
   };
@@ -195,26 +240,32 @@ export default function PostClient({ blog, relatedPosts = [] }) {
     }
   };
 
+  const [newsletterSubscribing, setNewsletterSubscribing] = useState(false);
+
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
-    const email = e.target.elements[0].value;
-    if (!email) return;
+    const emailInput = e.target.elements[0];
+    const email = emailInput?.value?.trim();
+    if (!email || newsletterSubscribing) return;
+
+    setNewsletterSubscribing(true);
     try {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, source: 'article', articleSlug: blog?.slug }),
       });
       const data = await res.json();
       if (data.success) {
-        addToast('Subscribed! You will receive our weekly editorial briefing.', 'success');
+        addToast(data.message || 'Subscribed! You will receive our weekly editorial briefing.', 'success');
         e.target.reset();
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || 'Subscription failed');
       }
     } catch (err) {
-      addToast(err.message || 'Subscription received!', 'info');
-      e.target.reset();
+      addToast(err.message || 'Subscription could not be processed.', 'error');
+    } finally {
+      setNewsletterSubscribing(false);
     }
   };
 
@@ -251,7 +302,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
   }, [playgroundCode]);
 
   return (
-    <div className="pb-24 pt-28 md:pt-32 relative">
+    <div className="pb-24 pt-20 sm:pt-28 md:pt-32 relative">
       <TopLoader />
       <ImageLightbox />
 
@@ -263,11 +314,11 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       />
 
       {/* Header */}
-      <header className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-12">
+      <header className="w-full mx-auto px-4 sm:px-6 md:px-12 max-w-[1600px] mb-8 sm:mb-12">
         {/* Quiet, Elegant Breadcrumb */}
         <nav
           aria-label="Breadcrumb"
-          className="mb-6 flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-500"
+          className="mb-4 sm:mb-6 flex items-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-500 overflow-hidden"
         >
           <Link href="/" className="hover:text-red-600 dark:hover:text-red-400 transition-colors">
             Frontpage
@@ -303,10 +354,12 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               <span>/</span>
             </>
           )}
-          <span className="text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-xs">{blog.title}</span>
+          <span className="text-zinc-600 dark:text-zinc-300 font-semibold truncate max-w-[160px] sm:max-w-xs md:max-w-md lg:max-w-xl xl:max-w-3xl">
+            {blog.title}
+          </span>
         </nav>
 
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
           {/* Content Type & Badges */}
           <div className="flex flex-wrap items-center gap-2">
             {(blog.editorial?.breaking || blog.breaking) && (
@@ -333,20 +386,20 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             )}
           </div>
 
-          {/* Authoritative Display Headline */}
-          <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-black text-zinc-950 dark:text-white leading-[1.12] tracking-tight font-display max-w-4xl">
+          {/* Authoritative Display Headline — Full-Width Editorial Canvas */}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.65rem] xl:text-[2.95rem] font-bold sm:font-extrabold text-zinc-900 dark:text-white leading-[1.2] sm:leading-[1.18] tracking-[-0.015em] font-display w-full max-w-none">
             {blog.title}
           </h1>
 
           {/* Subtitle / Dek */}
           {blog.subtitle && (
-            <p className="text-lg md:text-xl font-medium text-zinc-600 dark:text-zinc-300 leading-relaxed max-w-3xl font-sans">
+            <p className="text-base sm:text-lg md:text-xl font-normal sm:font-medium text-zinc-600 dark:text-zinc-300 leading-relaxed w-full max-w-none font-sans">
               {blog.subtitle}
             </p>
           )}
 
           {/* Metadata & Journalistic Author Profile */}
-          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 border-t border-zinc-200/80 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-zinc-200/80 dark:border-white/10 w-full">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center font-black text-sm font-display shadow-sm">
                 {blog.author ? blog.author[0] : 'T'}
@@ -361,7 +414,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-5 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-5 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
               <div className="flex items-center gap-1.5" suppressHydrationWarning>
                 <Calendar className="w-3.5 h-3.5 text-zinc-400" />
                 {blog.date ||
@@ -388,9 +441,9 @@ export default function PostClient({ blog, relatedPosts = [] }) {
         </div>
       </header>
 
-      {/* Featured Cover Hero Image */}
-      <section className="container mx-auto px-6 md:px-12 max-w-[1400px] mb-14">
-        <div className="aspect-[21/9] rounded-2xl overflow-hidden border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900 shadow-sm">
+      {/* Featured Cover Hero Image — edge-to-edge on mobile */}
+      <section className="w-full mx-auto px-0 sm:px-6 md:px-12 max-w-[1600px] mb-8 sm:mb-14">
+        <div className="aspect-[1200/630] sm:rounded-2xl overflow-hidden border-y sm:border border-zinc-200/80 dark:border-white/10 bg-zinc-100 dark:bg-zinc-900 shadow-sm">
           <EditorialImage
             src={blog.image}
             alt={blog.title}
@@ -403,13 +456,24 @@ export default function PostClient({ blog, relatedPosts = [] }) {
       </section>
 
       {/* Body Content Grid */}
-      <article className="container mx-auto px-6 md:px-12 max-w-[1400px]">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* Main prose column filling full allocated width */}
-          <div className="lg:col-span-8 xl:col-span-9 w-full min-w-0">
+      <article className={`w-full mx-auto px-4 sm:px-6 md:px-10 lg:px-12 ${focusMode ? 'max-w-[1280px]' : 'max-w-[1536px]'} transition-all duration-300`}>
+        <div className={`grid grid-cols-1 ${focusMode ? 'w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto' : 'lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_340px]'} gap-8 xl:gap-12 items-start w-full transition-all duration-300`}>
+          {/* Main prose column — in normal mode fills 1fr right up to sidebar; in focus mode takes 100% of the centered container */}
+          <div className="min-w-0 w-full">
+            {/* Mobile-only: Collapsible Table of Contents BEFORE article */}
+            {!focusMode && headings.length > 0 && (
+              <div className="lg:hidden mb-6">
+                <TableOfContents headings={headings} compact />
+              </div>
+            )}
+
             {/* Collapsible Reading Toolbar */}
-            <div className="mb-10 w-full">
-              <ReaderSettings content={blog.content} />
+            <div className="mb-6 sm:mb-10 w-full">
+              <ReaderSettings
+                content={blog.content}
+                focusMode={focusMode}
+                onToggleFocusMode={toggleFocusMode}
+              />
             </div>
 
             {/* Tutorial & Guide Meta Bar */}
@@ -452,7 +516,7 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             )}
 
             {/* Main Long-form Prose Body */}
-            <div ref={contentRef} className="w-full text-zinc-800 dark:text-zinc-200 font-serif leading-[1.8] text-[17px] sm:text-[18px]">
+            <div ref={contentRef} className="w-full text-zinc-800 dark:text-zinc-200 font-sans leading-loose text-[17px] sm:text-[18px]">
               <MarkdownRenderer
                 content={blog.content}
                 typography={typography}
@@ -672,83 +736,157 @@ export default function PostClient({ blog, relatedPosts = [] }) {
             <Comments slug={blog.slug} />
           </div>
 
-          {/* Sidebar Supporting Rail */}
-          <aside className="lg:col-span-4 xl:col-span-3 space-y-3.5 w-full">
-            {/* Unified Article Utility Actions Rail */}
-            <div className="p-2.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
-              <button
-                onClick={handleLikeClick}
-                className={`flex flex-col items-center gap-0.5 transition-all group ${
-                  liked ? 'text-rose-500' : 'text-zinc-500 hover:text-rose-500'
-                }`}
-              >
-                <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
-                <span className="text-[8.5px] font-black tracking-wider uppercase">{likesCount} Likes</span>
-              </button>
-              <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
-
-              <button
-                onClick={handleCopyLink}
-                className="flex flex-col items-center gap-0.5 transition-all text-zinc-500 hover:text-red-500 group"
-              >
-                <Share2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                <span className="text-[8.5px] font-black tracking-wider uppercase">Share</span>
-              </button>
-              <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
-
-              <button
-                onClick={toggleBookmark}
-                className={`flex flex-col items-center gap-0.5 transition-all group ${
-                  bookmarked ? 'text-amber-500' : 'text-zinc-500 hover:text-amber-500'
-                }`}
-              >
-                <Bookmark
-                  className={`w-3.5 h-3.5 ${
-                    bookmarked ? 'fill-current scale-110 text-amber-500' : 'group-hover:scale-110 transition-transform'
+          {/* Sidebar Supporting Rail - Sticky on Scroll — DESKTOP ONLY */}
+          {!focusMode && (
+            <aside className="hidden lg:block w-full lg:sticky lg:top-24 self-start space-y-3.5">
+              {/* Unified Article Utility Actions Rail */}
+              <div className="p-2.5 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/70 border border-zinc-200/80 dark:border-white/10 flex justify-around items-center shadow-xs">
+                <button
+                  onClick={handleLikeClick}
+                  className={`flex flex-col items-center gap-0.5 transition-all group ${
+                    liked ? 'text-rose-500' : 'text-zinc-500 hover:text-rose-500'
                   }`}
-                />
-                <span className="text-[8.5px] font-black tracking-wider uppercase">{bookmarked ? 'Saved' : 'Save'}</span>
-              </button>
-            </div>
+                >
+                  <Heart className={`w-3.5 h-3.5 ${liked ? 'fill-current scale-110' : 'group-hover:scale-110 transition-transform'}`} />
+                  <span className="text-[8.5px] font-black tracking-wider uppercase">{likesCount} Likes</span>
+                </button>
+                <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
 
-            {/* Sticky Reading Supporting Elements */}
-            <div className="lg:sticky lg:top-24 space-y-3.5">
+                <button
+                  onClick={handleCopyLink}
+                  className="flex flex-col items-center gap-0.5 transition-all text-zinc-500 hover:text-red-500 group"
+                >
+                  <Share2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                  <span className="text-[8.5px] font-black tracking-wider uppercase">Share</span>
+                </button>
+                <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
+
+                <button
+                  onClick={toggleBookmark}
+                  className={`flex flex-col items-center gap-0.5 transition-all group ${
+                    bookmarked ? 'text-amber-500' : 'text-zinc-500 hover:text-amber-500'
+                  }`}
+                >
+                  <Bookmark
+                    className={`w-3.5 h-3.5 ${
+                      bookmarked ? 'fill-current scale-110 text-amber-500' : 'group-hover:scale-110 transition-transform'
+                    }`}
+                  />
+                  <span className="text-[8.5px] font-black tracking-wider uppercase">{bookmarked ? 'Saved' : 'Save'}</span>
+                </button>
+                <div className="h-5 w-px bg-zinc-200 dark:bg-white/10" />
+
+                <button
+                  onClick={toggleFocusMode}
+                  className="flex flex-col items-center gap-0.5 transition-all text-zinc-500 hover:text-amber-500 group"
+                  title="Distraction-Free Focus Mode"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                  <span className="text-[8.5px] font-black tracking-wider uppercase">Focus</span>
+                </button>
+              </div>
+
+              {/* Table of Contents */}
               <TableOfContents headings={headings} />
 
-              {/* Publication Newsletter Module */}
-              <div className="p-4 rounded-xl bg-zinc-950 text-white border border-white/10 space-y-2.5 shadow-lg">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
-                  <h3 className="font-display font-black text-[11px] uppercase tracking-[0.16em] text-white">
-                    The Daily Briefing
-                  </h3>
+                {/* Publication Newsletter Module (Editorial Card - Not Black) */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#181d28] text-zinc-900 dark:text-zinc-100 border border-slate-200/90 dark:border-white/10 space-y-2.5 shadow-2xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                    <h3 className="font-display font-black text-[11px] uppercase tracking-[0.16em] text-zinc-900 dark:text-zinc-100">
+                      The Daily Briefing
+                    </h3>
+                  </div>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
+                    Weekly software architecture, engineering explainers, and regional reports.
+                  </p>
+                  <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-1.5 pt-0.5">
+                    <input
+                      type="email"
+                      placeholder="Enter email..."
+                      disabled={newsletterSubscribing}
+                      className="flex-1 min-w-0 px-3 py-2 rounded-xl text-xs bg-white dark:bg-[#1f2535] border border-slate-200 dark:border-white/10 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      disabled={newsletterSubscribing}
+                      className="px-3.5 py-2 rounded-xl font-bold text-[11px] uppercase tracking-wider bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white transition-all shrink-0 flex items-center gap-1.5 shadow-xs active:scale-95"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>{newsletterSubscribing ? 'Joining...' : 'Join'}</span>
+                    </button>
+                  </form>
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">
-                  Weekly software architecture, engineering explainers, and regional reports.
-                </p>
-                <form onSubmit={handleNewsletterSubmit} className="flex items-center gap-1.5 pt-0.5">
-                  <input
-                    type="email"
-                    placeholder="Enter email..."
-                    className="flex-1 min-w-0 px-3 py-1.5 rounded-lg text-xs bg-zinc-900 border border-white/15 text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1.5 rounded-lg font-bold text-[11px] uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white transition-colors shrink-0 flex items-center gap-1 shadow-sm"
-                  >
-                    <Mail className="w-3 h-3" />
-                    <span>Join</span>
-                  </button>
-                </form>
-              </div>
-            </div>
-          </aside>
+            </aside>
+          )}
         </div>
       </article>
 
+      {/* Mobile Floating Action Bar — visible on small screens when NOT in focus mode */}
+      {!focusMode && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden safe-area-bottom">
+          <div className="bg-white/95 dark:bg-zinc-950/95 backdrop-blur-lg border-t border-zinc-200/80 dark:border-white/10 px-4 py-2.5 flex items-center justify-around">
+            <button
+              onClick={handleLikeClick}
+              className={`touch-target flex flex-col items-center gap-0.5 transition-all ${
+                liked ? 'text-rose-500' : 'text-zinc-500'
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+              <span className="text-[9px] font-bold">{formatViews(likesCount)}</span>
+            </button>
+            <button
+              onClick={handleCopyLink}
+              className="touch-target flex flex-col items-center gap-0.5 text-zinc-500"
+            >
+              <Share2 className="w-5 h-5" />
+              <span className="text-[9px] font-bold">Share</span>
+            </button>
+            <button
+              onClick={toggleBookmark}
+              className={`touch-target flex flex-col items-center gap-0.5 transition-all ${
+                bookmarked ? 'text-amber-500' : 'text-zinc-500'
+              }`}
+            >
+              <Bookmark className={`w-5 h-5 ${bookmarked ? 'fill-current' : ''}`} />
+              <span className="text-[9px] font-bold">{bookmarked ? 'Saved' : 'Save'}</span>
+            </button>
+            <button
+              onClick={toggleFocusMode}
+              className="touch-target flex flex-col items-center gap-0.5 text-zinc-500"
+            >
+              <Maximize2 className="w-5 h-5" />
+              <span className="text-[9px] font-bold">Focus</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Exit Focus Mode button */}
+      <AnimatePresence>
+        {focusMode && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40"
+          >
+            <button
+              type="button"
+              onClick={toggleFocusMode}
+              className="px-4 py-2.5 rounded-2xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold shadow-xl border border-white/20 dark:border-zinc-800 flex items-center gap-2 hover:scale-105 active:scale-95 transition-all group safe-area-bottom"
+              title="Return to standard article layout with sidebar"
+            >
+              <Minimize2 className="w-4 h-4 text-amber-400 dark:text-amber-600 group-hover:rotate-90 transition-transform" />
+              <span>Exit Focus Mode</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Continue Reading / Related Stories */}
-      <div className="container mx-auto px-6 md:px-12 max-w-[1400px] mt-20">
+      <div className="container mx-auto px-4 sm:px-6 md:px-12 max-w-[1400px] mt-12 sm:mt-20 mb-16 lg:mb-0">
         <RelatedArticles currentSlug={blog.slug} posts={relatedPosts} />
       </div>
 
@@ -818,6 +956,14 @@ export default function PostClient({ blog, relatedPosts = [] }) {
           </div>
         )}
       </AnimatePresence>
+
+      {/* TeachyBlogs AI Editorial Reader Assistant */}
+      <AiReaderDrawer
+        articleSlug={blog.slug}
+        articleTitle={blog.title}
+        articleSection={blog.primarySection?.name || blog.categories?.[0] || 'General'}
+        contentType={blog.contentType || 'article'}
+      />
     </div>
   );
 }

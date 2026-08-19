@@ -30,6 +30,10 @@ import {
   CornerDownRight,
   X,
   Send,
+  Bot,
+  ShieldAlert,
+  CheckCircle2,
+  Info,
 } from 'lucide-react';
 import { commentAPI, taxonomyAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
@@ -38,6 +42,7 @@ import EmptyState from '@/components/admin/EmptyState';
 
 const STATUS_TABS = [
   { id: 'needs_attention', label: 'Needs Attention', countKey: 'reportedCount' },
+  { id: 'ai_review', label: 'AI Triage', countKey: 'aiNeedsAttentionCount' },
   { id: 'pending', label: 'Pending Approval', countKey: 'pendingCount' },
   { id: 'reported', label: 'Reported Flags', countKey: 'reportedCount' },
   { id: 'spam', label: 'Spam Detected', countKey: 'spamCount' },
@@ -69,6 +74,7 @@ export default function CommentsModerationPage() {
   const [threadLoading, setThreadLoading] = useState(false);
   const [moderatorNote, setModeratorNote] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [reanalyzing, setReanalyzing] = useState(false);
 
   const { addToast } = useToastStore();
 
@@ -173,6 +179,30 @@ export default function CommentsModerationPage() {
     }
   };
 
+  // Re-analyze single comment with AI
+  const handleReanalyze = async (id) => {
+    setReanalyzing(true);
+    try {
+      const res = await commentAPI.reanalyze(id);
+      if (res.success) {
+        addToast('AI safety analysis updated', 'success');
+        if (inspectingComment?._id === id) {
+          setInspectingComment(res.comment);
+        }
+        setComments((prev) =>
+          prev.map((c) => (c._id === id ? { ...c, aiModeration: res.aiModeration } : c))
+        );
+        fetchMetrics();
+      } else {
+        throw new Error(res.message || 'Re-analysis failed');
+      }
+    } catch (err) {
+      addToast(err.message || 'Failed to re-analyze comment', 'error');
+    } finally {
+      setReanalyzing(false);
+    }
+  };
+
   // Bulk Moderate Action
   const handleBulkAction = async (action) => {
     if (selectedIds.length === 0) return;
@@ -266,6 +296,16 @@ export default function CommentsModerationPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
+          <div className="flex items-center gap-1.5">
+            <Bot className="w-3 h-3 text-red-500" />
+            <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">AI Flagged</span>
+          </div>
+          <p className="font-display text-2xl font-black text-red-600 dark:text-red-400">
+            {metrics?.aiNeedsAttentionCount ?? 0}
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
           <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Reported Flags</span>
           <p className="font-display text-2xl font-black text-rose-600 dark:text-rose-400">
             {metrics?.reportedCount ?? 0}
@@ -273,10 +313,15 @@ export default function CommentsModerationPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
-          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Spam Detected</span>
-          <p className="font-display text-2xl font-black text-purple-600 dark:text-purple-400">
-            {metrics?.spamCount ?? 0}
-          </p>
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Auto-Approved</span>
+          <div className="flex items-baseline gap-1.5">
+            <p className="font-display text-2xl font-black text-emerald-600 dark:text-emerald-400">
+              {metrics?.autoApprovedTotal ?? 0}
+            </p>
+            <span className="text-[10px] font-mono font-bold text-emerald-600/70 dark:text-emerald-400/70">
+              {metrics?.autoApprovedRate ?? 100}%
+            </span>
+          </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
@@ -287,16 +332,9 @@ export default function CommentsModerationPage() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
-          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Rejected Today</span>
-          <p className="font-display text-2xl font-black text-zinc-600 dark:text-zinc-400">
-            {metrics?.rejectedToday ?? 0}
-          </p>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 shadow-xs space-y-1">
-          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Discussions</span>
+          <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase">Human Overrides</span>
           <p className="font-display text-2xl font-black text-blue-600 dark:text-blue-400">
-            {metrics?.activeDiscussionsCount ?? 0}
+            {metrics?.overridesTotal ?? 0}
           </p>
         </div>
       </section>
@@ -322,6 +360,11 @@ export default function CommentsModerationPage() {
                 }`}
               >
                 <span>{tab.label}</span>
+                {tab.id === 'ai_review' && metrics?.aiNeedsAttentionCount > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[9px] font-mono font-black">
+                    {metrics.aiNeedsAttentionCount}
+                  </span>
+                )}
                 {tab.id === 'reported' && metrics?.reportedCount > 0 && (
                   <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[9px] font-mono font-black">
                     {metrics.reportedCount}
@@ -360,6 +403,7 @@ export default function CommentsModerationPage() {
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#12151c] border border-zinc-200/80 dark:border-white/10 text-xs font-bold outline-none"
             >
               <option value="needs_attention">Priority: Needs Attention</option>
+              <option value="ai_severity">AI Highest Severity</option>
               <option value="reported">Most Reported</option>
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -412,166 +456,194 @@ export default function CommentsModerationPage() {
             <span className="font-mono text-[11px]">Showing {comments.length} items</span>
           </div>
 
-          {comments.map((comment) => (
-            <div
-              key={comment._id}
-              className={`p-5 rounded-2xl bg-white dark:bg-[#12151c] border transition-all space-y-3 ${
-                comment.reportCount > 0
-                  ? 'border-rose-500/30 dark:border-rose-500/20 shadow-xs'
-                  : 'border-zinc-200/80 dark:border-white/10'
-              }`}
-            >
-              {/* Comment Header */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={selectedIds.includes(comment._id)}
-                    onChange={() => handleToggleSelect(comment._id)}
-                    className="rounded text-red-600 mt-0.5"
-                  />
+          {comments.map((comment) => {
+            const ai = comment.aiModeration;
+            return (
+              <div
+                key={comment._id}
+                className={`p-5 rounded-2xl bg-white dark:bg-[#12151c] border transition-all space-y-3 ${
+                  ai?.classification === 'severe'
+                    ? 'border-red-500/40 dark:border-red-500/30 shadow-xs'
+                    : ai?.classification === 'abusive'
+                    ? 'border-amber-500/40 dark:border-amber-500/30'
+                    : comment.reportCount > 0
+                    ? 'border-rose-500/30 dark:border-rose-500/20 shadow-xs'
+                    : 'border-zinc-200/80 dark:border-white/10'
+                }`}
+              >
+                {/* Comment Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(comment._id)}
+                      onChange={() => handleToggleSelect(comment._id)}
+                      className="rounded text-red-600 mt-0.5"
+                    />
 
-                  <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-700 dark:text-zinc-300 shrink-0">
-                    {comment.name.charAt(0)}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-display font-bold text-sm text-zinc-900 dark:text-white truncate">
-                        {comment.name}
-                      </h4>
-                      {comment.isEditorial && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
-                          <BadgeCheck className="w-3 h-3" />
-                          <span>{comment.editorialBadge || 'Staff'}</span>
-                        </span>
-                      )}
-                      {comment.isPinned && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-bold">
-                          <Pin className="w-3 h-3" />
-                          <span>Pinned</span>
-                        </span>
-                      )}
+                    <div className="w-9 h-9 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-700 dark:text-zinc-300 shrink-0">
+                      {comment.name.charAt(0)}
                     </div>
 
-                    <span className="text-[11px] text-zinc-400 font-mono">
-                      {new Date(comment.createdAt).toLocaleString()}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-display font-bold text-sm text-zinc-900 dark:text-white truncate">
+                          {comment.name}
+                        </h4>
+                        {comment.isEditorial && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                            <BadgeCheck className="w-3 h-3" />
+                            <span>{comment.editorialBadge || 'Staff'}</span>
+                          </span>
+                        )}
+                        {comment.isPinned && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-bold">
+                            <Pin className="w-3 h-3" />
+                            <span>Pinned</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="text-[11px] text-zinc-400 font-mono">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status, Reports & AI Signals */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Unobtrusive AI Assistant Signal */}
+                    {ai && ai.classification !== 'unclassified' && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
+                          ai.classification === 'severe'
+                            ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20'
+                            : ai.classification === 'abusive'
+                            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                            : ai.classification === 'review'
+                            ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20'
+                            : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                        }`}
+                        title={ai.reason || 'AI Safety Triage'}
+                      >
+                        <Bot className="w-3 h-3" />
+                        <span className="capitalize">{ai.classification}</span>
+                        <span className="opacity-70 font-mono">· {Math.round((ai.confidence || 0) * 100)}%</span>
+                      </span>
+                    )}
+
+                    {comment.reportCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 text-[10px] font-bold flex items-center gap-1">
+                        <Flag className="w-3 h-3" />
+                        <span>{comment.reportCount} Report{comment.reportCount > 1 ? 's' : ''}</span>
+                      </span>
+                    )}
+
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
+                        comment.status === 'approved'
+                          ? 'bg-emerald-500/10 text-emerald-600'
+                          : comment.status === 'pending'
+                          ? 'bg-amber-500/10 text-amber-600'
+                          : comment.status === 'spam'
+                          ? 'bg-purple-500/10 text-purple-600'
+                          : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
+                      }`}
+                    >
+                      {comment.status}
                     </span>
                   </div>
                 </div>
 
-                {/* Status & Reports Pill */}
-                <div className="flex items-center gap-2">
-                  {comment.reportCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 text-[10px] font-bold flex items-center gap-1">
-                      <Flag className="w-3 h-3" />
-                      <span>{comment.reportCount} Report{comment.reportCount > 1 ? 's' : ''}</span>
-                    </span>
-                  )}
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
-                      comment.status === 'approved'
-                        ? 'bg-emerald-500/10 text-emerald-600'
-                        : comment.status === 'pending'
-                        ? 'bg-amber-500/10 text-amber-600'
-                        : comment.status === 'spam'
-                        ? 'bg-purple-500/10 text-purple-600'
-                        : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-500'
-                    }`}
-                  >
-                    {comment.status}
-                  </span>
+                {/* Comment Content */}
+                <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans pl-12">
+                  {comment.text}
+                </p>
+
+                {/* Article Context & Action Bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-white/5 pl-12 text-xs">
+                  {/* Article Context */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <Link
+                      href={`/blogs/${comment.slug}`}
+                      target="_blank"
+                      className="font-bold text-zinc-900 dark:text-white hover:text-red-600 truncate max-w-xs flex items-center gap-1"
+                    >
+                      <span>{comment.post?.title || comment.slug}</span>
+                      <ExternalLink className="w-3 h-3 text-zinc-400" />
+                    </Link>
+                    {comment.post?.primarySection && (
+                      <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-mono">
+                        {comment.post.primarySection.name || 'Desk'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Inline Actions */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenInspector(comment)}
+                      className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1"
+                    >
+                      <span>Context</span>
+                    </button>
+
+                    {comment.status !== 'approved' && (
+                      <button
+                        type="button"
+                        onClick={() => handleModerate(comment._id, 'approved')}
+                        disabled={actionLoading}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Approve</span>
+                      </button>
+                    )}
+
+                    {comment.status !== 'rejected' && (
+                      <button
+                        type="button"
+                        onClick={() => handleModerate(comment._id, 'rejected')}
+                        disabled={actionLoading}
+                        className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-rose-500/10 text-xs font-bold text-rose-600 flex items-center gap-1"
+                      >
+                        <RejectIcon className="w-3.5 h-3.5" />
+                        <span>Reject</span>
+                      </button>
+                    )}
+
+                    {comment.status !== 'spam' && (
+                      <button
+                        type="button"
+                        onClick={() => handleModerate(comment._id, 'spam')}
+                        disabled={actionLoading}
+                        className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-purple-500/10 text-xs font-bold text-purple-600 flex items-center gap-1"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>Spam</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleModerate(comment._id, comment.isPinned ? 'unpin' : 'pin')}
+                      disabled={actionLoading}
+                      className={`p-1.5 rounded-xl border transition-colors ${
+                        comment.isPinned
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+                          : 'border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400'
+                      }`}
+                      title={comment.isPinned ? 'Unpin Response' : 'Pin Editorial Response'}
+                    >
+                      <Pin className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {/* Comment Content */}
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans pl-12">
-                {comment.text}
-              </p>
-
-              {/* Article Context & Action Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-white/5 pl-12 text-xs">
-                {/* Article Context */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <Link
-                    href={`/blogs/${comment.slug}`}
-                    target="_blank"
-                    className="font-bold text-zinc-900 dark:text-white hover:text-red-600 truncate max-w-xs flex items-center gap-1"
-                  >
-                    <span>{comment.post?.title || comment.slug}</span>
-                    <ExternalLink className="w-3 h-3 text-zinc-400" />
-                  </Link>
-                  {comment.post?.primarySection && (
-                    <span className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-mono">
-                      {comment.post.primarySection.name || 'Desk'}
-                    </span>
-                  )}
-                </div>
-
-                {/* Inline Actions */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenInspector(comment)}
-                    className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-1"
-                  >
-                    <span>Context</span>
-                  </button>
-
-                  {comment.status !== 'approved' && (
-                    <button
-                      type="button"
-                      onClick={() => handleModerate(comment._id, 'approved')}
-                      disabled={actionLoading}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Approve</span>
-                    </button>
-                  )}
-
-                  {comment.status !== 'rejected' && (
-                    <button
-                      type="button"
-                      onClick={() => handleModerate(comment._id, 'rejected')}
-                      disabled={actionLoading}
-                      className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-rose-500/10 text-xs font-bold text-rose-600 flex items-center gap-1"
-                    >
-                      <RejectIcon className="w-3.5 h-3.5" />
-                      <span>Reject</span>
-                    </button>
-                  )}
-
-                  {comment.status !== 'spam' && (
-                    <button
-                      type="button"
-                      onClick={() => handleModerate(comment._id, 'spam')}
-                      disabled={actionLoading}
-                      className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-white/10 hover:bg-purple-500/10 text-xs font-bold text-purple-600 flex items-center gap-1"
-                    >
-                      <Shield className="w-3.5 h-3.5" />
-                      <span>Spam</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => handleModerate(comment._id, comment.isPinned ? 'unpin' : 'pin')}
-                    disabled={actionLoading}
-                    className={`p-1.5 rounded-xl border transition-colors ${
-                      comment.isPinned
-                        ? 'border-amber-500 bg-amber-500/10 text-amber-600'
-                        : 'border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400'
-                    }`}
-                    title={comment.isPinned ? 'Unpin Response' : 'Pin Editorial Response'}
-                  >
-                    <Pin className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -693,6 +765,123 @@ export default function CommentsModerationPage() {
                 <p className="text-xs text-zinc-800 dark:text-zinc-200 leading-relaxed font-sans">
                   {inspectingComment.text}
                 </p>
+              </div>
+
+              {/* 🤖 AI COMMUNITY SAFETY & MODERATION INTELLIGENCE MODULE */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#181d28] border border-slate-200/90 dark:border-white/10 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-red-600" />
+                    <h4 className="font-display font-bold text-xs uppercase tracking-wider text-zinc-900 dark:text-white">
+                      AI Safety Intelligence
+                    </h4>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleReanalyze(inspectingComment._id)}
+                    disabled={reanalyzing}
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-200 flex items-center gap-1 transition-all"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${reanalyzing ? 'animate-spin' : ''}`} />
+                    <span>{reanalyzing ? 'Analyzing...' : 'Re-analyze'}</span>
+                  </button>
+                </div>
+
+                {inspectingComment.aiModeration ? (
+                  <div className="space-y-3">
+                    {/* Classification & Severity Bar */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider font-mono ${
+                          inspectingComment.aiModeration.classification === 'severe'
+                            ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30'
+                            : inspectingComment.aiModeration.classification === 'abusive'
+                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                            : inspectingComment.aiModeration.classification === 'review'
+                            ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30'
+                            : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                        }`}
+                      >
+                        AI: {inspectingComment.aiModeration.classification} · {Math.round((inspectingComment.aiModeration.confidence || 0) * 100)}% Confidence
+                      </span>
+
+                      <div className="flex items-center gap-1" title={`Severity: ${inspectingComment.aiModeration.severity} / 5`}>
+                        <span className="text-[10px] font-mono text-zinc-400 mr-1">Sev: {inspectingComment.aiModeration.severity}/5</span>
+                        {[1, 2, 3, 4, 5].map((lvl) => (
+                          <span
+                            key={lvl}
+                            className={`w-2 h-2 rounded-full ${
+                              lvl <= (inspectingComment.aiModeration.severity || 0)
+                                ? inspectingComment.aiModeration.severity >= 4
+                                  ? 'bg-rose-500'
+                                  : inspectingComment.aiModeration.severity >= 2
+                                  ? 'bg-amber-500'
+                                  : 'bg-emerald-500'
+                                : 'bg-zinc-200 dark:bg-zinc-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Target & Flags */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                      {inspectingComment.aiModeration.targetType && (
+                        <span className="px-2 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-mono">
+                          Target: {inspectingComment.aiModeration.targetType.replace('_', ' ')}
+                        </span>
+                      )}
+                      {inspectingComment.aiModeration.isThreat && (
+                        <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold">
+                          ⚠️ Violent Threat
+                        </span>
+                      )}
+                      {inspectingComment.aiModeration.isDehumanizing && (
+                        <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-700 dark:text-rose-300 font-bold">
+                          Dehumanizing
+                        </span>
+                      )}
+                      {inspectingComment.aiModeration.isQuotedContent && (
+                        <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-700 dark:text-blue-300 font-bold">
+                          Quoted Text
+                        </span>
+                      )}
+                      {inspectingComment.aiModeration.isCondemnation && (
+                        <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
+                          Condemns Hate
+                        </span>
+                      )}
+                    </div>
+
+                    {/* AI Rationale */}
+                    {inspectingComment.aiModeration.reason && (
+                      <p className="text-xs text-zinc-700 dark:text-zinc-300 bg-white/70 dark:bg-zinc-900/70 p-2.5 rounded-xl border border-slate-200/60 dark:border-white/5 leading-relaxed font-sans">
+                        <strong className="text-zinc-900 dark:text-white font-semibold">Triage Rationale: </strong>
+                        {inspectingComment.aiModeration.reason}
+                      </p>
+                    )}
+
+                    {/* Highlighted Evidence Spans */}
+                    {inspectingComment.aiModeration.evidence?.length > 0 && (
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-mono text-zinc-400 uppercase">Evidence Spans:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {inspectingComment.aiModeration.evidence.map((span, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-mono"
+                            >
+                              "{span}"
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-500 italic">No AI safety analysis available for this comment.</p>
+                )}
               </div>
 
               {/* Reports Breakdown (if reported) */}

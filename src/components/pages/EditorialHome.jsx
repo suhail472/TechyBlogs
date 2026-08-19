@@ -375,38 +375,38 @@ export default function EditorialHome({ posts = [] }) {
             </div>
           </div>
 
-          <aside className="lg:col-span-5 rounded-3xl bg-zinc-950 text-white p-8 self-start border border-white/10 shadow-2xl space-y-5">
+          <aside className="lg:col-span-5 rounded-3xl bg-zinc-50 dark:bg-zinc-900/60 p-7 sm:p-8 self-start border border-zinc-200/90 dark:border-white/10 shadow-sm dark:shadow-xl space-y-5">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-600" />
-              <span className="text-[10px] uppercase tracking-[0.24em] text-red-400 font-black">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+              <span className="text-[10px] uppercase tracking-[0.24em] text-red-600 dark:text-red-400 font-bold">
                 The Morning Briefing
               </span>
             </div>
-            <h2 className="font-display text-2xl sm:text-3xl font-black leading-tight text-white">
+            <h2 className="font-display text-2xl sm:text-3xl font-bold leading-tight text-zinc-900 dark:text-white">
               Essential journalism, directly in your inbox.
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-sans">
+            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
               Join readers receiving our curated weekly analysis across software engineering, regional news, and education guides.
             </p>
 
-            <form onSubmit={handleNewsletterSubmit} className="space-y-3 pt-2">
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3 pt-1">
               <input
                 type="email"
                 required
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="journalist@newsroom.com"
-                className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-white/15 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-zinc-800/90 border border-zinc-200 dark:border-white/10 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 shadow-xs focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
               />
               <button
                 type="submit"
                 disabled={subscribing}
-                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-lg shadow-red-600/30"
+                className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-red-600/20"
               >
                 {subscribing ? 'Subscribing...' : 'Subscribe to The Briefing'}
               </button>
             </form>
-            <p className="text-[10px] text-zinc-400 text-center font-medium">
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center font-medium">
               Zero spam. Unsubscribe with 1-click anytime.
             </p>
           </aside>

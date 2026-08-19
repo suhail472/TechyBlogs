@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,9 +11,15 @@ import {
   Bookmark,
   Globe,
   ChevronDown,
+  ChevronRight,
   Flame,
   Layers,
   Sparkles,
+  MapPin,
+  Rss,
+  Home,
+  FileText,
+  Compass,
 } from 'lucide-react';
 import ThemeToggle from '../shared/ThemeToggle';
 import { taxonomyAPI } from '@/services/api';
@@ -32,6 +38,41 @@ export default function Navbar() {
   const [savedCount, setSavedCount] = useState(0);
   const pathname = usePathname();
   const dropdownRef = useRef(null);
+  const drawerRef = useRef(null);
+  const scrollYRef = useRef(0);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
+  // Body scroll lock for mobile drawer
+  useEffect(() => {
+    if (isOpen) {
+      scrollYRef.current = window.scrollY;
+      document.body.classList.add('body-scroll-locked');
+      document.body.style.top = `-${scrollYRef.current}px`;
+    } else {
+      document.body.classList.remove('body-scroll-locked');
+      document.body.style.top = '';
+      window.scrollTo(0, scrollYRef.current);
+    }
+    return () => {
+      document.body.classList.remove('body-scroll-locked');
+      document.body.style.top = '';
+    };
+  }, [isOpen]);
+
+  // Escape key handler for drawer
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -90,13 +131,20 @@ export default function Navbar() {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
   };
 
+  const closeDrawer = useCallback(() => setIsOpen(false), []);
+
   const currentEdition =
     EDITIONS.find((e) => e.path !== '/' && pathname.startsWith(e.path)) || EDITIONS[0];
 
+  const isActive = (path) => {
+    if (path === '/') return pathname === '/';
+    return pathname.startsWith(path);
+  };
+
   return (
-    <header className="fixed top-0 z-50 w-full transition-all duration-300">
-      {/* Top Edition & Utility Bar */}
-      <div className="bg-zinc-950 text-white text-[11px] font-bold py-1.5 px-6 border-b border-white/10">
+    <header className="fixed top-0 z-50 w-full transition-all duration-300 safe-area-top">
+      {/* Top Edition & Utility Bar — DESKTOP ONLY */}
+      <div className="hidden md:block bg-zinc-950 text-white text-[11px] font-bold py-1.5 px-6 border-b border-white/10">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Edition Switcher */}
@@ -134,8 +182,8 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            <span className="hidden sm:inline-block text-zinc-500">|</span>
-            <span className="hidden sm:inline-block text-zinc-400">
+            <span className="text-zinc-500">|</span>
+            <span className="text-zinc-400">
               Independent digital publishing & journalism
             </span>
           </div>
@@ -163,13 +211,24 @@ export default function Navbar() {
             : 'bg-white/70 dark:bg-[#0b0f19]/70 backdrop-blur-md border-b border-zinc-200/60 dark:border-white/5'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
-          {/* Brand Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-black text-sm font-display shadow-md shadow-red-600/20 group-hover:scale-105 transition-transform">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 h-14 sm:h-16 flex items-center justify-between">
+          {/* Mobile: Hamburger (left) */}
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="lg:hidden touch-target rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+            aria-label="Toggle Navigation"
+            aria-expanded={isOpen}
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
+          {/* Brand Logo — centered on mobile, left on desktop */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0 lg:mr-auto">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-black text-xs sm:text-sm font-display shadow-md shadow-red-600/20 group-hover:scale-105 transition-transform">
               TB
             </div>
-            <span className="text-xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
+            <span className="text-lg sm:text-xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
               Teachy<span className="text-red-600 dark:text-red-500">Blogs</span>
             </span>
           </Link>
@@ -226,87 +285,178 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Utility Tools */}
-          <div className="flex items-center gap-2.5">
+          {/* Utility Tools — right side */}
+          <div className="flex items-center gap-1 sm:gap-2.5">
             {/* Search Trigger */}
             <Link
               href="/search"
-              className="p-2 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+              className="touch-target rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
               aria-label="Search articles"
             >
-              <Search className="w-4 h-4" />
-              <span className="hidden sm:inline-block text-zinc-400">⌘K</span>
+              <Search className="w-[18px] h-[18px] sm:w-4 sm:h-4" />
             </Link>
 
-            <ThemeToggle />
-
-            {/* Mobile Menu Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-white/5"
-              aria-label="Toggle Navigation"
-            >
-              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Theme toggle — hidden on tiny mobile, shown sm+ */}
+            <div className="hidden sm:block">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Navigation Drawer */}
-        <AnimatePresence>
-          {isOpen && (
+      {/* ===== MOBILE NAVIGATION DRAWER ===== */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop overlay */}
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden bg-white dark:bg-zinc-950 border-b border-zinc-200 dark:border-white/10 px-6 py-4 overflow-hidden space-y-3 text-sm font-bold"
-            >
-              <Link
-                href="/"
-                onClick={() => setIsOpen(false)}
-                className="block py-2 text-zinc-700 dark:text-zinc-300"
-              >
-                Frontpage
-              </Link>
-              <Link
-                href="/blogs"
-                onClick={() => setIsOpen(false)}
-                className="block py-2 text-zinc-700 dark:text-zinc-300"
-              >
-                All Stories & Archives
-              </Link>
-              <Link
-                href="/kashmir"
-                onClick={() => setIsOpen(false)}
-                className="block py-2 text-red-600 dark:text-red-400"
-              >
-                Kashmir Regional Bureau
-              </Link>
-              <Link
-                href="/search"
-                onClick={() => setIsOpen(false)}
-                className="block py-2 text-zinc-700 dark:text-zinc-300"
-              >
-                Search Stories
-              </Link>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="drawer-backdrop lg:hidden"
+              onClick={closeDrawer}
+              aria-hidden="true"
+            />
 
-              <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400 block">Verticals</span>
-                {sections.map((sec) => (
+            {/* Slide-in drawer from left */}
+            <motion.div
+              ref={drawerRef}
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[320px] bg-white dark:bg-zinc-950 shadow-2xl lg:hidden flex flex-col safe-area-top"
+            >
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200/80 dark:border-white/10">
+                <Link href="/" onClick={closeDrawer} className="flex items-center gap-2 group">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center text-white font-black text-xs font-display shadow-md shadow-red-600/20">
+                    TB
+                  </div>
+                  <span className="text-lg font-black font-display tracking-tight text-zinc-900 dark:text-white">
+                    Teachy<span className="text-red-600 dark:text-red-500">Blogs</span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={closeDrawer}
+                  className="touch-target rounded-xl text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Drawer Body — scrollable */}
+              <div className="flex-1 overflow-y-auto overscroll-contain py-3 px-3">
+                {/* Primary Navigation */}
+                <div className="space-y-0.5">
+                  <DrawerLink href="/" icon={Home} label="Frontpage" active={pathname === '/'} onClick={closeDrawer} />
+                  <DrawerLink href="/blogs" icon={FileText} label="All Stories & Archives" active={pathname.startsWith('/blogs')} onClick={closeDrawer} />
+                  <DrawerLink href="/search" icon={Search} label="Search Stories" active={pathname === '/search'} onClick={closeDrawer} />
+                  <DrawerLink href="/saved" icon={Bookmark} label={`Bookmarks${savedCount > 0 ? ` (${savedCount})` : ''}`} active={pathname === '/saved'} onClick={closeDrawer} />
+                </div>
+
+                {/* Kashmir Bureau — highlighted */}
+                <div className="mt-4 mb-2">
                   <Link
-                    key={sec.slug}
-                    href={`/section/${sec.slug}`}
-                    onClick={() => setIsOpen(false)}
-                    className="block py-1.5 text-zinc-600 dark:text-zinc-400 text-xs"
+                    href="/kashmir"
+                    onClick={closeDrawer}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-xl font-bold text-sm transition-all ${
+                      pathname.startsWith('/kashmir')
+                        ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                        : 'text-red-600 dark:text-red-400 hover:bg-red-500/5'
+                    }`}
                   >
-                    {sec.name}
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <span className="block leading-tight">Kashmir Bureau</span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">Regional coverage</span>
+                    </div>
                   </Link>
-                ))}
+                </div>
+
+                {/* Editorial Sections */}
+                <div className="pt-3 border-t border-zinc-100 dark:border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500 block px-3 mb-2">
+                    Editorial Desks
+                  </span>
+                  <div className="space-y-0.5">
+                    {sections.map((sec) => (
+                      <DrawerLink
+                        key={sec.slug}
+                        href={`/section/${sec.slug}`}
+                        icon={Layers}
+                        label={sec.name}
+                        active={pathname === `/section/${sec.slug}`}
+                        onClick={closeDrawer}
+                        compact
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Edition Switcher */}
+                <div className="pt-4 mt-3 border-t border-zinc-100 dark:border-white/5">
+                  <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500 block px-3 mb-2">
+                    Editions
+                  </span>
+                  <div className="space-y-0.5">
+                    {EDITIONS.map((ed) => (
+                      <DrawerLink
+                        key={ed.id}
+                        href={ed.path}
+                        icon={Globe}
+                        label={ed.name}
+                        active={currentEdition.id === ed.id}
+                        onClick={closeDrawer}
+                        compact
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="px-4 py-3 border-t border-zinc-100 dark:border-white/5 flex items-center justify-between safe-area-bottom">
+                <ThemeToggle />
+                <Link
+                  href="/feed.xml"
+                  target="_blank"
+                  className="touch-target rounded-xl text-zinc-400 hover:text-amber-500 hover:bg-zinc-100 dark:hover:bg-white/5 transition-colors"
+                  aria-label="RSS Feed"
+                >
+                  <Rss className="w-4 h-4" />
+                </Link>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </nav>
+          </>
+        )}
+      </AnimatePresence>
     </header>
+  );
+}
+
+/* ===== Drawer Link Component ===== */
+function DrawerLink({ href, icon: Icon, label, active, onClick, compact = false }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className={`flex items-center gap-3 px-3 rounded-xl font-semibold transition-all ${
+        compact ? 'py-2.5 text-[13px]' : 'py-3 text-sm'
+      } ${
+        active
+          ? 'bg-red-500/10 text-red-600 dark:text-red-400 font-bold'
+          : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-white/5 hover:text-zinc-900 dark:hover:text-white'
+      }`}
+    >
+      <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-red-600 dark:text-red-400' : 'text-zinc-400'}`} />
+      <span>{label}</span>
+      {active && <ChevronRight className="w-3.5 h-3.5 ml-auto text-red-400/60" />}
+    </Link>
   );
 }

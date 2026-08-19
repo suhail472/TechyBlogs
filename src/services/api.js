@@ -25,10 +25,24 @@ const apiCall = async (endpoint, options = {}) => {
     headers,
   });
 
-  const data = await response.json();
+  const contentType = response.headers.get('content-type') || '';
+  let data = null;
+
+  if (contentType.includes('application/json')) {
+    try {
+      data = await response.json();
+    } catch (err) {
+      data = { message: 'Failed to parse server response as JSON' };
+    }
+  } else {
+    const rawText = await response.text();
+    // Strip HTML tags if HTML error returned
+    const cleanMessage = rawText.replace(/<[^>]*>?/gm, '').trim();
+    data = { message: cleanMessage || `API error: ${response.status}` };
+  }
 
   if (!response.ok) {
-    throw new Error(data.message || `API error: ${response.status}`);
+    throw new Error(data?.message || `API error: ${response.status}`);
   }
 
   return data;
@@ -357,6 +371,11 @@ export const commentAPI = {
     return apiCall('/comments/bulk', {
       method: 'POST',
       body: JSON.stringify({ commentIds, action }),
+    });
+  },
+  reanalyze: async (id) => {
+    return apiCall(`/comments/${id}/analyze`, {
+      method: 'POST',
     });
   },
 };

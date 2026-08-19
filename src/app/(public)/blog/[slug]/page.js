@@ -111,13 +111,13 @@ export default async function SingleBlogPage({ params }) {
       .lean();
 
     if (blog) {
-      const query = getPublicPostFilter({
-        slug: { $ne: slug },
-      });
+      const relatedExtra = { slug: { $ne: slug } };
 
       if (blog.primaryTopic) {
-        query.$or = [{ primaryTopic: blog.primaryTopic._id }, { topics: blog.primaryTopic._id }];
+        relatedExtra.$or = [{ primaryTopic: blog.primaryTopic._id }, { topics: blog.primaryTopic._id }];
       }
+
+      const query = getPublicPostFilter(relatedExtra);
 
       const relatedPosts = await Post.find(query)
         .populate('primaryTopic', 'name slug')

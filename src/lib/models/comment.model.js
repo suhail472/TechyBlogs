@@ -44,6 +44,13 @@ const commentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Admin',
       default: null,
+      index: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+      default: null,
+      index: true,
     },
     isEditorial: {
       type: Boolean,
@@ -58,11 +65,44 @@ const commentSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+      },
+    ],
+    likesCount: {
+      type: Number,
+      default: 0,
+    },
+    dislikes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+      },
+    ],
+    dislikesCount: {
+      type: Number,
+      default: 0,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'spam', 'deleted'],
       default: 'pending',
       index: true,
+    },
+    autoApproved: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    approvedAt: {
+      type: Date,
+      default: null,
     },
     reports: [
       {
@@ -85,6 +125,85 @@ const commentSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    aiModeration: {
+      status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'skipped'],
+        default: 'pending',
+        index: true,
+      },
+      classification: {
+        type: String,
+        enum: ['safe', 'review', 'abusive', 'severe', 'unclassified'],
+        default: 'unclassified',
+        index: true,
+      },
+      severity: {
+        type: Number,
+        min: 0,
+        max: 5,
+        default: 0,
+      },
+      confidence: {
+        type: Number,
+        min: 0,
+        max: 1,
+        default: 0,
+      },
+      categories: {
+        type: [String],
+        default: [],
+      },
+      targetType: {
+        type: String,
+        enum: ['none', 'individual', 'protected_group', 'institution', 'idea_doctrine'],
+        default: 'none',
+      },
+      targetCategory: {
+        type: String,
+        default: null,
+      },
+      isThreat: {
+        type: Boolean,
+        default: false,
+      },
+      isDehumanizing: {
+        type: Boolean,
+        default: false,
+      },
+      isQuotedContent: {
+        type: Boolean,
+        default: false,
+      },
+      isCondemnation: {
+        type: Boolean,
+        default: false,
+      },
+      recommendedAction: {
+        type: String,
+        enum: ['allow', 'review', 'hold'],
+        default: 'allow',
+      },
+      reason: {
+        type: String,
+        maxlength: 1000,
+        default: '',
+      },
+      evidence: {
+        type: [String],
+        default: [],
+      },
+      model: {
+        type: String,
+        default: '',
+      },
+      modelVersion: {
+        type: String,
+        default: '1.0',
+      },
+      analyzedAt: Date,
+      contentHash: String,
+    },
     moderationHistory: [
       {
         action: { type: String, required: true },
@@ -97,6 +216,12 @@ const commentSchema = new mongoose.Schema(
         previousStatus: String,
         newStatus: String,
         note: String,
+        aiRecommendation: String,
+        aiConfidence: Number,
+        moderatorOverride: {
+          type: Boolean,
+          default: false,
+        },
       },
     ],
     moderatorNotes: {
@@ -127,6 +252,12 @@ const commentSchema = new mongoose.Schema(
 // Compound indexes for high-speed queue sorting and filtering
 commentSchema.index({ status: 1, reportCount: -1, createdAt: -1 });
 commentSchema.index({ slug: 1, status: 1, isPinned: -1, timestamp: 1 });
+commentSchema.index({ 'aiModeration.classification': 1, 'aiModeration.severity': -1, createdAt: -1 });
+
+// Delete mongoose cached model to ensure clean re-registration
+if (mongoose.models && mongoose.models.Comment) {
+  delete mongoose.models.Comment;
+}
 
 const Comment = mongoose.models.Comment || mongoose.model('Comment', commentSchema);
 

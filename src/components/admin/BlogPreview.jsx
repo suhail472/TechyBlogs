@@ -91,7 +91,7 @@ export default function BlogPreview({ formData }) {
               <img
                 src={formData.image}
                 alt={formData.title}
-                className="w-full aspect-[16/9] object-cover rounded-2xl shadow-xl"
+                className="w-full aspect-[1200/630] object-cover rounded-2xl shadow-xl"
               />
             </div>
           )}

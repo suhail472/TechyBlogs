@@ -75,10 +75,10 @@ export default function SearchClient() {
   };
 
   return (
-    <main className="pt-32 pb-24 max-w-7xl mx-auto px-6">
+    <main className="pt-24 sm:pt-32 pb-16 sm:pb-24 max-w-7xl mx-auto px-4 sm:px-6">
       {/* Search Header */}
       <div className="mb-10 text-center max-w-2xl mx-auto">
-        <h1 className="text-3xl md:text-5xl font-black font-display tracking-tight mb-4">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl font-black font-display tracking-tight mb-4">
           Search the <span className="text-red-600">Newsroom</span>
         </h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -98,7 +98,7 @@ export default function SearchClient() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search topics, headlines, authors, keywords..."
-            className="w-full px-6 py-4 pl-13 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 text-base font-medium shadow-lg shadow-zinc-200/50 dark:shadow-none focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full px-5 sm:px-6 py-3.5 sm:py-4 pl-12 sm:pl-13 rounded-2xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-zinc-900 text-sm sm:text-base font-medium shadow-lg shadow-zinc-200/50 dark:shadow-none focus:outline-none focus:ring-2 focus:ring-red-500"
           />
           <Search className="w-5 h-5 text-zinc-400 absolute left-4.5 top-1/2 -translate-y-1/2" />
           <button
@@ -111,8 +111,8 @@ export default function SearchClient() {
       </div>
 
       {/* Filters Bar */}
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-4 mb-10 flex flex-wrap items-center justify-between gap-4 text-xs font-bold">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-white/10 p-3 sm:p-4 mb-8 sm:mb-10 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3 sm:gap-4 text-xs font-bold">
+        <div className="flex overflow-x-auto no-scrollbar items-center gap-3 pb-1 sm:pb-0">
           <div className="flex items-center gap-1.5 text-zinc-400 uppercase tracking-wider text-[10px]">
             <Filter className="w-3.5 h-3.5" /> Filter by:
           </div>

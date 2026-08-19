@@ -48,7 +48,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
   const categories = ['All', ...new Set(allBlogs.flatMap(b => b.categories || []))];
 
   return (
-    <div className="pt-36 pb-24 px-6 md:px-12 max-w-7xl mx-auto relative">
+    <div className="pt-24 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 md:px-12 max-w-7xl mx-auto relative">
       <TopLoader />
       
       {/* Ambient decorative blobs */}
@@ -67,7 +67,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
               <BookOpen className="w-3.5 h-3.5" />
               Blog Archive
             </span>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-900 dark:text-white font-display">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-zinc-900 dark:text-white font-display">
               Article Archive
             </h1>
             <p className="text-base md:text-lg text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed font-sans">
@@ -78,7 +78,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
 
         {/* Filter Toolbar */}
         <div className="flex flex-col lg:flex-row gap-6 items-center justify-between border-y border-zinc-200/80 dark:border-white/[0.06] py-8 mb-12">
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+          <div className="flex overflow-x-auto no-scrollbar scroll-shadow-x gap-2 w-full lg:w-auto pb-2 lg:pb-0">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -86,7 +86,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
                   setSelectedCategory(cat);
                   setShowBookmarksOnly(false);
                 }}
-                className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border ${
+                className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border whitespace-nowrap shrink-0 ${
                   selectedCategory === cat && !showBookmarksOnly
                     ? 'bg-gradient-to-r from-blue-600 to-indigo-600 border-blue-500 text-white shadow-md shadow-blue-500/15'
                     : 'bg-white/60 border-zinc-200/80 text-zinc-500 hover:text-zinc-900 hover:bg-white hover:border-zinc-300 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-zinc-400 dark:hover:text-white dark:hover:bg-white/[0.06] dark:hover:border-white/10'
@@ -104,7 +104,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
                   setBookmarks(JSON.parse(localStorage.getItem('techy-blogs-bookmarks') || '[]'));
                 }
               }}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border flex items-center gap-1.5 ${
+              className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 border flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
                 showBookmarksOnly
                   ? 'bg-gradient-to-r from-amber-500 to-amber-600 border-amber-500 text-white shadow-md shadow-amber-500/15'
                   : 'bg-white/60 border-zinc-200/80 text-amber-600 hover:text-amber-700 hover:bg-white hover:border-zinc-300 dark:bg-white/[0.03] dark:border-white/[0.06] dark:text-amber-500 dark:hover:text-amber-400 dark:hover:bg-white/[0.06] dark:hover:border-white/10'
@@ -134,7 +134,7 @@ export default function BlogsClient({ initialBlogs = [], initialCategory = 'All'
             No articles found matching that filter.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-8 lg:gap-10">
             {filteredBlogs.map((blog, index) => (
               <motion.div
                 key={blog._id || blog.id}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Volume2, Play, Pause, Square, Sun, Type, Sliders, ChevronDown, Sparkles } from 'lucide-react';
+import { Volume2, Play, Pause, Square, Sun, Type, Sliders, ChevronDown, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 
 const getCleanTextForSpeech = (markdown) => {
   if (!markdown) return '';
@@ -75,7 +75,11 @@ const getPreferredVoice = (voiceList) => {
   return scored[0].voice;
 };
 
-export default function ReaderSettings({ content = '' }) {
+export default function ReaderSettings({
+  content = '',
+  focusMode = false,
+  onToggleFocusMode = null,
+}) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentChunkIndex, setCurrentChunkIndex] = useState(0);
@@ -85,10 +89,18 @@ export default function ReaderSettings({ content = '' }) {
   const [warmth, setWarmth] = useState('Off');
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Typography state
-  const [fontFamily, setFontFamily] = useState('font-serif');
+  const handleFocusToggle = () => {
+    if (onToggleFocusMode) {
+      onToggleFocusMode();
+    } else if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('teachyblogs-focus-mode-toggle'));
+    }
+  };
+
+  // Typography state — Defaults: Manrope Sans, A+ (prose-lg), Generous spacing (leading-loose)
+  const [fontFamily, setFontFamily] = useState('font-sans');
   const [fontSize, setFontSize] = useState('prose-lg');
-  const [lineHeight, setLineHeight] = useState('leading-relaxed');
+  const [lineHeight, setLineHeight] = useState('leading-loose');
 
   const synthRef = useRef(null);
   const chunksRef = useRef([]);
@@ -112,9 +124,9 @@ export default function ReaderSettings({ content = '' }) {
 
     if (typeof window !== 'undefined') {
       const savedWarmth = localStorage.getItem('teachyblogs-reader-warmth') || 'Off';
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-serif';
+      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
       const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
+      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-loose';
       setWarmth(savedWarmth);
       setFontFamily(savedFamily);
       setFontSize(savedSize);
@@ -360,20 +372,36 @@ export default function ReaderSettings({ content = '' }) {
             </div>
           </div>
 
-          {/* Expand Settings Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className={`h-9 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border ${
-              isExpanded
-                ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent shadow-sm'
-                : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:border-zinc-300'
-            }`}
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span>Customize Reading</span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
-          </button>
+          {/* Focus Mode & Settings Toggles */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleFocusToggle}
+              className={`h-9 px-3.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm border ${
+                focusMode
+                  ? 'bg-amber-600 dark:bg-amber-500 text-white border-amber-600 dark:border-amber-500 shadow-amber-600/20'
+                  : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:border-amber-500/50 hover:text-amber-600 dark:hover:text-amber-400'
+              }`}
+              title={focusMode ? 'Exit Distraction-Free Focus Mode' : 'Enter Distraction-Free Focus Mode (Full Width Canvas)'}
+            >
+              {focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              <span>{focusMode ? 'Exit Focus' : 'Focus Mode'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className={`h-9 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all border ${
+                isExpanded
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 border-transparent shadow-sm'
+                  : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:border-zinc-300'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Customize</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Collapsible Reader Customization Panel */}
@@ -493,6 +521,21 @@ export default function ReaderSettings({ content = '' }) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleFocusToggle}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                    focusMode
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                      : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:border-amber-500'
+                  }`}
+                >
+                  {focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                  <span>{focusMode ? 'Exit Zen Focus' : 'Zen Focus Mode'}</span>
+                </button>
               </div>
             </div>
           </div>

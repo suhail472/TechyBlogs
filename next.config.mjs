@@ -16,6 +16,8 @@ const nextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['bcryptjs', 'mongoose', 'jsonwebtoken'],
+  transpilePackages: ['framer-motion'],
 };
 
 export default nextConfig;

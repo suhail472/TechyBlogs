@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Globe, ArrowRight, BadgeCheck, MapPin, FileText, Twitter, Linkedin, Github } from 'lucide-react';
+import { Globe, ArrowRight, BadgeCheck, MapPin, FileText, Share2 } from 'lucide-react';
 import connectToDatabase from '@/lib/db';
 import Admin from '@/lib/models/admin.model';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import BlogCard from '@/components/shared/BlogCard';
 import { notFound } from 'next/navigation';
 import { DEFAULT_AUTHORS, DEFAULT_STORIES } from '@/data/defaultStories';
@@ -12,7 +12,6 @@ const SITE_URL = 'https://teachyblogs.com';
 async function getAuthor(slug) {
   try {
     await connectToDatabase();
-    const now = new Date();
     const author = await Admin.findOne({
       $or: [{ slug }, { username: slug }],
     })
@@ -20,12 +19,11 @@ async function getAuthor(slug) {
       .lean();
 
     if (author) {
-      // Query published stories strictly <= now to avoid exposing embargoed scheduled articles
-      const posts = await Post.find({
-        status: { $in: ['published', 'updated'] },
-        publishedAt: { $lte: now },
-        $or: [{ primaryAuthor: author._id }, { author: author.name }, { 'authors.authorId': author._id }],
-      })
+      const posts = await Post.find(
+        getPublicPostFilter({
+          $or: [{ primaryAuthor: author._id }, { author: author.name }, { 'authors.authorId': author._id }],
+        })
+      )
         .sort({ publishedAt: -1 })
         .limit(30)
         .lean();
@@ -164,7 +162,7 @@ export default async function AuthorPage({ params }) {
                 target="_blank"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-blue-500"
               >
-                <Twitter className="w-3.5 h-3.5" /> X / Twitter
+                <Share2 className="w-3.5 h-3.5" /> X / Twitter
               </a>
             )}
             {author.socialLinks?.linkedin && (
@@ -174,7 +172,7 @@ export default async function AuthorPage({ params }) {
                 target="_blank"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-blue-600"
               >
-                <Linkedin className="w-3.5 h-3.5" /> LinkedIn
+                <Share2 className="w-3.5 h-3.5" /> LinkedIn
               </a>
             )}
             {author.socialLinks?.github && (
@@ -184,7 +182,7 @@ export default async function AuthorPage({ params }) {
                 target="_blank"
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white"
               >
-                <Github className="w-3.5 h-3.5" /> GitHub
+                <Share2 className="w-3.5 h-3.5" /> GitHub
               </a>
             )}
           </div>

@@ -13,14 +13,18 @@ const useToastStore = create((set) => ({
       if (msgOrObj.type) toastType = msgOrObj.type;
     }
 
-    set((state) => ({
-      toasts: [...state.toasts, { id, message: String(text || ''), type: toastType }],
-    }));
+    // Schedule state update safely outside the current synchronous render cycle
     setTimeout(() => {
       set((state) => ({
-        toasts: state.toasts.filter((t) => t.id !== id),
+        toasts: [...state.toasts, { id, message: String(text || ''), type: toastType }],
       }));
-    }, 3000);
+
+      setTimeout(() => {
+        set((state) => ({
+          toasts: state.toasts.filter((t) => t.id !== id),
+        }));
+      }, 3000);
+    }, 0);
   },
   removeToast: (id) => {
     set((state) => ({

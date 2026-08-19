@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -20,15 +20,14 @@ async function getRegionData(slug) {
       subRegions.forEach((sr) => regionIds.push(sr._id));
     }
 
-    const query = {
-      status: { $in: ['published', 'updated'] },
+    const query = getPublicPostFilter({
       $or: [
         { primaryRegion: { $in: regionIds } },
         { regions: { $in: regionIds } },
         { tags: slug },
         { tags: new RegExp(`^${resolvedName}$`, 'i') },
       ],
-    };
+    });
 
     const posts = await Post.find(query)
       .populate('primaryTopic', 'name slug')

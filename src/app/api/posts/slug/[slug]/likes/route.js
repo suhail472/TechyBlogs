@@ -7,10 +7,29 @@ export async function POST(req, { params }) {
     const { slug } = await params;
     await connectToDatabase();
 
-    const post = await Post.findOne({ slug, status: 'published' });
+    const normalizedSlug = decodeURIComponent(slug).trim();
+    const cleanSlug = normalizedSlug.replace(/^-+/, '');
+    const slugVariants = [
+      normalizedSlug,
+      cleanSlug,
+      `-${cleanSlug}`,
+    ];
+
+    const post = await Post.findOne({
+      slug: { $in: slugVariants },
+      status: 'published',
+    });
     if (!post) throw new Error('Post not found');
 
-    post.likes = (post.likes || 0) + 1;
+    const body = await req.json().catch(() => ({}));
+    const action = body.action || 'like';
+
+    if (action === 'unlike') {
+      post.likes = Math.max(0, (post.likes || 0) - 1);
+    } else {
+      post.likes = (post.likes || 0) + 1;
+    }
+
     await post.save();
 
     return NextResponse.json({ success: true, likes: post.likes }, { status: 200 });

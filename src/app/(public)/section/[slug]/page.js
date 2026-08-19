@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 
@@ -13,7 +13,9 @@ async function getSection(slug) {
     await connectToDatabase();
     const item = await Taxonomy.findOne({ kind: 'section', slug, active: true }).lean();
     const resolvedName = item?.name || name;
-    const query = { status: { $in: ['published', 'updated'] }, $or: [{ primarySection: item?._id }, { sections: item?._id }, { categories: new RegExp(`^${escapeRegex(resolvedName)}$`, 'i') }] };
+    const query = getPublicPostFilter({
+      $or: [{ primarySection: item?._id }, { sections: item?._id }, { categories: new RegExp(`^${escapeRegex(resolvedName)}$`, 'i') }],
+    });
     const posts = await Post.find(query).sort({ featured: -1, publishedAt: -1 }).limit(24).lean();
     return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
   } catch (err) {

@@ -32,7 +32,7 @@ export default function PostLoading() {
             </div>
 
             {/* Featured Image placeholder */}
-            <div className="aspect-[21/9] rounded-3xl bg-zinc-200/50 dark:bg-white/[0.04] w-full" />
+            <div className="aspect-[1200/630] rounded-3xl bg-zinc-200/50 dark:bg-white/[0.04] w-full" />
 
             {/* Article Content blocks */}
             <div className="space-y-6 pt-4">

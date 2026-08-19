@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -14,14 +14,13 @@ async function getTopic(slug) {
     await connectToDatabase();
     const item = await Taxonomy.findOne({ kind: 'topic', slug, active: true }).lean();
     const resolvedName = item?.name || name;
-    const query = {
-      status: { $in: ['published', 'updated'] },
+    const query = getPublicPostFilter({
       $or: [
         { topics: item?._id },
         { tags: new RegExp(`^${escapeRegex(resolvedName)}$`, 'i') },
         { tags: slug },
       ],
-    };
+    });
     const posts = await Post.find(query).sort({ featured: -1, publishedAt: -1 }).limit(24).lean();
     return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
   } catch (err) {

@@ -290,12 +290,21 @@ const Post = mongoose.models.Post || mongoose.model('Post', postSchema);
 
 export function getPublicPostFilter(extra = {}) {
   const now = new Date();
-  return {
+  const base = {
     status: { $in: ['published', 'updated'] },
     publishedAt: { $lte: now },
-    $or: [{ embargoUntil: null }, { embargoUntil: { $lte: now } }],
-    ...extra,
+    $or: [{ embargoUntil: null }, { embargoUntil: { $exists: false } }, { embargoUntil: { $lte: now } }],
   };
+
+  // If extra has its own $or, we must wrap both in $and to prevent overwrite
+  if (extra.$or) {
+    const { $or: extraOr, ...rest } = extra;
+    return {
+      $and: [base, { $or: extraOr }, ...Object.keys(rest).length ? [rest] : []],
+    };
+  }
+
+  return { ...base, ...extra };
 }
 
 export default Post;

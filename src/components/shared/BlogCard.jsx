@@ -30,8 +30,8 @@ const BlogCard = ({ blog }) => {
           </div>
         </div>
         
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-3 text-xs font-semibold tracking-wider text-zinc-400 dark:text-zinc-500">
+        <div className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 sm:mb-3 gap-1.5 text-xs font-semibold tracking-wider text-zinc-400 dark:text-zinc-500">
             <div className="flex gap-1.5 flex-wrap">
               {(blog.categories || []).map((cat) => (
                 <span key={cat} className="text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 dark:bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/10 dark:border-indigo-500/15">
@@ -56,7 +56,7 @@ const BlogCard = ({ blog }) => {
             </div>
           </div>
           
-          <h3 className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 font-display">
+          <h3 className="text-base sm:text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 font-display">
             {blog.title}
           </h3>
           
@@ -64,7 +64,7 @@ const BlogCard = ({ blog }) => {
             {blog.excerpt}
           </p>
           
-          <div className="mt-5 flex items-center text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 opacity-0 translate-x-[-4px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+          <div className="mt-4 sm:mt-5 flex items-center text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 sm:opacity-0 sm:translate-x-[-4px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
             Read Article
             <ArrowUpRight className="ml-1.5 w-3.5 h-3.5" />
           </div>

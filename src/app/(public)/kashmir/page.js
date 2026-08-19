@@ -1,5 +1,5 @@
 import connectToDatabase from '@/lib/db';
-import Post from '@/lib/models/post.model';
+import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
@@ -10,14 +10,13 @@ async function getKashmirData() {
   try {
     await connectToDatabase();
     const item = await Taxonomy.findOne({ kind: 'edition', slug: 'kashmir', active: true }).lean();
-    const query = {
-      status: { $in: ['published', 'updated'] },
+    const query = getPublicPostFilter({
       $or: [
         { editions: item?._id },
         { categories: /kashmir|srinagar|jammu/i },
         { tags: /kashmir|srinagar|dal lake|gulmarg/i },
       ],
-    };
+    });
     const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(30).lean();
     
     if (posts && posts.length > 0) {

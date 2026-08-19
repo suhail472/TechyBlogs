@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { List, ChevronDown } from 'lucide-react';
 
-export default function TableOfContents({ headings = [] }) {
+export default function TableOfContents({ headings = [], compact = false }) {
   const [activeId, setActiveId] = useState('');
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(compact ? false : true);
   const observerRef = useRef(null);
 
   useEffect(() => {
@@ -81,10 +81,10 @@ export default function TableOfContents({ headings = [] }) {
 
       <div
         className={`transition-all duration-200 ease-in-out overflow-hidden ${
-          isExpanded ? 'max-h-[300px] opacity-100 mt-2.5 pt-2.5 border-t border-zinc-200/50 dark:border-white/5' : 'max-h-0 opacity-0'
+          isExpanded ? `${compact ? 'max-h-[200px]' : 'max-h-[300px]'} opacity-100 mt-2.5 pt-2.5 border-t border-zinc-200/50 dark:border-white/5` : 'max-h-0 opacity-0'
         }`}
       >
-        <nav className="space-y-0.5 max-h-[240px] overflow-y-auto pr-1">
+        <nav className={`space-y-0.5 ${compact ? 'max-h-[160px]' : 'max-h-[240px]'} overflow-y-auto pr-1`}>
           {headings.map((heading, idx) => {
             const formattedRank = idx + 1 < 10 ? `0${idx + 1}` : `${idx + 1}`;
             const isActive = activeId === heading.id;

@@ -278,8 +278,8 @@ export default function MarkdownRenderer({
   }, [htmlContent, content, onCodePlay, addToast]);
 
   const typographyClass = typography
-    ? `${typography.fontFamily || 'font-sans'} ${typography.fontSize || 'prose-lg'} ${typography.lineHeight || 'leading-relaxed'}`
-    : 'font-sans prose-lg leading-relaxed';
+    ? `${typography.fontFamily || 'font-sans'} ${typography.fontSize || 'prose-lg'} ${typography.lineHeight || 'leading-loose'}`
+    : 'font-sans prose-lg leading-loose';
 
   return (
     <div

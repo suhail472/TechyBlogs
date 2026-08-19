@@ -387,6 +387,7 @@ export default function BlogEditor({ id }) {
   const [formData, setFormData] = useState({
     title: '',
     subtitle: '',
+    excerpt: '',
     slug: '',
     content: '',
     categories: ['Technology'],
@@ -497,6 +498,7 @@ export default function BlogEditor({ id }) {
           const serverForm = {
             title: p.title || '',
             subtitle: p.subtitle || '',
+            excerpt: p.excerpt || p.subtitle || '',
             slug: p.slug || '',
             content: p.content || '',
             categories: p.categories || ['Technology'],
@@ -649,6 +651,7 @@ export default function BlogEditor({ id }) {
       try {
         const payload = {
           ...formData,
+          excerpt: formData.excerpt || formData.subtitle || formData.seo?.description || formData.title || 'Article dispatch',
           isAutosave: isBackground,
         };
 
@@ -976,6 +979,7 @@ export default function BlogEditor({ id }) {
     try {
       const payload = {
         ...formData,
+        excerpt: formData.excerpt || formData.subtitle || formData.seo?.description || formData.title || 'Article dispatch',
         status: targetStatus,
         isAutosave: false, // Record formal version milestone on manual save
         publishedAt: targetStatus === 'published' && !formData.publishedAt ? new Date() : formData.publishedAt,
@@ -988,8 +992,9 @@ export default function BlogEditor({ id }) {
       } else {
         res = await postAPI.createPost(payload);
         addToast(`Story created as ${targetStatus}`, 'success');
-        if (res.post?._id) {
-          router.push(`/admin/edit/${res.post._id}`);
+        const newId = res?._id || res?.post?._id;
+        if (newId) {
+          router.push(`/admin/edit/${newId}`);
         }
       }
 
@@ -2145,7 +2150,7 @@ export default function BlogEditor({ id }) {
                   {openSections.media && (
                     <div className="p-3.5 space-y-3 bg-white dark:bg-[#12151c] border-t border-zinc-200/60 dark:border-white/5">
                       {formData.image ? (
-                        <div className="relative rounded-xl overflow-hidden aspect-[16/9] border border-zinc-200 dark:border-white/10">
+                        <div className="relative rounded-xl overflow-hidden aspect-[1200/630] border border-zinc-200 dark:border-white/10">
                           <img src={formData.image} alt="" className="w-full h-full object-cover" />
                           <button
                             type="button"
@@ -2160,7 +2165,7 @@ export default function BlogEditor({ id }) {
                         <label className="border-2 border-dashed border-zinc-200 dark:border-white/10 rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:border-red-500 transition-colors">
                           <Upload className="w-5 h-5 text-zinc-400 mb-1" />
                           <span className="font-bold text-xs">Upload Cover Image</span>
-                          <span className="text-[10px] text-zinc-400">PNG, JPG, WebP up to 5MB</span>
+                          <span className="text-[10px] text-zinc-400">1200×630 (PNG, JPG, WebP up to 5MB)</span>
                           <input
                             type="file"
                             accept="image/*"
