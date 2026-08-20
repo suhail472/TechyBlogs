@@ -16,7 +16,6 @@ import {
   Search,
 } from 'lucide-react';
 import EditorialCard from '@/components/shared/EditorialCard';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const KASHMIR_DISTRICTS = [
   { name: 'All Valley', query: '' },
@@ -50,20 +49,7 @@ export default function TaxonomyLanding({ kind, item, posts = [], isKashmirHub =
 
   const [selectedDistrict, setSelectedDistrict] = useState('');
 
-  // Fallback resilience
-  let dataset = posts;
-  if (!dataset || dataset.length === 0) {
-    const slug = (item?.slug || '').toLowerCase();
-    dataset = DEFAULT_STORIES.filter(
-      (s) =>
-        s.editions?.some((e) => e.slug === slug) ||
-        s.primarySection?.slug === slug ||
-        s.categories?.some((c) => c.toLowerCase().includes(slug)) ||
-        s.tags?.some((t) => t.toLowerCase().includes(slug)) ||
-        (isKashmir && /kashmir|srinagar/i.test(s.categories?.join(' ') + s.title))
-    );
-    if (dataset.length === 0) dataset = DEFAULT_STORIES.slice(0, 6);
-  }
+  const dataset = Array.isArray(posts) ? posts : [];
 
   // Filter by selected district if Kashmir
   const filteredStories = selectedDistrict

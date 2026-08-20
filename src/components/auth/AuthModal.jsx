@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Mail, User, ShieldCheck, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { X, Lock, Mail, User, ShieldCheck, Loader2, ArrowRight } from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
 import useToastStore from '@/store/useToastStore';
 

@@ -1,5 +1,7 @@
 import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
+import '@/lib/models/taxonomy.model';
+import '@/lib/models/admin.model';
 import EditorialHome from '@/components/pages/EditorialHome';
 
 export const metadata = {

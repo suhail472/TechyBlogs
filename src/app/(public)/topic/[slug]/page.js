@@ -2,7 +2,6 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
@@ -24,15 +23,9 @@ async function getTopic(slug) {
     const posts = await Post.find(query).sort({ featured: -1, publishedAt: -1 }).limit(24).lean();
     return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
   } catch (err) {
-    const matchingFallback = DEFAULT_STORIES.filter(
-      (s) =>
-        s.topics?.some((t) => t.slug === slug) ||
-        s.tags?.some((t) => t.toLowerCase().includes(slug.replace(/-/g, ' '))) ||
-        s.categories?.some((c) => c.toLowerCase().includes(slug.replace(/-/g, ' ')))
-    );
     return {
-      item: { name, slug, description: `Explore articles and tutorials on ${name}.`, seo: { indexable: true } },
-      posts: matchingFallback.length ? matchingFallback : DEFAULT_STORIES.slice(0, 3),
+      item: { name, slug, description: `Explore articles and tutorials on ${name}.`, seo: { indexable: false } },
+      posts: [],
     };
   }
 }

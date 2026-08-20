@@ -16,11 +16,11 @@ export async function GET(req) {
     try {
       await connectToDatabase();
       const result = await postService.getAllPosts(filters);
-      if (result && result.posts && result.posts.length > 0) {
+      if (result && result.posts) {
         return NextResponse.json({ success: true, ...result }, { status: 200 });
       }
     } catch (dbErr) {
-      console.warn('Database error in getAllPosts, using fallback:', dbErr.message);
+      console.warn('Database error in getAllPosts:', dbErr.message);
     }
 
     // Fallback to DEFAULT_STORIES

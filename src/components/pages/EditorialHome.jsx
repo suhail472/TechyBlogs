@@ -20,32 +20,23 @@ import {
   Feather,
 } from 'lucide-react';
 import EditorialCard from '@/components/shared/EditorialCard';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
 import { getDeskLayout } from '@/lib/services/layoutStrategy';
 import useToastStore from '@/store/useToastStore';
+import { subscriberAPI } from '@/services/api';
 
 export default function EditorialHome({ posts = [] }) {
-  const { addToast } = useToastStore();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribing, setSubscribing] = useState(false);
+  const { addToast } = useToastStore();
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
     if (!newsletterEmail.trim()) return;
     setSubscribing(true);
     try {
-      const res = await fetch('/api/newsletter/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newsletterEmail.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        addToast('Subscribed! You will receive our weekly editorial briefing.', 'success');
-        setNewsletterEmail('');
-      } else {
-        throw new Error(data.message);
-      }
+      const res = await subscriberAPI.subscribe(newsletterEmail.trim());
+      addToast(res.message || 'Subscribed successfully to The Morning Briefing!', 'success');
+      setNewsletterEmail('');
     } catch (err) {
       addToast(err.message || 'Subscription received!', 'info');
       setNewsletterEmail('');
@@ -54,7 +45,7 @@ export default function EditorialHome({ posts = [] }) {
     }
   };
 
-  const dataset = posts && posts.length > 0 ? posts : DEFAULT_STORIES;
+  const dataset = Array.isArray(posts) ? posts : [];
   const ordered = [...dataset].sort(
     (a, b) => new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0)
   );
@@ -138,39 +129,41 @@ export default function EditorialHome({ posts = [] }) {
           </div>
         </div>
 
-        {/* 3. Hero Ensemble: 7 cols Dominant Lead + 5 cols Most Read */}
+        {/* 3. Hero Ensemble: Dominant Lead + Most Read (when multiple stories exist) */}
         {heroStory && (
-          <section className="grid lg:grid-cols-12 gap-8 lg:gap-10 pt-6 pb-10 border-b border-zinc-200/80 dark:border-white/10">
-            {/* Primary Lead Story (7 cols) */}
-            <div className="lg:col-span-7 lg:border-r lg:pr-10 border-zinc-200/80 dark:border-white/10">
+          <section className={`grid ${secondaryLead.length > 0 ? 'lg:grid-cols-12' : 'grid-cols-1'} gap-8 lg:gap-10 pt-6 pb-10 border-b border-zinc-200/80 dark:border-white/10`}>
+            {/* Primary Lead Story */}
+            <div className={secondaryLead.length > 0 ? 'lg:col-span-7 lg:border-r lg:pr-10 border-zinc-200/80 dark:border-white/10' : 'w-full'}>
               <EditorialCard blog={heroStory} variant="lead" priority={true} />
             </div>
 
             {/* Most Read Sidebar (5 cols) */}
-            <aside className="lg:col-span-5 space-y-4">
-              <div className="flex items-center justify-between pb-2.5 border-b-2 border-zinc-950 dark:border-white">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-red-600" />
-                  <h2 className="font-display font-black text-lg text-zinc-900 dark:text-white">
-                    Most Read Stories
-                  </h2>
+            {secondaryLead.length > 0 && (
+              <aside className="lg:col-span-5 space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b-2 border-zinc-950 dark:border-white">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-red-600" />
+                    <h2 className="font-display font-black text-lg text-zinc-900 dark:text-white">
+                      Most Read Stories
+                    </h2>
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 font-mono">
+                    Trending Feed
+                  </span>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 font-mono">
-                  Trending Feed
-                </span>
-              </div>
 
-              <div className="space-y-0.5">
-                {secondaryLead.slice(0, 5).map((post, idx) => (
-                  <EditorialCard
-                    key={String(post._id || post.slug)}
-                    blog={post}
-                    variant="trending"
-                    rank={idx + 1}
-                  />
-                ))}
-              </div>
-            </aside>
+                <div className="space-y-0.5">
+                  {secondaryLead.slice(0, 5).map((post, idx) => (
+                    <EditorialCard
+                      key={String(post._id || post.slug)}
+                      blog={post}
+                      variant="trending"
+                      rank={idx + 1}
+                    />
+                  ))}
+                </div>
+              </aside>
+            )}
           </section>
         )}
 

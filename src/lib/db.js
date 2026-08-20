@@ -53,12 +53,24 @@ async function seedAdmin() {
 }
 
 async function connectToDatabase() {
-  const MONGODB_URI = process.env.MONGODB_URI;
+  let MONGODB_URI = process.env.MONGODB_URI;
 
   if (!MONGODB_URI) {
-    throw new Error(
-      'Please define the MONGODB_URI environment variable inside .env.local'
-    );
+    try {
+      const fs = await import('fs');
+      const path = await import('path');
+      const envPath = path.resolve(process.cwd(), '.env.local');
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf-8');
+        for (const line of content.split('\n')) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const [k, ...v] = trimmed.split('=');
+          if (k && v.length) process.env[k.trim()] = v.join('=').trim();
+        }
+      }
+    } catch (e) {}
+    MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/teachyblogs';
   }
 
   if (cached.conn) {

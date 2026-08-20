@@ -2,7 +2,6 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
@@ -41,16 +40,9 @@ async function getRegionData(slug) {
       posts: JSON.parse(JSON.stringify(posts)),
     };
   } catch (err) {
-    const matchingFallback = DEFAULT_STORIES.filter(
-      (s) =>
-        s.regions?.some((r) => r.slug === slug) ||
-        s.locations?.some((l) => l.slug === slug) ||
-        s.title.toLowerCase().includes(slug.replace(/-/g, ' ')) ||
-        s.excerpt.toLowerCase().includes(slug.replace(/-/g, ' '))
-    );
     return {
-      item: { name, slug, description: `Regional coverage, journalism, education, and culture across ${name}.`, isHub: true, seo: { indexable: true } },
-      posts: matchingFallback.length ? matchingFallback : DEFAULT_STORIES.slice(0, 4),
+      item: { name, slug, description: `Regional coverage, journalism, education, and culture across ${name}.`, isHub: true, seo: { indexable: false } },
+      posts: [],
     };
   }
 }

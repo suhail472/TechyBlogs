@@ -93,6 +93,38 @@ export const authAPI = {
     return response;
   },
 
+  requestOtp: async (email, purpose = 'PASSWORD_RESET') => {
+    const response = await apiCall('/auth/otp/request', {
+      method: 'POST',
+      body: JSON.stringify({ email, purpose }),
+    });
+    return response;
+  },
+
+  verifyOtp: async (email, otp, purpose = 'PASSWORD_RESET') => {
+    const response = await apiCall('/auth/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, purpose }),
+    });
+    return response;
+  },
+
+  recoverPassword: async (email, otp, newPassword) => {
+    const response = await apiCall('/auth/recover/password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
+    return response;
+  },
+
+  recoverSecurityToken: async (email, otp, currentPassword, newLoginToken) => {
+    const response = await apiCall('/auth/recover/token', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, currentPassword, newLoginToken }),
+    });
+    return response;
+  },
+
   resetPasswordByInfo: async (name, email, dob, newPassword) => {
     const response = await apiCall('/auth/reset-password', {
       method: 'POST',
@@ -481,6 +513,35 @@ export const analyticsAPI = {
   },
 };
 
+// Newsroom Email API calls
+export const emailAPI = {
+  getThreads: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiCall(`/admin/email/threads${query ? '?' + query : ''}`, { method: 'GET' });
+  },
+  getThreadMessages: async (threadId) => {
+    return apiCall(`/admin/email/threads/${threadId}`, { method: 'GET' });
+  },
+  sendEmail: async (payload) => {
+    return apiCall('/admin/email/send', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  sendReply: async (payload) => {
+    return apiCall('/admin/email/reply', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  performAction: async (payload) => {
+    return apiCall('/admin/email/actions', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
 export default {
   authAPI,
   postAPI,
@@ -493,4 +554,5 @@ export default {
   subscriberAPI,
   campaignAPI,
   analyticsAPI,
+  emailAPI,
 };

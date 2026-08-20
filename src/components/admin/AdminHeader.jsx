@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Plus, ExternalLink, Bell, Sparkles, Home } from 'lucide-react';
+import { Search, Plus, ExternalLink, Bell, Home } from 'lucide-react';
 import SearchCommandModal from './SearchCommandModal';
 import useAuthStore from '@/store/useAuthStore';
 

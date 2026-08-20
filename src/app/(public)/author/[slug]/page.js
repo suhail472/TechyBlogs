@@ -37,10 +37,20 @@ async function getAuthor(slug) {
   // Fallback to DEFAULT_AUTHORS
   const fallbackAuthor = DEFAULT_AUTHORS.find((a) => a.slug === slug || a.username === slug);
   if (fallbackAuthor) {
-    const matchingPosts = DEFAULT_STORIES.filter(
-      (s) => s.author === fallbackAuthor.name || s.primaryAuthor?.slug === slug
-    );
-    return { author: fallbackAuthor, posts: matchingPosts };
+    try {
+      await connectToDatabase();
+      const posts = await Post.find(
+        getPublicPostFilter({
+          $or: [{ author: fallbackAuthor.name }, { 'primaryAuthor.slug': slug }],
+        })
+      )
+        .sort({ publishedAt: -1 })
+        .limit(30)
+        .lean();
+      return { author: fallbackAuthor, posts: posts ? JSON.parse(JSON.stringify(posts)) : [] };
+    } catch {
+      return { author: fallbackAuthor, posts: [] };
+    }
   }
 
   return null;

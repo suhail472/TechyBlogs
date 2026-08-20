@@ -43,11 +43,7 @@ export async function verifyAuth(req) {
 
   try {
     const decoded = authService.verifyToken(token);
-    let admin = await authService.getAdminById(decoded.id).catch(() => null);
-    if (!admin) {
-      // Fallback: if database reseeded and ID changed, resolve active superadmin
-      admin = (await Admin.findOne({ role: 'superadmin' })) || (await Admin.findOne());
-    }
+    const admin = await authService.getAdminById(decoded.id);
     if (!admin || !admin.isActive) {
       throw new Error('Admin not found or inactive');
     }

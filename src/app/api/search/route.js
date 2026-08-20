@@ -98,7 +98,7 @@ export async function GET(req) {
       const availableSections = await Taxonomy.find({ kind: 'section', active: true }).select('name slug').lean();
       const availableEditions = await Taxonomy.find({ kind: 'edition', active: true }).select('name slug').lean();
 
-      if (posts && posts.length > 0) {
+      if (posts) {
         return NextResponse.json({
           success: true,
           data: {
@@ -107,7 +107,7 @@ export async function GET(req) {
               total,
               page,
               limit,
-              totalPages: Math.ceil(total / limit),
+              totalPages: Math.ceil(total / limit) || 1,
             },
             facets: {
               sections: availableSections,
@@ -118,7 +118,7 @@ export async function GET(req) {
         });
       }
     } catch (dbErr) {
-      console.warn('Database error in search API, using fallback:', dbErr.message);
+      console.warn('Database error in search API:', dbErr.message);
     }
 
     // Fallback in-memory search across DEFAULT_STORIES

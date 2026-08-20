@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, Sparkles } from 'lucide-react';
+import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import TopLoader from '@/components/shared/TopLoader';
 
 export default function ContactClient() {
@@ -53,7 +53,7 @@ export default function ContactClient() {
               className="lg:col-span-5 lg:sticky lg:top-28"
             >
               <span className="inline-flex items-center gap-2 text-blue-500 font-black tracking-widest uppercase text-xs mb-5 font-display px-4 py-2 rounded-full bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15">
-                <Sparkles className="w-3.5 h-3.5" />
+                <Mail className="w-3.5 h-3.5" />
                 Get in Touch
               </span>
 

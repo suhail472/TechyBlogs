@@ -5,10 +5,8 @@ import { motion } from 'framer-motion';
 import BlogCard from '@/components/shared/BlogCard';
 import TopLoader from '@/components/shared/TopLoader';
 import { Search, BookOpen } from 'lucide-react';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
-
 export default function BlogsClient({ initialBlogs = [], initialCategory = 'All' }) {
-  const blogsData = (initialBlogs && initialBlogs.length > 0) ? initialBlogs : DEFAULT_STORIES;
+  const blogsData = Array.isArray(initialBlogs) ? initialBlogs : [];
   const [allBlogs, setAllBlogs] = useState(blogsData);
   const [filteredBlogs, setFilteredBlogs] = useState(blogsData);
   const [searchQuery, setSearchQuery] = useState('');

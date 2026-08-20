@@ -67,7 +67,7 @@ export default function AdminLayout({ children }) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [sidebarOpen, closeSidebar]);
 
-  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/forgot';
+  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/forgot' || pathname === '/admin/register';
 
   useEffect(() => {
     if (isAuthPage || verifying) return;
@@ -145,13 +145,14 @@ export default function AdminLayout({ children }) {
       title: 'AUDIENCE & CRM',
       items: [
         { icon: BarChart3, label: 'Editorial Analytics', path: '/admin/analytics' },
+        { icon: Mail, label: 'Email Center', path: '/admin/email' },
         {
           icon: MessageSquare,
           label: 'Comment Queue',
           path: '/admin/comments',
           badge: pendingCommentsCount > 0 ? pendingCommentsCount : null,
         },
-        { icon: Mail, label: 'Briefing Subscribers', path: '/admin/subscribers' },
+        { icon: Users, label: 'Briefing Subscribers', path: '/admin/subscribers' },
       ],
     },
     {

@@ -1,6 +1,6 @@
 import { DEFAULT_STORIES } from './defaultStories.js';
 
-export const blogs = DEFAULT_STORIES.map((s, index) => ({
+export const blogs = (DEFAULT_STORIES || []).map((s, index) => ({
   id: index + 1,
   _id: s._id,
   slug: s.slug,
@@ -9,9 +9,9 @@ export const blogs = DEFAULT_STORIES.map((s, index) => ({
   excerpt: s.excerpt,
   content: s.content,
   image: s.image,
-  categories: s.categories,
-  tags: s.tags,
-  date: new Date(s.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  categories: s.categories || [],
+  tags: s.tags || [],
+  date: s.publishedAt ? new Date(s.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '',
   author: s.author,
   primaryAuthor: s.primaryAuthor,
   primarySection: s.primarySection,

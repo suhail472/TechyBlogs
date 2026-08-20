@@ -2,7 +2,6 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
-import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 
@@ -19,35 +18,27 @@ async function getKashmirData() {
     });
     const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(30).lean();
     
-    if (posts && posts.length > 0) {
-      return {
-        item: item || {
-          name: 'Kashmir',
-          slug: 'kashmir',
-          description: 'Independent reporting, investigative journalism, education updates, and cultural coverage from Jammu & Kashmir and Srinagar.',
-          seo: { indexable: true },
-        },
-        posts: JSON.parse(JSON.stringify(posts)),
-      };
-    }
+    return {
+      item: item || {
+        name: 'Kashmir Bureau',
+        slug: 'kashmir',
+        description: 'Independent reporting, investigative journalism, education updates, and cultural coverage from Jammu & Kashmir and Srinagar.',
+        seo: { indexable: true },
+      },
+      posts: posts ? JSON.parse(JSON.stringify(posts)) : [],
+    };
   } catch (err) {
     console.error('Error fetching Kashmir data:', err);
+    return {
+      item: {
+        name: 'Kashmir Bureau',
+        slug: 'kashmir',
+        description: 'Independent reporting, higher education & admissions, tourism dispatch, smart city developments, and cultural documentation across the Kashmir Valley and Srinagar.',
+        seo: { indexable: true },
+      },
+      posts: [],
+    };
   }
-
-  // Fallback dataset
-  const kashmirFallbacks = DEFAULT_STORIES.filter(
-    (p) => /kashmir|srinagar/i.test(p.categories?.join(' ')) || /kashmir|srinagar/i.test(p.title)
-  );
-
-  return {
-    item: {
-      name: 'Kashmir Bureau',
-      slug: 'kashmir',
-      description: 'Independent reporting, higher education & admissions, tourism dispatch, smart city developments, and cultural documentation across the Kashmir Valley and Srinagar.',
-      seo: { indexable: true },
-    },
-    posts: kashmirFallbacks.length > 0 ? kashmirFallbacks : DEFAULT_STORIES,
-  };
 }
 
 export const metadata = {
