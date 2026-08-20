@@ -610,6 +610,16 @@ class EmailService {
     return messages;
   }
 
+  async getThreadById(threadId) {
+    const messages = await this.getThreadMessages(threadId);
+    return { messages };
+  }
+
+  async listThreads(opts = {}) {
+    const res = await this.getThreads(opts);
+    return { threads: res.threads, total: res.pagination?.total || 0, pagination: res.pagination };
+  }
+
   /**
    * Thread & Message Actions (Star, Archive, MarkRead, Folder, Label)
    */
