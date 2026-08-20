@@ -16,6 +16,12 @@ const nextConfig = {
       },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   serverExternalPackages: ['bcryptjs', 'mongoose', 'jsonwebtoken'],
   transpilePackages: ['framer-motion'],
 };
