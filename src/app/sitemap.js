@@ -10,6 +10,7 @@ export default async function sitemap() {
   const staticPages = [
     { url: SITE_URL, lastModified: new Date(), changeFrequency: 'hourly', priority: 1.0 },
     { url: `${SITE_URL}/blogs`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE_URL}/kashmir`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.95 },
     { url: `${SITE_URL}/search`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
@@ -23,7 +24,7 @@ export default async function sitemap() {
   try {
     await connectToDatabase();
 
-    const [posts, sections, editions, topics, regions, authors] = await Promise.all([
+    const [posts, sections, editions, topics, regions, entities, authors] = await Promise.all([
       Post.find(getPublicPostFilter({ 'seo.indexable': { $ne: false } }))
         .select('slug updatedAt publishedAt')
         .sort({ publishedAt: -1 })
@@ -32,7 +33,8 @@ export default async function sitemap() {
       Taxonomy.find({ kind: 'edition', active: true }).select('slug updatedAt').lean(),
       Taxonomy.find({ kind: 'topic', active: true }).select('slug updatedAt').lean(),
       Taxonomy.find({ kind: 'region', active: true }).select('slug isHub updatedAt').lean(),
-      Admin.find({ isActive: true }).select('slug updatedAt').lean(),
+      Taxonomy.find({ kind: 'entity', active: true }).select('slug updatedAt').lean(),
+      Admin.find({ status: 'active', 'seo.indexable': { $ne: false } }).select('slug username updatedAt').lean(),
     ]);
 
     if (posts && posts.length > 0) {
@@ -71,16 +73,32 @@ export default async function sitemap() {
         priority: reg.isHub ? 0.9 : 0.75,
       }));
 
+      const entityEntries = entities.map((ent) => ({
+        url: `${SITE_URL}/entity/${ent.slug}`,
+        lastModified: ent.updatedAt || new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+      }));
+
       const authorEntries = authors
-        .filter((a) => a.slug)
+        .filter((a) => a.slug || a.username)
         .map((author) => ({
-          url: `${SITE_URL}/author/${author.slug}`,
+          url: `${SITE_URL}/author/${author.slug || author.username}`,
           lastModified: author.updatedAt || new Date(),
           changeFrequency: 'weekly',
           priority: 0.7,
         }));
 
-      return [...staticPages, ...regionEntries, ...editionEntries, ...sectionEntries, ...topicEntries, ...authorEntries, ...blogEntries];
+      return [
+        ...staticPages,
+        ...regionEntries,
+        ...editionEntries,
+        ...sectionEntries,
+        ...topicEntries,
+        ...entityEntries,
+        ...authorEntries,
+        ...blogEntries,
+      ];
     }
   } catch (err) {
     console.warn('Sitemap generation using static fallback:', err.message);
@@ -111,6 +129,8 @@ export default async function sitemap() {
     { url: `${SITE_URL}/edition/global`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/edition/kashmir`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/edition/india`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+    { url: `${SITE_URL}/entity/university-of-kashmir`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.75 },
+    { url: `${SITE_URL}/entity/openai`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.75 },
   ];
 
   return [...staticPages, ...fallbackTaxonomies, ...fallbackAuthors, ...fallbackBlogs];

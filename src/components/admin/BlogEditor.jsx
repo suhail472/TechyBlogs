@@ -71,6 +71,8 @@ import {
   ExternalLink,
   Keyboard,
   CheckCheck,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import { postAPI, taxonomyAPI, authorAPI } from '@/services/api';
 import useToastStore from '@/store/useToastStore';
@@ -443,6 +445,59 @@ export default function BlogEditor({ id }) {
 
   // Central Publication Readiness Evaluation
   const readiness = useMemo(() => getPublicationReadiness(formData), [formData]);
+
+  // Word-Level Semantic SEO & Link Opportunity State
+  const [semanticAnalysis, setSemanticAnalysis] = useState(null);
+  const [loadingInspection, setLoadingInspection] = useState(false);
+
+  const runSemanticInspection = useCallback(async () => {
+    try {
+      setLoadingInspection(true);
+      const pk = formData.seo?.keywords?.[0] || '';
+      const sks = formData.seo?.keywords?.slice(1) || [];
+      const res = await fetch('/api/admin/seo/inspect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content,
+          excerpt: formData.excerpt,
+          metaDescription: formData.seo?.description || formData.subtitle,
+          slug: formData.slug,
+          primaryKeyword: pk,
+          secondaryKeywords: sks,
+          primaryTopicId: formData.primaryTopic,
+          primaryRegionId: formData.primaryRegion,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setSemanticAnalysis(data.data);
+      }
+    } catch (e) {
+      console.warn('Semantic inspection failed:', e);
+    } finally {
+      setLoadingInspection(false);
+    }
+  }, [
+    formData.title,
+    formData.content,
+    formData.excerpt,
+    formData.seo?.description,
+    formData.seo?.keywords,
+    formData.subtitle,
+    formData.slug,
+    formData.primaryTopic,
+    formData.primaryRegion,
+  ]);
+
+  const handleInsertInternalLink = (anchorText, targetUrl) => {
+    const linkMd = ` [${anchorText}](${targetUrl}) `;
+    updateForm({
+      content: (formData.content || '') + linkMd,
+    });
+    addToast(`Inserted internal link: ${anchorText}`, 'success');
+  };
 
   // Timer Cleanup on Unmount
   useEffect(() => {
@@ -1780,6 +1835,115 @@ export default function BlogEditor({ id }) {
                             <option value="nofollow">No Follow</option>
                           </select>
                         </div>
+                      </div>
+
+                      {/* Word-Level Semantic & Linking Inspector */}
+                      <div className="pt-2 border-t border-zinc-100 dark:border-white/5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-amber-500" />
+                            Semantic SEO & Link Engine
+                          </span>
+                          <button
+                            type="button"
+                            onClick={runSemanticInspection}
+                            disabled={loadingInspection}
+                            className="px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-[10px] font-mono font-bold text-zinc-600 dark:text-zinc-300 flex items-center gap-1 transition-colors"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${loadingInspection ? 'animate-spin' : ''}`} />
+                            <span>{loadingInspection ? 'Auditing...' : 'Analyze Story'}</span>
+                          </button>
+                        </div>
+
+                        {semanticAnalysis && (
+                          <div className="space-y-3 bg-zinc-50 dark:bg-zinc-900/60 p-3 rounded-2xl border border-zinc-200/60 dark:border-white/5">
+                            {/* Intent & Overall Rating */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+                                Intent: <span className="text-red-600 dark:text-red-400">{semanticAnalysis.searchIntent?.primary}</span>
+                              </span>
+                              <span
+                                className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
+                                  semanticAnalysis.score?.rating === 'EXCELLENT'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                    : semanticAnalysis.score?.rating === 'GOOD'
+                                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                }`}
+                              >
+                                {semanticAnalysis.score?.score}% ({semanticAnalysis.score?.rating})
+                              </span>
+                            </div>
+
+                            {/* Keyword Placement Badges */}
+                            {semanticAnalysis.keywordAnalysis && (
+                              <div className="space-y-1.5 pt-1 border-t border-zinc-200/60 dark:border-white/5">
+                                <span className="text-[10px] font-mono text-zinc-400 block font-bold">
+                                  Primary Keyword: "{semanticAnalysis.keywordAnalysis.keyword}" ({semanticAnalysis.keywordAnalysis.density}% density)
+                                </span>
+                                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
+                                  <div className="flex items-center gap-1">
+                                    <span className={semanticAnalysis.keywordAnalysis.placements.title ? 'text-emerald-500 font-bold' : 'text-zinc-400'}>
+                                      {semanticAnalysis.keywordAnalysis.placements.title ? '✓' : '✗'}
+                                    </span>
+                                    <span>Headline</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className={semanticAnalysis.keywordAnalysis.placements.lead ? 'text-emerald-500 font-bold' : 'text-zinc-400'}>
+                                      {semanticAnalysis.keywordAnalysis.placements.lead ? '✓' : '✗'}
+                                    </span>
+                                    <span>Lead Paragraph</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className={semanticAnalysis.keywordAnalysis.placements.metaDescription ? 'text-emerald-500 font-bold' : 'text-zinc-400'}>
+                                      {semanticAnalysis.keywordAnalysis.placements.metaDescription ? '✓' : '✗'}
+                                    </span>
+                                    <span>Meta Description</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className={semanticAnalysis.keywordAnalysis.placements.slug ? 'text-emerald-500 font-bold' : 'text-zinc-400'}>
+                                      {semanticAnalysis.keywordAnalysis.placements.slug ? '✓' : '✗'}
+                                    </span>
+                                    <span>URL Slug</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Internal Linking Opportunities */}
+                            {semanticAnalysis.linkOpportunities?.length > 0 && (
+                              <div className="space-y-2 pt-2 border-t border-zinc-200/60 dark:border-white/5">
+                                <span className="text-[10px] font-mono font-bold text-zinc-400 block">
+                                  Contextual Internal Link Suggestions
+                                </span>
+                                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                  {semanticAnalysis.linkOpportunities.slice(0, 4).map((opp, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200/60 dark:border-white/5 flex items-center justify-between gap-2"
+                                    >
+                                      <div className="min-w-0">
+                                        <span className="font-bold text-[11px] text-zinc-900 dark:text-white truncate block">
+                                          {opp.anchorText}
+                                        </span>
+                                        <span className="text-[9px] font-mono text-zinc-400 truncate block">
+                                          {opp.targetUrl}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleInsertInternalLink(opp.anchorText, opp.targetUrl)}
+                                        className="px-2 py-1 rounded bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white text-[10px] font-bold shrink-0 transition-colors"
+                                      >
+                                        + Insert Link
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Google Search Snippet Preview */}

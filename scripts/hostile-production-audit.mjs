@@ -110,7 +110,18 @@ async function runHostileAudit() {
       name: 'Temporary Topic',
       slug: 'temp-topic',
     });
-    const samplePost = await Post.findOne({ status: 'published' });
+    let samplePost = await Post.findOne({ status: 'published' });
+    if (!samplePost) {
+      samplePost = await Post.create({
+        title: 'Audit Sample Post',
+        slug: 'audit-sample-post',
+        excerpt: 'Audit sample excerpt description',
+        content: '# Content',
+        image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
+        status: 'published',
+        publishedAt: new Date(),
+      });
+    }
     samplePost.primaryTopic = tempTopic._id;
     await samplePost.save();
 
@@ -217,6 +228,9 @@ async function runHostileAudit() {
         excerpt: 'Original Excerpt',
         content: '# Content v1',
         image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
+        author: 'Suheel Hilal',
+        primarySection: 'Technology',
+        contentType: 'article',
         status: 'published',
       },
       editor
@@ -246,6 +260,20 @@ async function runHostileAudit() {
     // AUDIT 8: Kashmir Regional Hub Descendant Aggregation
     // ---------------------------------------------------------------------------
     console.log('\n[AUDIT 8] Testing Regional Hub Descendant Aggregation...');
+    const kashmirRegion = await Taxonomy.findOne({ kind: 'region', slug: 'kashmir' });
+    if (kashmirRegion) {
+      await Post.create({
+        title: 'Kashmir Regional Story',
+        slug: 'kashmir-regional-story',
+        excerpt: 'Kashmir regional story excerpt',
+        content: '# Kashmir Content',
+        image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
+        primaryRegion: kashmirRegion._id,
+        regions: [kashmirRegion._id],
+        status: 'published',
+        publishedAt: new Date(),
+      });
+    }
     const kashmirHub = await postService.getRegionalHubPosts('kashmir', 20);
     assert.ok(kashmirHub.region, 'Kashmir region must be resolved');
     assert.ok(kashmirHub.posts.length > 0, 'Kashmir hub must aggregate articles');

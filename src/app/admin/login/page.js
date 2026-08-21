@@ -24,7 +24,7 @@ import useToastStore from '@/store/useToastStore';
 
 export default function Login() {
   const router = useRouter();
-  const { login, devBypassLogin } = useAuthStore();
+  const { login } = useAuthStore();
   const { addToast } = useToastStore();
 
   const [email, setEmail] = useState('');
@@ -32,7 +32,6 @@ export default function Login() {
   const [token, setToken] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [bypassLoading, setBypassLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -54,16 +53,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDevBypass = () => {
-    if (bypassLoading) return;
-    setBypassLoading(true);
-    devBypassLogin();
-    addToast('⚡ Development login bypassed. Welcome Chief Editor!', 'success');
-    setTimeout(() => {
-      router.push('/admin');
-    }, 250);
   };
 
   return (
@@ -115,40 +104,6 @@ export default function Login() {
                 Sign in to manage editorials, desking, and publications.
               </p>
             </div>
-          </div>
-
-          {/* 1-Click Fast Dev Bypass Banner */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 dark:border-amber-500/20 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5 font-mono">
-                <Zap className="w-3.5 h-3.5 text-amber-500" />
-                <span>Developer Fast Access</span>
-              </span>
-              <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 font-mono font-bold">
-                Local Dev
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleDevBypass}
-              disabled={bypassLoading}
-              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-450 active:scale-[0.99] text-zinc-950 font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm shadow-amber-500/20 cursor-pointer disabled:opacity-75"
-            >
-              {bypassLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-              ) : (
-                <Zap className="w-4 h-4 text-zinc-950" />
-              )}
-              <span>{bypassLoading ? 'Signing In...' : '1-Click Superadmin Sign In'}</span>
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center">
-            <div className="w-full border-t border-zinc-200 dark:border-white/10" />
-            <span className="absolute px-3 bg-white dark:bg-[#0E131F] text-[10px] font-bold uppercase tracking-widest text-zinc-400 select-none">
-              Or Sign In With Key
-            </span>
           </div>
 
           {/* Error Message */}

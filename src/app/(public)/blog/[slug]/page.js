@@ -3,6 +3,7 @@ import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import '@/lib/models/taxonomy.model';
 import '@/lib/models/admin.model';
 import PostClient from '@/components/pages/PostClient';
+import seoService from '@/lib/services/seo.service';
 import { notFound } from 'next/navigation';
 
 export async function generateMetadata({ params }) {
@@ -102,42 +103,13 @@ export default async function SingleBlogPage({ params }) {
       .populate('primaryRegion', 'name slug isHub type ancestors')
       .populate('topics', 'name slug')
       .populate('regions', 'name slug')
-      .populate('entities', 'name slug type')
+      .populate('entities', 'name slug type sameAs')
       .populate('series', 'name slug title')
       .populate('coverage', 'name slug title')
       .lean();
 
     if (blog) {
-      const relatedExtra = { slug: { $ne: slug } };
-
-      if (blog.primaryTopic) {
-        relatedExtra.$or = [{ primaryTopic: blog.primaryTopic._id }, { topics: blog.primaryTopic._id }];
-      }
-
-      const query = getPublicPostFilter(relatedExtra);
-
-      const relatedPosts = await Post.find(query)
-        .populate('primaryTopic', 'name slug')
-        .populate('primaryRegion', 'name slug')
-        .sort({ publishedAt: -1 })
-        .limit(4)
-        .lean();
-
-      allRelated = relatedPosts;
-      if (allRelated.length < 3) {
-        const excludeSlugs = [slug, ...allRelated.map((p) => p.slug)];
-        const extraPosts = await Post.find(
-          getPublicPostFilter({
-            slug: { $nin: excludeSlugs },
-          })
-        )
-          .populate('primaryTopic', 'name slug')
-          .populate('primaryRegion', 'name slug')
-          .sort({ publishedAt: -1 })
-          .limit(3 - allRelated.length)
-          .lean();
-        allRelated = [...allRelated, ...extraPosts];
-      }
+      allRelated = await seoService.getRelatedArticles(blog, 4);
     }
   } catch (err) {
     console.warn('Failed to load article from DB:', err.message);
@@ -159,25 +131,51 @@ export default async function SingleBlogPage({ params }) {
   // Determine structured data schema based on content type
   let schemaType = 'Article';
   if (blog.contentType === 'news') schemaType = 'NewsArticle';
-  else if (blog.contentType === 'tutorial') schemaType = 'TechArticle';
+  else if (blog.contentType === 'tutorial' || blog.contentType === 'guide') schemaType = 'TechArticle';
+
+  // Build About & Mentions Entities
+  const entityAbout = [];
+  if (blog.primaryTopic) {
+    entityAbout.push({
+      '@type': 'Thing',
+      name: blog.primaryTopic.name,
+      url: `https://teachyblogs.com/topic/${blog.primaryTopic.slug}`,
+    });
+  }
+  if (blog.primaryRegion) {
+    entityAbout.push({
+      '@type': 'Place',
+      name: blog.primaryRegion.name,
+      url: blog.primaryRegion.slug === 'kashmir' ? 'https://teachyblogs.com/kashmir' : `https://teachyblogs.com/region/${blog.primaryRegion.slug}`,
+    });
+  }
+
+  const entityMentions = (blog.entities || []).map((ent) => ({
+    '@type': ent.type === 'company' ? 'Organization' : ent.type === 'institution' ? 'EducationalOrganization' : 'Thing',
+    name: ent.name,
+    url: `https://teachyblogs.com/entity/${ent.slug}`,
+    sameAs: ent.sameAs || undefined,
+  }));
 
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': schemaType,
     headline: blog.title,
-    description: blog.excerpt,
-    image: blog.image,
+    description: blog.excerpt || blog.metaDescription || '',
+    image: blog.image ? [blog.image] : ['https://teachyblogs.com/favicon.ico'],
     datePublished: blog.publishedAt || blog.createdAt,
     dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
     inLanguage: blog.language || 'en',
+    articleSection: blog.primaryTopic?.name || blog.primarySection || 'General',
     author: {
       '@type': 'Person',
       name: blog.author || 'Suheel Hilal',
       url: `https://teachyblogs.com/author/${blog.primaryAuthor?.slug || 'suheel-hilal'}`,
     },
     publisher: {
-      '@type': 'Organization',
+      '@type': 'NewsMediaOrganization',
       name: 'TeachyBlogs',
+      url: 'https://teachyblogs.com',
       logo: {
         '@type': 'ImageObject',
         url: 'https://teachyblogs.com/favicon.ico',
@@ -187,24 +185,52 @@ export default async function SingleBlogPage({ params }) {
       '@type': 'WebPage',
       '@id': `https://teachyblogs.com/blog/${slug}`,
     },
+    about: entityAbout.length ? entityAbout : undefined,
+    mentions: entityMentions.length ? entityMentions : undefined,
     keywords: blog.keywords || (blog.tags ? blog.tags.join(', ') : ''),
   };
+
+  // Spatial Coverage for Local Kashmiri and Indian Stories
+  if (blog.primaryRegion) {
+    articleSchema.spatialCoverage = {
+      '@type': 'Place',
+      name: blog.primaryRegion.name,
+    };
+  }
+
+  // Series Reference
+  if (blog.series) {
+    articleSchema.isPartOf = {
+      '@type': 'CreativeWorkSeries',
+      name: blog.series.name,
+      url: `https://teachyblogs.com/series/${blog.series.slug}`,
+    };
+  }
 
   // Breadcrumb List Schema
   const breadcrumbItems = [
     { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://teachyblogs.com' },
   ];
+  let currentPos = 2;
+  if (blog.primaryRegion) {
+    breadcrumbItems.push({
+      '@type': 'ListItem',
+      position: currentPos++,
+      name: blog.primaryRegion.name,
+      item: blog.primaryRegion.slug === 'kashmir' ? 'https://teachyblogs.com/kashmir' : `https://teachyblogs.com/region/${blog.primaryRegion.slug}`,
+    });
+  }
   if (blog.primaryTopic) {
     breadcrumbItems.push({
       '@type': 'ListItem',
-      position: 2,
+      position: currentPos++,
       name: blog.primaryTopic.name,
       item: `https://teachyblogs.com/topic/${blog.primaryTopic.slug}`,
     });
   }
   breadcrumbItems.push({
     '@type': 'ListItem',
-    position: breadcrumbItems.length + 1,
+    position: currentPos,
     name: blog.title,
     item: `https://teachyblogs.com/blog/${slug}`,
   });
@@ -251,7 +277,8 @@ export default async function SingleBlogPage({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       )}
-      <PostClient blog={serializedBlog} relatedPosts={serializedRelated} />
+
+      <PostClient post={serializedBlog} relatedPosts={serializedRelated} />
     </>
   );
 }

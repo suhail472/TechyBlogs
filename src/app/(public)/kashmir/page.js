@@ -13,16 +13,16 @@ async function getKashmirData() {
       $or: [
         { editions: item?._id },
         { categories: /kashmir|srinagar|jammu/i },
-        { tags: /kashmir|srinagar|dal lake|gulmarg/i },
+        { tags: /kashmir|srinagar|dal lake|gulmarg|baramulla|anantnag/i },
       ],
     });
     const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(30).lean();
-    
+
     return {
       item: item || {
         name: 'Kashmir Bureau',
         slug: 'kashmir',
-        description: 'Independent reporting, investigative journalism, education updates, and cultural coverage from Jammu & Kashmir and Srinagar.',
+        description: 'Independent reporting, investigative journalism, university admissions, and cultural documentation across Jammu & Kashmir and Srinagar.',
         seo: { indexable: true },
       },
       posts: posts ? JSON.parse(JSON.stringify(posts)) : [],
@@ -33,7 +33,7 @@ async function getKashmirData() {
       item: {
         name: 'Kashmir Bureau',
         slug: 'kashmir',
-        description: 'Independent reporting, higher education & admissions, tourism dispatch, smart city developments, and cultural documentation across the Kashmir Valley and Srinagar.',
+        description: 'Independent reporting, higher education, tourism dispatch, smart city developments, and cultural documentation across the Kashmir Valley and Srinagar.',
         seo: { indexable: true },
       },
       posts: [],
@@ -42,7 +42,7 @@ async function getKashmirData() {
 }
 
 export const metadata = {
-  title: 'Kashmir Edition — Independent Valley Journalism & Education | TeachyBlogs',
+  title: 'Kashmir Edition — Independent Valley Journalism & Higher Education | TeachyBlogs',
   description: 'Comprehensive coverage of Jammu & Kashmir: University admissions, local economy, tourism guides, infrastructure developments, and investigative reporting from Srinagar.',
   alternates: {
     canonical: `${SITE_URL}/kashmir`,
@@ -60,12 +60,21 @@ export const metadata = {
 export default async function KashmirHubPage() {
   const { item, posts } = await getKashmirData();
 
-  const schema = {
+  const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Kashmir Edition — TeachyBlogs',
     description: item.description,
     url: `${SITE_URL}/kashmir`,
+    about: {
+      '@type': 'Place',
+      name: 'Jammu and Kashmir',
+      geo: {
+        '@type': 'GeoCoordinates',
+        latitude: 34.0837,
+        longitude: 74.7973,
+      },
+    },
     publisher: {
       '@type': 'NewsMediaOrganization',
       name: 'TeachyBlogs Kashmir Bureau',
@@ -73,11 +82,24 @@ export default async function KashmirHubPage() {
     },
   };
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Kashmir Bureau', item: `${SITE_URL}/kashmir` },
+    ],
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <TaxonomyLanding kind="edition" item={item} posts={posts} isKashmirHub={true} />
     </>

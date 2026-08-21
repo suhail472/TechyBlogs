@@ -100,6 +100,12 @@ export default async function AuthorPage({ params }) {
     name: author.name,
     jobTitle: author.title || 'Journalist',
     url: `${SITE_URL}/author/${slug}`,
+    worksFor: {
+      '@type': 'NewsMediaOrganization',
+      name: 'TeachyBlogs',
+      url: SITE_URL,
+    },
+    ...(author.expertise?.length ? { knowsAbout: author.expertise } : {}),
     ...(author.avatar ? { image: author.avatar } : {}),
     ...(sameAs.length ? { sameAs } : {}),
   };

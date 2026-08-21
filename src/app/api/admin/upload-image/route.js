@@ -13,19 +13,15 @@ export async function POST(req) {
       token = req.cookies.get('token')?.value;
     }
 
-    // In production, require authentication
-    if (!token && process.env.NODE_ENV === 'production') {
+    // Require authentication
+    if (!token) {
       return NextResponse.json({ success: false, message: 'Unauthorized access' }, { status: 401 });
     }
 
-    if (token && token !== 'dev_bypass_token') {
-      try {
-        authService.verifyToken(token);
-      } catch (err) {
-        if (process.env.NODE_ENV === 'production') {
-          return NextResponse.json({ success: false, message: 'Invalid or expired session token' }, { status: 401 });
-        }
-      }
+    try {
+      authService.verifyToken(token);
+    } catch (err) {
+      return NextResponse.json({ success: false, message: 'Invalid or expired session token' }, { status: 401 });
     }
 
     // 2. Parse request payload (supports multipart/form-data and application/json)

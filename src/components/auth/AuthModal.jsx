@@ -14,7 +14,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const { login, register, devBypassLogin } = useAuthStore();
+  const { login, register } = useAuthStore();
   const { addToast } = useToastStore();
 
   if (!isOpen) return null;
@@ -53,13 +53,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleDevBypass = () => {
-    devBypassLogin();
-    addToast('Signed in as Chief Editor (Demo Mode)', 'success');
-    if (onSuccess) onSuccess();
-    onClose();
   };
 
   return (
@@ -209,18 +202,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
               )}
             </button>
           </form>
-
-          {/* Quick Demo Bypass (Useful for paired review and testing) */}
-          <div className="pt-3 border-t border-zinc-200/80 dark:border-white/10">
-            <button
-              type="button"
-              onClick={handleDevBypass}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
-              <span>1-Click Demo Sign-In (Chief Editor)</span>
-            </button>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>

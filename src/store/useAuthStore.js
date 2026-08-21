@@ -29,25 +29,6 @@ const useAuthStore = create(
         }
       },
 
-      devBypassLogin: () => {
-        if (typeof document !== 'undefined') {
-          document.cookie = 'token=dev_bypass_token; path=/; max-age=604800; SameSite=Lax';
-        }
-        const devUser = {
-          _id: 'dev_admin_id',
-          name: 'Chief Editor',
-          email: 'editor@teachyblogs.com',
-          role: 'Editor in Chief',
-        };
-        set({
-          user: devUser,
-          isAuthenticated: true,
-          loading: false,
-          error: null,
-        });
-        return true;
-      },
-
       register: async (name, email, password) => {
         set({ loading: true, error: null });
         try {
@@ -79,19 +60,6 @@ const useAuthStore = create(
 
       getMe: async () => {
         try {
-          if (typeof document !== 'undefined') {
-            const isBypassed = document.cookie.includes('token=dev_bypass_token');
-            if (isBypassed) {
-              const devUser = {
-                _id: 'dev_admin_id',
-                name: 'Chief Editor',
-                email: 'editor@teachyblogs.com',
-                role: 'Editor in Chief',
-              };
-              set({ user: devUser, isAuthenticated: true });
-              return devUser;
-            }
-          }
           const user = await authAPI.getMe();
           set({ user, isAuthenticated: true });
           return user;

@@ -25,12 +25,14 @@ async function getRegionData(slug) {
         { regions: { $in: regionIds } },
         { tags: slug },
         { tags: new RegExp(`^${resolvedName}$`, 'i') },
+        { title: new RegExp(`\\b${resolvedName}\\b`, 'i') },
       ],
     });
 
     const posts = await Post.find(query)
       .populate('primaryTopic', 'name slug')
       .populate('primaryRegion', 'name slug')
+      .populate('primaryAuthor', 'name slug avatar')
       .sort({ featured: -1, publishedAt: -1 })
       .limit(24)
       .lean();
@@ -62,17 +64,33 @@ export async function generateMetadata({ params }) {
 export default async function RegionPage({ params }) {
   const { slug } = await params;
   const { item, posts } = await getRegionData(slug);
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: item.name,
     description: item.description,
     url: `${SITE_URL}/region/${slug}`,
+    about: {
+      '@type': 'Place',
+      name: item.name,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Kashmir Bureau', item: `${SITE_URL}/kashmir` },
+      { '@type': 'ListItem', position: 3, name: item.name, item: `${SITE_URL}/region/${slug}` },
+    ],
   };
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <TaxonomyLanding kind="region" item={item} posts={posts} />
     </>
   );

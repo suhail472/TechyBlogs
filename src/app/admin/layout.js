@@ -20,6 +20,7 @@ import {
   FileText,
   Compass,
   Radio,
+  Globe,
 } from 'lucide-react';
 import useAuthStore from '@/store/useAuthStore';
 import TopLoader from '@/components/shared/TopLoader';
@@ -158,6 +159,7 @@ export default function AdminLayout({ children }) {
     {
       title: 'PUBLICATION IA',
       items: [
+        { icon: Globe, label: 'SEO & Knowledge Graph', path: '/admin/seo' },
         { icon: Layers, label: 'Taxonomy Architecture', path: '/admin/taxonomy' },
         { icon: Users, label: 'Staff Correspondents', path: '/admin/authors' },
       ],
