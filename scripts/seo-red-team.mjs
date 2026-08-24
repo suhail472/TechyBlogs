@@ -36,7 +36,7 @@ const filter = getPublicPostFilter();
 
 assert.deepStrictEqual(filter.status, { $in: ['published', 'updated'] }, 'Must only permit published/updated status');
 assert.ok(filter.publishedAt.$lte instanceof Date, 'Must enforce publishedAt <= now');
-assert.ok(Array.isArray(filter.$and), 'Must include embargo condition');
+assert.ok(Array.isArray(filter.$or), 'Must include embargo condition');
 
 const isFutureDateBlocked = filter.publishedAt.$lte.getTime() <= now.getTime() + 1000;
 assert.ok(isFutureDateBlocked, 'Future scheduled articles must be filtered out');

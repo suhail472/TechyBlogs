@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import seoService from '@/lib/services/seo.service';
-import { authenticateRequest } from '@/lib/middlewares/auth';
+import { verifyAuth } from '@/lib/middlewares/auth';
 
 export async function POST(req) {
   try {
-    const auth = await authenticateRequest(req);
-    if (!auth.authenticated) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
-    }
-
+    await verifyAuth(req);
     await connectToDatabase();
     const body = await req.json();
 
@@ -53,9 +49,10 @@ export async function POST(req) {
       { status: 200 }
     );
   } catch (error) {
+    const isAuthError = error.message?.includes('authorized') || error.message?.includes('Admin not found');
     return NextResponse.json(
       { success: false, message: error.message || 'SEO Inspection failed' },
-      { status: 500 }
+      { status: isAuthError ? 401 : 500 }
     );
   }
 }

@@ -1,15 +1,27 @@
 /**
  * TEST SUITE: Internal Linking Engine & Related Stories Multi-Factor Scorer
  */
+import fs from 'fs';
 import assert from 'assert';
+
+if (fs.existsSync('.env.local')) {
+  const env = fs.readFileSync('.env.local', 'utf-8');
+  for (const line of env.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const [k, ...v] = trimmed.split('=');
+    if (k && v.length) process.env[k.trim()] = v.join('=').trim();
+  }
+}
+
 import seoService from '../src/lib/services/seo.service.js';
 
 console.log('🧪 Starting Internal Linking Engine & Related Stories Test Suite...\n');
 
-// 1. Test Internal Linking Extraction for Topics & Regions
-console.log('👉 [1/2] Testing Contextual Internal Link Scorer...');
 (async () => {
   try {
+    // 1. Test Internal Linking Extraction for Topics & Regions
+    console.log('👉 [1/2] Testing Contextual Internal Link Scorer...');
     const linkOpportunities = await seoService.getInternalLinkOpportunities({
       content: 'In-depth coverage of Artificial Intelligence developments across Srinagar and Kashmir technology sectors.',
       currentSlug: 'sample-slug',
@@ -36,6 +48,7 @@ console.log('👉 [1/2] Testing Contextual Internal Link Scorer...');
     console.log(`   ✓ Found ${related.length} semantically & regionally ranked related stories`);
 
     console.log('\n🎉 ALL INTERNAL LINKING TESTS PASSED (2/2)!');
+    process.exit(0);
   } catch (err) {
     console.error('Test execution error:', err);
     process.exit(1);

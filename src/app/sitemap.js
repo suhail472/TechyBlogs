@@ -1,8 +1,8 @@
-import connectToDatabase from '@/lib/db';
-import Post, { getPublicPostFilter } from '@/lib/models/post.model';
-import Taxonomy from '@/lib/models/taxonomy.model';
-import Admin from '@/lib/models/admin.model';
-import { DEFAULT_STORIES, DEFAULT_AUTHORS } from '@/data/defaultStories';
+import connectToDatabase from '../lib/db.js';
+import Post, { getPublicPostFilter } from '../lib/models/post.model.js';
+import Taxonomy from '../lib/models/taxonomy.model.js';
+import Admin from '../lib/models/admin.model.js';
+import { DEFAULT_STORIES, DEFAULT_AUTHORS } from '../data/defaultStories.js';
 
 const SITE_URL = 'https://teachyblogs.com';
 

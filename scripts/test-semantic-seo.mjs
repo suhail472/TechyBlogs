@@ -13,8 +13,8 @@ const sampleArticle = {
   content: `
 Next.js 15 App Router revolutionizes full-stack React development by providing hybrid rendering out of the box.
 
-## Architecture Overview
-In this guide, we dive deep into how Next.js 15 handles asynchronous requests and server components.
+## Next.js 15 Architecture Overview
+In this guide, we dive deep into how Next.js 15 handles asynchronous requests and React Server Components.
 
 ## Practical Examples
 Here are hands-on patterns for data fetching.

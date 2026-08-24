@@ -1,6 +1,5 @@
-import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/db';
-import Post, { getPublicPostFilter } from '@/lib/models/post.model';
+import connectToDatabase from '../../lib/db.js';
+import Post, { getPublicPostFilter } from '../../lib/models/post.model.js';
 
 const SITE_URL = 'https://teachyblogs.com';
 
@@ -63,7 +62,8 @@ export async function GET() {
   ${newsItems}
 </urlset>`;
 
-  return new NextResponse(xml, {
+  return new Response(xml, {
+    status: 200,
     headers: {
       'Content-Type': 'application/xml; charset=utf-8',
       'Cache-Control': 'public, max-age=1800, s-maxage=1800',

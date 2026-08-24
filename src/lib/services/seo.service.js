@@ -1,8 +1,8 @@
 import crypto from 'crypto';
-import connectToDatabase from '@/lib/db';
-import Post, { getPublicPostFilter } from '@/lib/models/post.model';
-import Taxonomy from '@/lib/models/taxonomy.model';
-import Admin from '@/lib/models/admin.model';
+import connectToDatabase from '../db.js';
+import Post, { getPublicPostFilter } from '../models/post.model.js';
+import Taxonomy from '../models/taxonomy.model.js';
+import Admin from '../models/admin.model.js';
 
 const KASHMIR_GEO_ENTITIES = [
   { name: 'Kashmir', slug: 'kashmir', type: 'region', aliases: ['kashmir valley', 'jammu and kashmir', 'j&k', 'jammu & kashmir'] },
@@ -91,9 +91,8 @@ class SeoService {
       }
     }
 
-    // Lead paragraph (First 100 words)
-    const firstParagraph = plainContent.split(/\.\s+/)[0] || '';
-    const leadWords = words.slice(0, 100).join(' ');
+    // Lead paragraph (First ~100 words / 600 characters)
+    const leadText = plainContent.slice(0, 600);
 
     // Primary Keyword Analysis
     let keywordAnalysis = null;
@@ -102,9 +101,9 @@ class SeoService {
       const pkEscaped = escapeRegex(pk);
       const pkRegex = new RegExp(`\\b${pkEscaped}\\b`, 'gi');
       const inTitle = new RegExp(`\\b${pkEscaped}\\b`, 'i').test(title);
-      const inLead = new RegExp(`\\b${pkEscaped}\\b`, 'i').test(leadWords);
+      const inLead = new RegExp(`\\b${pkEscaped}\\b`, 'i').test(leadText);
       const inMetaDesc = new RegExp(`\\b${pkEscaped}\\b`, 'i').test(metaDescription || excerpt);
-      const inSlug = slug.toLowerCase().includes(pk.replace(/\s+/g, '-'));
+      const inSlug = slug.toLowerCase().replace(/[^a-z0-9]/g, '').includes(pk.replace(/[^a-z0-9]/g, ''));
       const inHeadings = headings.some((h) => new RegExp(`\\b${pkEscaped}\\b`, 'i').test(h.text));
 
       const count = (plainContent.match(pkRegex) || []).length;

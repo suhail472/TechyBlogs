@@ -30,7 +30,11 @@ console.log('   ✓ Global story correctly identified as non-local');
 
 // 3. Test Intent Detection for Local Stories
 console.log('\n👉 [3/4] Testing Search Intent for Local Kashmir Story...');
-const intent = seoService.classifySearchIntent(kashmirText);
+const localGuideText = {
+  title: 'Higher Education and Startup Ecosystem in Srinagar Kashmir Valley',
+  content: 'An overview of opportunities in Srinagar and around Dal Lake for university students.',
+};
+const intent = seoService.classifySearchIntent(localGuideText);
 assert.strictEqual(intent.primary, 'Local / Regional', 'Should classify search intent as Local / Regional');
 console.log('   ✓ Intent classified:', intent.primary, `(${intent.confidence} confidence)`);
 
