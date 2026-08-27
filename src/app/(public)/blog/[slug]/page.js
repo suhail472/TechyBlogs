@@ -5,6 +5,7 @@ import '@/lib/models/admin.model';
 import PostClient from '@/components/pages/PostClient';
 import seoService from '@/lib/services/seo.service';
 import { notFound } from 'next/navigation';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
@@ -19,6 +20,10 @@ export async function generateMetadata({ params }) {
       .lean();
   } catch (err) {
     // ignore
+  }
+
+  if (!blog) {
+    blog = DEFAULT_STORIES.find((s) => s.slug === slug);
   }
 
   if (!blog) {
@@ -113,6 +118,14 @@ export default async function SingleBlogPage({ params }) {
     }
   } catch (err) {
     console.warn('Failed to load article from DB:', err.message);
+  }
+
+  if (!blog) {
+    const fallbackStory = DEFAULT_STORIES.find((s) => s.slug === slug);
+    if (fallbackStory) {
+      blog = fallbackStory;
+      allRelated = DEFAULT_STORIES.filter((s) => s.slug !== slug).slice(0, 4);
+    }
   }
 
   if (!blog) {
@@ -278,7 +291,7 @@ export default async function SingleBlogPage({ params }) {
         />
       )}
 
-      <PostClient post={serializedBlog} relatedPosts={serializedRelated} />
+      <PostClient blog={serializedBlog} post={serializedBlog} relatedPosts={serializedRelated} />
     </>
   );
 }

@@ -68,7 +68,7 @@ export default function EditorialCard({
               className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             {badge && (
-              <span className={`absolute top-4 left-4 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-md ${badge.classes}`}>
+              <span className={`absolute top-4 left-4 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-md whitespace-nowrap ${badge.classes}`}>
                 {badge.type === 'breaking' && <Flame className="w-3 h-3" />}
                 {badge.type === 'developing' && <Activity className="w-3 h-3" />}
                 <span>{badge.label}</span>
@@ -131,7 +131,7 @@ export default function EditorialCard({
               className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
             />
             {badge && (
-              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-md ${badge.classes}`}>
+              <span className={`absolute top-3.5 left-3.5 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.18em] px-2.5 py-1 rounded-md whitespace-nowrap ${badge.classes}`}>
                 <span>{badge.label}</span>
               </span>
             )}
@@ -414,7 +414,7 @@ export default function EditorialCard({
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.02]"
           />
           {badge && (
-            <span className={`absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${badge.classes}`}>
+            <span className={`absolute top-3 left-3 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md whitespace-nowrap ${badge.classes}`}>
               <span>{badge.label}</span>
             </span>
           )}

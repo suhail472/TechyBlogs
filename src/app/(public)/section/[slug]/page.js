@@ -2,6 +2,7 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
@@ -9,18 +10,34 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function getSection(slug) {
   const name = displayName(slug);
+  let cleanPosts = [];
+  let item = null;
+
   try {
     await connectToDatabase();
-    const item = await Taxonomy.findOne({ kind: 'section', slug, active: true }).lean();
+    item = await Taxonomy.findOne({ kind: 'section', slug, active: true }).lean();
     const resolvedName = item?.name || name;
     const query = getPublicPostFilter({
       $or: [{ primarySection: item?._id }, { sections: item?._id }, { categories: new RegExp(`^${escapeRegex(resolvedName)}$`, 'i') }],
     });
     const posts = await Post.find(query).sort({ featured: -1, publishedAt: -1 }).limit(24).lean();
-    return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
+    cleanPosts = posts ? JSON.parse(JSON.stringify(posts)) : [];
   } catch (err) {
-    return { item: { name, slug, seo: { indexable: false } }, posts: [] };
+    // ignore
   }
+
+  if (cleanPosts.length === 0) {
+    cleanPosts = DEFAULT_STORIES.filter((p) =>
+      new RegExp(escapeRegex(slug.replace(/-/g, ' ')), 'i').test(
+        (p.categories || []).join(' ') + ' ' + (p.primarySection?.name || '') + ' ' + (p.tags || []).join(' ') + ' ' + p.title
+      )
+    );
+  }
+
+  return {
+    item: item || { name: item?.name || name, slug, seo: { indexable: true } },
+    posts: cleanPosts.length > 0 ? cleanPosts : DEFAULT_STORIES.slice(0, 6),
+  };
 }
 
 export async function generateMetadata({ params }) {

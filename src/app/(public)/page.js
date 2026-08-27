@@ -3,6 +3,7 @@ import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import '@/lib/models/taxonomy.model';
 import '@/lib/models/admin.model';
 import EditorialHome from '@/components/pages/EditorialHome';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export const metadata = {
   title: 'TeachyBlogs - Modern Digital Publishing Platform & Journal',
@@ -42,6 +43,11 @@ export default async function HomePage() {
     serializedPosts = JSON.parse(JSON.stringify(posts));
   } catch (err) {
     console.warn('Database query during page render failed, using fallback:', err.message);
+  }
+
+  // Fallback to rich default stories if database is empty or offline
+  if (!serializedPosts || serializedPosts.length === 0) {
+    serializedPosts = DEFAULT_STORIES;
   }
 
   const websiteSchema = {

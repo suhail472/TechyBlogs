@@ -44,7 +44,8 @@ function formatViews(num) {
   return num.toString();
 }
 
-export default function PostClient({ blog, relatedPosts = [] }) {
+export default function PostClient({ blog: propBlog, post: propPost, relatedPosts = [] }) {
+  const blog = propBlog || propPost;
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(blog?.likes || 0);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);

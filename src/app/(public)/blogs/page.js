@@ -1,6 +1,7 @@
 import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import BlogsClient from '@/components/pages/BlogsClient';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export const metadata = {
   title: 'All Stories & Archives | TeachyBlogs',
@@ -35,6 +36,11 @@ export default async function BlogsPage(props) {
     serializedPosts = JSON.parse(JSON.stringify(posts));
   } catch (err) {
     console.warn('Database query during blogs archive failed:', err.message);
+  }
+
+  // Fallback to rich default stories if database is empty or offline
+  if (!serializedPosts || serializedPosts.length === 0) {
+    serializedPosts = DEFAULT_STORIES;
   }
   
   const collectionSchema = {

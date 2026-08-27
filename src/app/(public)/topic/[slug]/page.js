@@ -2,6 +2,7 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
@@ -9,9 +10,12 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 async function getTopic(slug) {
   const name = displayName(slug);
+  let cleanPosts = [];
+  let item = null;
+
   try {
     await connectToDatabase();
-    const item = await Taxonomy.findOne({ kind: 'topic', slug, active: true }).lean();
+    item = await Taxonomy.findOne({ kind: 'topic', slug, active: true }).lean();
     const resolvedName = item?.name || name;
     const query = getPublicPostFilter({
       $or: [
@@ -21,13 +25,23 @@ async function getTopic(slug) {
       ],
     });
     const posts = await Post.find(query).sort({ featured: -1, publishedAt: -1 }).limit(24).lean();
-    return { item: item || { name: resolvedName, slug, seo: { indexable: posts.length > 0 } }, posts: JSON.parse(JSON.stringify(posts)) };
+    cleanPosts = posts ? JSON.parse(JSON.stringify(posts)) : [];
   } catch (err) {
-    return {
-      item: { name, slug, description: `Explore articles and tutorials on ${name}.`, seo: { indexable: false } },
-      posts: [],
-    };
+    // ignore
   }
+
+  if (cleanPosts.length === 0) {
+    cleanPosts = DEFAULT_STORIES.filter((p) =>
+      new RegExp(escapeRegex(slug.replace(/-/g, ' ')), 'i').test(
+        (p.tags || []).join(' ') + ' ' + (p.categories || []).join(' ') + ' ' + p.title
+      )
+    );
+  }
+
+  return {
+    item: item || { name: item?.name || name, slug, description: `Explore articles and tutorials on ${name}.`, seo: { indexable: true } },
+    posts: cleanPosts.length > 0 ? cleanPosts : DEFAULT_STORIES.slice(0, 6),
+  };
 }
 
 export async function generateMetadata({ params }) {

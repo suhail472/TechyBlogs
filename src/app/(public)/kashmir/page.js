@@ -2,6 +2,7 @@ import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
+import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 const SITE_URL = 'https://teachyblogs.com';
 
@@ -18,6 +19,13 @@ async function getKashmirData() {
     });
     const posts = await Post.find(query).sort({ breaking: -1, featured: -1, publishedAt: -1 }).limit(30).lean();
 
+    let cleanPosts = posts ? JSON.parse(JSON.stringify(posts)) : [];
+    if (cleanPosts.length === 0) {
+      cleanPosts = DEFAULT_STORIES.filter((p) =>
+        /kashmir|srinagar|pampore|zabarwan|gulmarg/i.test((p.categories || []).join(' ') + ' ' + (p.tags || []).join(' ') + ' ' + p.title)
+      );
+    }
+
     return {
       item: item || {
         name: 'Kashmir Bureau',
@@ -25,10 +33,13 @@ async function getKashmirData() {
         description: 'Independent reporting, investigative journalism, university admissions, and cultural documentation across Jammu & Kashmir and Srinagar.',
         seo: { indexable: true },
       },
-      posts: posts ? JSON.parse(JSON.stringify(posts)) : [],
+      posts: cleanPosts,
     };
   } catch (err) {
     console.error('Error fetching Kashmir data:', err);
+    const kashmirFallback = DEFAULT_STORIES.filter((p) =>
+      /kashmir|srinagar|pampore|zabarwan|gulmarg/i.test((p.categories || []).join(' ') + ' ' + (p.tags || []).join(' ') + ' ' + p.title)
+    );
     return {
       item: {
         name: 'Kashmir Bureau',
@@ -36,7 +47,7 @@ async function getKashmirData() {
         description: 'Independent reporting, higher education, tourism dispatch, smart city developments, and cultural documentation across the Kashmir Valley and Srinagar.',
         seo: { indexable: true },
       },
-      posts: [],
+      posts: kashmirFallback,
     };
   }
 }
