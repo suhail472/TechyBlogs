@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import './post.model.js';
+import './admin.model.js';
 
 const commentSchema = new mongoose.Schema(
   {

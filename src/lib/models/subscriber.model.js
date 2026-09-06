@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import crypto from 'crypto';
+import './post.model.js';
 
 const subscriberSchema = new mongoose.Schema(
   {

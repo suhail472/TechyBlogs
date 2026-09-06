@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import './taxonomy.model.js';
+import './admin.model.js';
 
 const postSchema = new mongoose.Schema(
   {

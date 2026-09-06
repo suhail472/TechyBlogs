@@ -1114,4 +1114,38 @@ body.body-scroll-locked {
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* ========== Infinite Breaking News Marquee Animation ========== */
+@keyframes marquee-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee-infinite {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee-scroll var(--marquee-duration, 65s) linear infinite;
+}
+
+.animate-marquee-infinite:hover,
+.animate-marquee-infinite:focus-within {
+  animation-play-state: paused;
+}
+
+.mask-marquee-edges {
+  mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-infinite {
+    animation-duration: 120s;
+  }
+}
+
+
 

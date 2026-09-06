@@ -1,7 +1,10 @@
 import connectToDatabase from '../db.js';
 import Post from '../models/post.model.js';
+import Taxonomy from '../models/taxonomy.model.js';
+import Admin from '../models/admin.model.js';
 import { extractHeadings } from '../../utils/markdownEngine.js';
 import { sanitizeArticleText } from './safety.js';
+import { DEFAULT_STORIES } from '../../data/defaultStories.js';
 
 /**
  * Canonical Public Visibility Query Invariant
@@ -54,17 +57,49 @@ const PUBLIC_ARTICLE_PROJECTION = {
 export async function getPublicArticleContext(slug) {
   if (!slug || typeof slug !== 'string') return null;
 
-  await connectToDatabase();
   const cleanSlug = String(slug).toLowerCase().trim();
+  let post = null;
 
-  const query = getPublicPostFilter({ slug: cleanSlug });
+  try {
+    await connectToDatabase();
+    const query = getPublicPostFilter({ slug: cleanSlug });
 
-  const post = await Post.findOne(query)
-    .select(PUBLIC_ARTICLE_PROJECTION)
-    .populate('primarySection', 'name slug')
-    .populate('primaryTopic', 'name slug')
-    .populate('primaryRegion', 'name slug')
-    .lean();
+    post = await Post.findOne(query)
+      .select(PUBLIC_ARTICLE_PROJECTION)
+      .populate('primarySection', 'name slug')
+      .populate('primaryTopic', 'name slug')
+      .populate('primaryRegion', 'name slug')
+      .lean();
+  } catch (err) {
+    console.warn('[AI Context] Database lookup issue, attempting fallback:', err.message);
+  }
+
+  // Fallback to DEFAULT_STORIES if not found in DB
+  if (!post) {
+    const fallback = DEFAULT_STORIES.find((s) => s.slug === cleanSlug);
+    if (fallback) {
+      post = {
+        title: fallback.title,
+        slug: fallback.slug,
+        subtitle: fallback.subtitle || fallback.excerpt || '',
+        excerpt: fallback.excerpt || fallback.subtitle || '',
+        content: fallback.content || fallback.excerpt || '',
+        author: fallback.author || 'Editorial Bureau',
+        image: fallback.image || '',
+        primarySection: fallback.primarySection || { name: fallback.category || 'General', slug: (fallback.category || 'general').toLowerCase() },
+        primaryTopic: fallback.primaryTopic || null,
+        primaryRegion: fallback.primaryRegion || null,
+        categories: fallback.categories || (fallback.category ? [fallback.category] : ['General']),
+        tags: fallback.tags || [],
+        contentType: fallback.contentType || 'article',
+        publishedAt: fallback.publishedAt || fallback.date || null,
+        faqs: fallback.faqs || [],
+        sources: fallback.sources || [],
+        reviewData: fallback.reviewData || null,
+        tutorialData: fallback.tutorialData || null,
+      };
+    }
+  }
 
   if (!post) return null;
 
@@ -120,28 +155,44 @@ export async function getRelatedPublicStories(currentPost, limit = 3) {
     const category = currentPost.categories?.[0] || currentPost.primarySection?.name || 'Technology';
     const currentId = currentPost._id;
 
-    const query = getPublicPostFilter({
-      _id: { $ne: currentId },
-      $or: [
-        { primarySection: currentPost.primarySection?._id || currentPost.primarySection },
-        { categories: category },
-      ],
-    });
+    let related = [];
+    if (currentId) {
+      const query = getPublicPostFilter({
+        _id: { $ne: currentId },
+        $or: [
+          { primarySection: currentPost.primarySection?._id || currentPost.primarySection },
+          { categories: category },
+        ],
+      });
 
-    const related = await Post.find(query)
-      .select({
-        title: 1,
-        slug: 1,
-        excerpt: 1,
-        subtitle: 1,
-        image: 1,
-        author: 1,
-        categories: 1,
-        publishedAt: 1,
-      })
-      .sort({ publishedAt: -1 })
-      .limit(limit)
-      .lean();
+      related = await Post.find(query)
+        .select({
+          title: 1,
+          slug: 1,
+          excerpt: 1,
+          subtitle: 1,
+          image: 1,
+          author: 1,
+          categories: 1,
+          publishedAt: 1,
+        })
+        .sort({ publishedAt: -1 })
+        .limit(limit)
+        .lean();
+    }
+
+    if (!related || related.length === 0) {
+      const fallbackRelated = DEFAULT_STORIES.filter((s) => s.slug !== currentPost.slug).slice(0, limit);
+      return fallbackRelated.map((r) => ({
+        title: r.title,
+        slug: r.slug,
+        excerpt: r.subtitle || r.excerpt || '',
+        image: r.image || '',
+        category: r.category || r.categories?.[0] || 'General',
+        publishedAt: r.publishedAt || r.date || '',
+        url: `/blog/${r.slug}`,
+      }));
+    }
 
     return related.map((r) => ({
       title: r.title,

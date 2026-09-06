@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${manrope.variable} ${plusJakartaSans.variable} ${lora.variable} ${bodoniModa.variable} scroll-smooth`}
+      className={`${manrope.variable} ${plusJakartaSans.variable} ${lora.variable} ${bodoniModa.variable} scroll-smooth overflow-x-hidden`}
       suppressHydrationWarning
     >
       <head>
@@ -81,7 +81,7 @@ export default function RootLayout({ children }) {
           }
         `}} />
       </head>
-      <body className="min-h-screen bg-white dark:bg-[#0c0e12] text-zinc-900 dark:text-zinc-100 antialiased selection:bg-red-500/20 selection:text-red-600 dark:selection:text-red-400 font-sans">
+      <body className="min-h-screen bg-white dark:bg-[#0c0e12] text-zinc-900 dark:text-zinc-100 antialiased selection:bg-red-500/20 selection:text-red-600 dark:selection:text-red-400 font-sans overflow-x-hidden">
         <ThemeInitializer />
         {children}
         <ToastContainer />

@@ -80,14 +80,14 @@ export default function EditorialCard({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-x-2 gap-y-1 text-xs flex-wrap">
               <span className="text-[11px] font-black uppercase tracking-[0.22em] text-red-600 dark:text-red-400">
                 {category}
               </span>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
-              <span className="text-zinc-500 dark:text-zinc-400 font-medium">{dateText}</span>
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">{dateText}</span>
               <span className="text-zinc-300 dark:text-zinc-700">/</span>
-              <span className="text-zinc-500 dark:text-zinc-400 font-medium">{readingTime} min read</span>
+              <span className="text-zinc-500 dark:text-zinc-400 font-medium whitespace-nowrap">{readingTime} min read</span>
             </div>
 
             <h2 className="font-display text-2xl sm:text-3xl lg:text-[2.4rem] font-black leading-[1.12] tracking-tight text-zinc-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-200">

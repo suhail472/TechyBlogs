@@ -3,6 +3,9 @@ import { sanitizeUserMessage, sanitizeHistory } from '@/lib/ai/safety';
 import { checkRateLimit, getClientFingerprint } from '@/lib/ai/rateLimit';
 import { getPublicArticleContext } from '@/lib/ai/context';
 import { streamEditorialResponse } from '@/lib/ai/provider';
+import '@/lib/models/taxonomy.model';
+import '@/lib/models/post.model';
+import '@/lib/models/admin.model';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +43,12 @@ export async function POST(req) {
     const cleanHistory = sanitizeHistory(history);
 
     // 3. Retrieve Public Article Context (Strict Public Invariant)
-    const context = await getPublicArticleContext(articleSlug);
+    let context = null;
+    try {
+      context = await getPublicArticleContext(articleSlug);
+    } catch (err) {
+      console.warn('[AI Chat API] Context fetch issue:', err.message);
+    }
 
     // 4. Create Server-Sent Events (SSE) Stream
     const stream = new ReadableStream({

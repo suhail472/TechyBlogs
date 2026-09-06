@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import Admin from './models/admin.model.js';
+import './models/taxonomy.model.js';
+import './models/post.model.js';
+import './models/subscriber.model.js';
+import './models/comment.model.js';
 
 // MONGODB_URI is fetched inside connectToDatabase to avoid top-level evaluation errors during build.
 

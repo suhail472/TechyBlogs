@@ -8,7 +8,6 @@ import {
   Flame,
   MapPin,
   TrendingUp,
-  Sparkles,
   Layers,
   Cpu,
   GraduationCap,
@@ -75,6 +74,15 @@ export default function EditorialHome({ posts = [] }) {
     const brk = ordered.filter((p) => p.breaking);
     return brk.length > 0 ? brk.slice(0, 4) : ordered.slice(0, 3);
   }, [ordered]);
+
+  // Repeated ticker stories for seamless continuous infinite marquee loop
+  const tickerStories = useMemo(() => {
+    if (!breaking || breaking.length === 0) return [];
+    if (breaking.length === 1) return [...breaking, ...breaking, ...breaking, ...breaking];
+    if (breaking.length === 2) return [...breaking, ...breaking, ...breaking];
+    if (breaking.length === 3) return [...breaking, ...breaking];
+    return breaking;
+  }, [breaking]);
 
   // Hero Lead Candidate Stories for Template Switcher
   const heroCandidates = useMemo(() => {
@@ -145,60 +153,92 @@ export default function EditorialHome({ posts = [] }) {
     { label: 'Hardware Scorecard', icon: Star, badge: 'Gear Lab' },
     { label: 'Kashmir Bureau', icon: MapPin, badge: 'Regional' },
     { label: 'Academic Roadmap', icon: GraduationCap, badge: 'Education' },
-    { label: 'Systems Analysis', icon: Sparkles, badge: 'Opinion' },
+    { label: 'Systems Analysis', icon: Activity, badge: 'Opinion' },
   ];
 
   return (
     <main className="pt-24 pb-20">
-      {/* 1. Restrained Breaking Ticker */}
+      {/* 1. Infinite Floating Breaking Ticker */}
       {breaking.length > 0 && (
-        <div className="bg-zinc-950 text-white border-b border-white/10 shadow-inner">
-          <div className="max-w-7xl mx-auto px-6 py-2.5 flex items-center gap-3 overflow-x-auto no-scrollbar">
-            <span className="shrink-0 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 px-2.5 py-0.5 rounded-md shadow-sm animate-pulse whitespace-nowrap">
-              <Flame className="w-3 h-3" /> Breaking
-            </span>
-            <div className="h-3.5 w-px bg-white/20 shrink-0" />
-            <div className="flex items-center gap-6 shrink-0 text-xs font-semibold whitespace-nowrap">
-              {breaking.map((post) => (
-                <Link
-                  key={String(post._id || post.slug)}
-                  href={`/blog/${post.slug}`}
-                  className="hover:text-red-400 transition-colors flex items-center gap-2 shrink-0"
-                >
-                  <span className="text-zinc-400 text-[10px] font-bold uppercase tracking-wider">
-                    {post.primarySection?.name || post.categories?.[0] || 'News'}:
-                  </span>
-                  <span className="hover:underline underline-offset-2">{post.title}</span>
-                </Link>
-              ))}
+        <div className="bg-zinc-950 text-white border-b border-white/10 shadow-inner overflow-hidden relative select-none">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10 py-2.5 flex items-center gap-3 relative">
+            {/* Fixed Sticky Breaking Label */}
+            <div className="shrink-0 flex items-center gap-3 z-10 bg-zinc-950 pr-2">
+              <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.2em] bg-red-600 px-2.5 py-0.5 rounded-md shadow-sm animate-pulse whitespace-nowrap">
+                <Flame className="w-3 h-3 fill-current" /> Breaking
+              </span>
+              <div className="h-3.5 w-px bg-white/20 shrink-0" />
+            </div>
+
+            {/* Seamless Infinite Marquee Track (Right to Left) */}
+            <div className="relative flex-1 overflow-hidden min-w-0 mask-marquee-edges">
+              <div className="animate-marquee-infinite flex items-center">
+                {/* Track A */}
+                <div className="flex items-center gap-8 shrink-0 pr-8">
+                  {tickerStories.map((post, idx) => (
+                    <Link
+                      key={`ticker-a-${post._id || post.slug}-${idx}`}
+                      href={`/blog/${post.slug}`}
+                      className="hover:text-red-400 transition-colors flex items-center gap-2 shrink-0 text-xs font-semibold whitespace-nowrap group"
+                    >
+                      <span className="text-zinc-400 group-hover:text-red-300 transition-colors text-[10px] font-bold uppercase tracking-wider">
+                        {post.primarySection?.name || post.categories?.[0] || 'News'}:
+                      </span>
+                      <span className="group-hover:underline underline-offset-2">{post.title}</span>
+                      <span className="text-zinc-600 font-mono text-[10px] ml-1">///</span>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Track B (Exact duplicate for seamless continuous infinite right-to-left marquee) */}
+                <div className="flex items-center gap-8 shrink-0 pr-8" aria-hidden="true">
+                  {tickerStories.map((post, idx) => (
+                    <Link
+                      key={`ticker-b-${post._id || post.slug}-${idx}`}
+                      href={`/blog/${post.slug}`}
+                      tabIndex={-1}
+                      className="hover:text-red-400 transition-colors flex items-center gap-2 shrink-0 text-xs font-semibold whitespace-nowrap group"
+                    >
+                      <span className="text-zinc-400 group-hover:text-red-300 transition-colors text-[10px] font-bold uppercase tracking-wider">
+                        {post.primarySection?.name || post.categories?.[0] || 'News'}:
+                      </span>
+                      <span className="group-hover:underline underline-offset-2">{post.title}</span>
+                      <span className="text-zinc-600 font-mono text-[10px] ml-1">///</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-6 md:px-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-10">
         {/* 2. High-Information Publication Masthead */}
-        <div className="py-4 md:py-5 border-b border-zinc-200/80 dark:border-white/10 flex flex-wrap justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping shrink-0" />
-            <p className="text-[11px] uppercase tracking-[0.24em] font-black text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
-              Independent Digital Publishing · Global Desks & Regional Bureaus
+        <div className="py-3.5 sm:py-4 md:py-5 border-b border-zinc-200/80 dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-red-600" />
+            </span>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-wider sm:tracking-[0.24em] font-black text-zinc-700 dark:text-zinc-300 leading-snug break-words">
+              Independent Digital Publishing <span className="text-zinc-400 dark:text-zinc-600 font-normal">·</span> Global Desks &amp; Regional Bureaus
             </p>
           </div>
-          <div className="flex items-center gap-4 text-[11px] font-mono font-medium text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+          <div className="flex items-center gap-2 sm:gap-4 text-[10px] sm:text-[11px] font-mono font-medium text-zinc-400 dark:text-zinc-500 pl-4.5 sm:pl-0">
             <span className="hidden sm:inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
               <ShieldCheck className="w-3.5 h-3.5" /> Verified Editorial Journal
             </span>
-            <span>·</span>
+            <span className="hidden sm:inline">·</span>
             <span>{todayFormatted}</span>
           </div>
         </div>
 
         {/* 3. Sleek Editorial Desks & Lead Story Selector */}
-        <div className="pt-5 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10">
+        <div className="pt-4 sm:pt-5 pb-3 sm:pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-zinc-200/80 dark:border-white/10">
           <div className="flex items-center gap-2.5 shrink-0">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-[10px] font-black uppercase tracking-[0.16em] whitespace-nowrap shadow-xs">
-              <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />
+              <SlidersHorizontal className="w-3 h-3 text-red-500 shrink-0" />
               <span>Curated Desks</span>
             </span>
             <span className="text-zinc-400 dark:text-zinc-500 text-[11px] font-medium hidden sm:inline whitespace-nowrap">
@@ -207,9 +247,9 @@ export default function EditorialHome({ posts = [] }) {
           </div>
 
           {/* Desk Pill Selectors */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-shadow-x max-w-full py-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-shadow-x max-w-full py-1 min-w-0">
             {heroCandidates.map((story, idx) => {
-              const template = heroTemplates[idx] || { label: `Desk 0${idx + 1}`, icon: Sparkles };
+              const template = heroTemplates[idx] || { label: `Desk 0${idx + 1}`, icon: Layers };
               const Icon = template.icon;
               const isSelected = selectedHeroIndex === idx;
 

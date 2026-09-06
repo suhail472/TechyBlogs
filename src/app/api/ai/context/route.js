@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getPublicArticleContext } from '@/lib/ai/context';
+import '@/lib/models/taxonomy.model';
+import '@/lib/models/post.model';
+import '@/lib/models/admin.model';
 
 export const dynamic = 'force-dynamic';
 
