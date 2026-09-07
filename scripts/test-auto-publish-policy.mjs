@@ -16,7 +16,7 @@ if (fs.existsSync('.env.local')) {
 
 async function runAutoPublishTestSuite() {
   console.log('\n================================================================');
-  console.log('TEACHYBLOGS AI — AUTO-PUBLISH & LOW-FRICTION MODERATION TEST');
+  console.log('TECHYBLOGS AI — AUTO-PUBLISH & LOW-FRICTION MODERATION TEST');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -33,7 +33,7 @@ async function runAutoPublishTestSuite() {
   }
 
   // Connect to DB
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/teachyblogs');
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/techyblogs');
   const Comment = (await import('../src/lib/models/comment.model.js')).default;
   const commentService = (await import('../src/lib/services/comment.service.js')).default;
 

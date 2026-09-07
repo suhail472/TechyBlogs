@@ -27,7 +27,7 @@ try {
   console.warn('Failed to parse .env.local manually:', err.message);
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/teachyblogs';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/techyblogs';
 
 const postSchema = new mongoose.Schema({
   title: String,

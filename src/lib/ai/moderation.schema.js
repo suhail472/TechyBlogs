@@ -1,5 +1,5 @@
 /**
- * TeachyBlogs AI — Comment Moderation Output Validator & Normalizer
+ * TechyBlogs AI — Comment Moderation Output Validator & Normalizer
  * Validates, bounds, and normalizes structured JSON output from LLM moderation providers.
  */
 

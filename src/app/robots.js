@@ -28,8 +28,8 @@ export default function robots() {
       },
     ],
     sitemap: [
-      'https://teachyblogs.com/sitemap.xml',
-      'https://teachyblogs.com/news-sitemap.xml',
+      'https://techyblogs.com/sitemap.xml',
+      'https://techyblogs.com/news-sitemap.xml',
     ],
   };
 }

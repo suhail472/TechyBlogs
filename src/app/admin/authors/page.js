@@ -646,7 +646,7 @@ export default function AuthorsManagementPage() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                      placeholder="journalist@teachyblogs.com"
+                      placeholder="journalist@techyblogs.com"
                       className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none"
                     />
                   </div>

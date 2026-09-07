@@ -176,7 +176,7 @@ export default function AdminLayout({ children }) {
           <span className="w-7 h-7 rounded-lg bg-red-600 text-white flex items-center justify-center text-xs font-black shadow-sm shadow-red-600/20">
             TB
           </span>
-          <span>TeachyBlogs <span className="text-red-600 dark:text-red-400 text-[10px] uppercase font-mono tracking-wider ml-1">Newsroom</span></span>
+          <span>TechyBlogs <span className="text-red-600 dark:text-red-400 text-[10px] uppercase font-mono tracking-wider ml-1">Newsroom</span></span>
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -212,7 +212,7 @@ export default function AdminLayout({ children }) {
               </span>
               <div>
                 <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-bold text-sm">TeachyBlogs</span>
+                  <span className="font-bold text-sm">TechyBlogs</span>
                   <span className="text-[9px] font-black uppercase tracking-wider text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded font-mono">
                     Newsroom
                   </span>

@@ -74,7 +74,7 @@ async function connectToDatabase() {
         }
       }
     } catch (e) {}
-    MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/teachyblogs';
+    MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/techyblogs';
   }
 
   if (cached.conn) {

@@ -4,7 +4,7 @@ import Taxonomy from '../lib/models/taxonomy.model.js';
 import Admin from '../lib/models/admin.model.js';
 import { DEFAULT_STORIES, DEFAULT_AUTHORS } from '../data/defaultStories.js';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 export default async function sitemap() {
   const staticPages = [

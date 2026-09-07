@@ -6,21 +6,21 @@ import EditorialHome from '@/components/pages/EditorialHome';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export const metadata = {
-  title: 'TeachyBlogs - Modern Digital Publishing Platform & Journal',
+  title: 'TechyBlogs - Modern Digital Publishing Platform & Journal',
   description: 'Independent reporting, technical guides, product reviews, and regional news across Technology, Education, Kashmir, and Culture by Suheel Hilal.',
   keywords: 'Web Development, Coding Tutorials, React, Next.js, Kashmir News, Technology, Reviews, Education, Software Engineer, Suheel Hilal',
   alternates: {
-    canonical: 'https://teachyblogs.com',
+    canonical: 'https://techyblogs.com',
   },
   openGraph: {
-    title: 'TeachyBlogs - Modern Digital Publishing Platform',
+    title: 'TechyBlogs - Modern Digital Publishing Platform',
     description: 'Independent reporting, technical guides, product reviews, and regional news across Technology, Education, Kashmir, and Culture.',
-    url: 'https://teachyblogs.com',
+    url: 'https://techyblogs.com',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TeachyBlogs - Digital Publishing Platform',
+    title: 'TechyBlogs - Digital Publishing Platform',
     description: 'Modern journalism and digital publishing platform.',
   }
 };
@@ -53,8 +53,8 @@ export default async function HomePage() {
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "TeachyBlogs",
-    "url": "https://teachyblogs.com",
+    "name": "TechyBlogs",
+    "url": "https://techyblogs.com",
     "description": "Independent reporting, technical guides, product reviews, and regional news across Technology, Education, Kashmir, and Culture.",
     "publisher": {
       "@type": "Person",

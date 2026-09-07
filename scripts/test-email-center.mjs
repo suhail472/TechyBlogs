@@ -48,7 +48,7 @@ function assert(condition, message) {
 
 async function runEmailCenterSuite() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — NEWSROOM EMAIL CENTER & INBOX RED-TEAM SUITE');
+  console.log('TECHYBLOGS — NEWSROOM EMAIL CENTER & INBOX RED-TEAM SUITE');
   console.log('================================================================\n');
 
   await findActivePort();
@@ -75,7 +75,7 @@ async function runEmailCenterSuite() {
     loginToken: testToken,
   });
 
-  const contributorEmail = `contrib_${testSuffix}@teachyblogs.com`;
+  const contributorEmail = `contrib_${testSuffix}@techyblogs.com`;
   const contributorUser = await Admin.create({
     name: 'Guest Contributor',
     email: contributorEmail,
@@ -283,7 +283,7 @@ async function runEmailCenterSuite() {
       from: 'Test Partner <partner@news.org>',
       to: ['editorial@techyblogging.in'],
       subject: `Syndication Partnership Request [${testSuffix}]`,
-      text: 'We would like to syndicate TeachyBlogs stories.',
+      text: 'We would like to syndicate TechyBlogs stories.',
       message_id: `<partner_${testSuffix}@news.org>`,
     },
   };

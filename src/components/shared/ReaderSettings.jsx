@@ -93,7 +93,7 @@ export default function ReaderSettings({
     if (onToggleFocusMode) {
       onToggleFocusMode();
     } else if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('teachyblogs-focus-mode-toggle'));
+      window.dispatchEvent(new CustomEvent('techyblogs-focus-mode-toggle'));
     }
   };
 
@@ -123,10 +123,10 @@ export default function ReaderSettings({
     }
 
     if (typeof window !== 'undefined') {
-      const savedWarmth = localStorage.getItem('teachyblogs-reader-warmth') || 'Off';
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
-      const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-loose';
+      const savedWarmth = localStorage.getItem('techyblogs-reader-warmth') || 'Off';
+      const savedFamily = localStorage.getItem('techyblogs-font-family') || 'font-sans';
+      const savedSize = localStorage.getItem('techyblogs-font-size') || 'prose-lg';
+      const savedHeight = localStorage.getItem('techyblogs-line-height') || 'leading-loose';
       setWarmth(savedWarmth);
       setFontFamily(savedFamily);
       setFontSize(savedSize);
@@ -248,13 +248,13 @@ export default function ReaderSettings({
 
   const handleWarmthChange = (val) => {
     setWarmth(val);
-    localStorage.setItem('teachyblogs-reader-warmth', val);
+    localStorage.setItem('techyblogs-reader-warmth', val);
   };
 
   const broadcastTypography = (family, size, height) => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
-        new CustomEvent('teachyblogs-typography-change', {
+        new CustomEvent('techyblogs-typography-change', {
           detail: { fontFamily: family, fontSize: size, lineHeight: height },
         })
       );
@@ -263,19 +263,19 @@ export default function ReaderSettings({
 
   const handleFontFamilyChange = (val) => {
     setFontFamily(val);
-    localStorage.setItem('teachyblogs-font-family', val);
+    localStorage.setItem('techyblogs-font-family', val);
     broadcastTypography(val, fontSize, lineHeight);
   };
 
   const handleFontSizeChange = (val) => {
     setFontSize(val);
-    localStorage.setItem('teachyblogs-font-size', val);
+    localStorage.setItem('techyblogs-font-size', val);
     broadcastTypography(fontFamily, val, lineHeight);
   };
 
   const handleLineHeightChange = (val) => {
     setLineHeight(val);
-    localStorage.setItem('teachyblogs-line-height', val);
+    localStorage.setItem('techyblogs-line-height', val);
     broadcastTypography(fontFamily, fontSize, val);
   };
 

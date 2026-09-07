@@ -3,7 +3,7 @@ import { authorService } from '../src/lib/services/author.service.js';
 
 async function runAuthorEngineTests() {
   console.log('=====================================================');
-  console.log('TEACHYBLOGS — NEWSROOM AUTHORS ENGINE INTEGRATION TESTS');
+  console.log('TECHYBLOGS — NEWSROOM AUTHORS ENGINE INTEGRATION TESTS');
   console.log('=====================================================\n');
 
   try {

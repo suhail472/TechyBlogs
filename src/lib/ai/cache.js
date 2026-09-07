@@ -1,5 +1,5 @@
 /**
- * TeachyBlogs AI — Smart Semantic Response Cache
+ * TechyBlogs AI — Smart Semantic Response Cache
  * Caches deterministic requests (Summaries, Takeaways, Key Facts) keyed by article content hash.
  */
 

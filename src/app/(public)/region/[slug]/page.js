@@ -3,7 +3,7 @@ import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
 
 async function getRegionData(slug) {
@@ -52,7 +52,7 @@ async function getRegionData(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { item, posts } = await getRegionData(slug);
-  const title = item.seo?.title || `${item.name} News, Analysis & Stories | TeachyBlogs`;
+  const title = item.seo?.title || `${item.name} News, Analysis & Stories | TechyBlogs`;
   return {
     title,
     description: item.seo?.description || item.description || `In-depth regional reporting, education, culture, and affairs in ${item.name}.`,

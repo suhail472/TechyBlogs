@@ -79,7 +79,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
                 <span className="text-[10px] font-black uppercase tracking-widest text-red-600 dark:text-red-400 font-mono">
-                  TeachyBlogs Identity
+                  TechyBlogs Identity
                 </span>
               </div>
               <h2 id="auth-modal-title" className="font-display font-black text-xl sm:text-2xl text-zinc-900 dark:text-white">
@@ -88,7 +88,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode = 'l
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 {message || (mode === 'login'
                   ? 'Sign in to comment, reply, like, and participate in discussion.'
-                  : 'Join the TeachyBlogs community for civil discussions.')}
+                  : 'Join the TechyBlogs community for civil discussions.')}
               </p>
             </div>
             <button

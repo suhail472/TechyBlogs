@@ -1,22 +1,22 @@
 import AboutClient from '@/components/pages/AboutClient';
 
 export const metadata = {
-  title: 'About Suheel Hilal | TeachyBlogs - Web Development & Design Creator',
+  title: 'About Suheel Hilal | TechyBlogs - Web Development & Design Creator',
   description: 'Suheel Hilal is a professional full-stack software engineer and frontend designer. Read about his tech stack, coding insights, and check his portfolio at www.suhailhilal.in.',
-  keywords: 'Suheel Hilal, Software Engineer, Frontend Developer, React Specialist, Next.js, Web Design, TeachyBlogs Creator, Portfolio',
+  keywords: 'Suheel Hilal, Software Engineer, Frontend Developer, React Specialist, Next.js, Web Design, TechyBlogs Creator, Portfolio',
   alternates: {
-    canonical: 'https://teachyblogs.com/about',
+    canonical: 'https://techyblogs.com/about',
   },
   openGraph: {
-    title: 'About Suheel Hilal | TeachyBlogs - Web Dev & Design Creator',
+    title: 'About Suheel Hilal | TechyBlogs - Web Dev & Design Creator',
     description: 'Suheel Hilal is a professional full-stack software engineer and frontend designer. Read about his tech stack, coding insights, and check his portfolio at www.suhailhilal.in.',
-    url: 'https://teachyblogs.com/about',
+    url: 'https://techyblogs.com/about',
     type: 'profile',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About Suheel Hilal | TeachyBlogs',
-    description: 'Professional full-stack software engineer & creator of TeachyBlogs.',
+    title: 'About Suheel Hilal | TechyBlogs',
+    description: 'Professional full-stack software engineer & creator of TechyBlogs.',
   }
 };
 

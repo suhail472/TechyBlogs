@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 function escapeXml(unsafe) {
   return unsafe.replace(/[<>&'"]/g, (c) => {
@@ -53,7 +53,7 @@ export async function GET() {
   const rssFeed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>TeachyBlogs - Web Development &amp; Digital Publishing Platform</title>
+    <title>TechyBlogs - Web Development &amp; Digital Publishing Platform</title>
     <link>${SITE_URL}</link>
     <description>Modern digital publishing platform covering Technology, Regional News, Education, Travel, and Analysis.</description>
     <language>en-us</language>
@@ -61,7 +61,7 @@ export async function GET() {
     <atom:link href="${SITE_URL}/feed.xml" rel="self" type="application/rss+xml" />
     <image>
       <url>${SITE_URL}/favicon.ico</url>
-      <title>TeachyBlogs</title>
+      <title>TechyBlogs</title>
       <link>${SITE_URL}</link>
     </image>
     ${rssItems}

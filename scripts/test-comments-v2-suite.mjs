@@ -20,7 +20,7 @@ import commentService from '../src/lib/services/comment.service.js';
 
 async function runCommentsV2TestSuite() {
   console.log('\n================================================================');
-  console.log('TEACHYBLOGS — COMMUNITY COMMENTS 2.0 VERIFICATION & RED-TEAM');
+  console.log('TECHYBLOGS — COMMUNITY COMMENTS 2.0 VERIFICATION & RED-TEAM');
   console.log('================================================================\n');
 
   await connectToDatabase();

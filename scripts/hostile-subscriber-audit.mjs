@@ -3,7 +3,7 @@ import { subscriberService } from '../src/lib/services/subscriber.service.js';
 
 async function runHostileAudienceRedTeam() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — HOSTILE AUDIENCE & NEWSLETTER RED-TEAM AUDIT');
+  console.log('TECHYBLOGS — HOSTILE AUDIENCE & NEWSLETTER RED-TEAM AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;

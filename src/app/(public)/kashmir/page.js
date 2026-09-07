@@ -4,7 +4,7 @@ import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 async function getKashmirData() {
   try {
@@ -53,16 +53,16 @@ async function getKashmirData() {
 }
 
 export const metadata = {
-  title: 'Kashmir Edition — Independent Valley Journalism & Higher Education | TeachyBlogs',
+  title: 'Kashmir Edition — Independent Valley Journalism & Higher Education | TechyBlogs',
   description: 'Comprehensive coverage of Jammu & Kashmir: University admissions, local economy, tourism guides, infrastructure developments, and investigative reporting from Srinagar.',
   alternates: {
     canonical: `${SITE_URL}/kashmir`,
   },
   openGraph: {
-    title: 'Kashmir Bureau | TeachyBlogs',
+    title: 'Kashmir Bureau | TechyBlogs',
     description: 'In-depth reporting from the Kashmir valley, Srinagar developments, university admissions, and cultural heritage.',
     url: `${SITE_URL}/kashmir`,
-    siteName: 'TeachyBlogs',
+    siteName: 'TechyBlogs',
     locale: 'en_US',
     type: 'website',
   },
@@ -74,7 +74,7 @@ export default async function KashmirHubPage() {
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Kashmir Edition — TeachyBlogs',
+    name: 'Kashmir Edition — TechyBlogs',
     description: item.description,
     url: `${SITE_URL}/kashmir`,
     about: {
@@ -88,7 +88,7 @@ export default async function KashmirHubPage() {
     },
     publisher: {
       '@type': 'NewsMediaOrganization',
-      name: 'TeachyBlogs Kashmir Bureau',
+      name: 'TechyBlogs Kashmir Bureau',
       url: SITE_URL,
     },
   };

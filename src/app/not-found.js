@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, Home, Search } from 'lucide-react';
 
 export const metadata = {
-  title: '404 - Page Not Found | TeachyBlogs',
-  description: 'The requested page or article could not be found on TeachyBlogs.',
+  title: '404 - Page Not Found | TechyBlogs',
+  description: 'The requested page or article could not be found on TechyBlogs.',
 };
 
 export default function NotFound() {

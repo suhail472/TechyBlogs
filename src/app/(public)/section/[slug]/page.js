@@ -4,7 +4,7 @@ import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 const displayName = (slug) => slug.split('-').map((word) => word[0]?.toUpperCase() + word.slice(1)).join(' ');
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -43,7 +43,7 @@ async function getSection(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { item, posts } = await getSection(slug);
-  const title = item.seo?.title || `${item.name} | TeachyBlogs`;
+  const title = item.seo?.title || `${item.name} | TechyBlogs`;
   return { title, description: item.seo?.description || item.description, alternates: { canonical: `${SITE_URL}/section/${slug}` }, robots: posts.length ? { index: item.seo?.indexable !== false, follow: true } : { index: false, follow: true } };
 }
 

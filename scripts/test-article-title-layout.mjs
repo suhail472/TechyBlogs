@@ -2,7 +2,7 @@ import fs from 'fs';
 
 async function runArticleTitleLayoutTest() {
   console.log('\n================================================================');
-  console.log('TEACHYBLOGS — ARTICLE TITLE & HORIZONTAL CANVAS LAYOUT TEST');
+  console.log('TECHYBLOGS — ARTICLE TITLE & HORIZONTAL CANVAS LAYOUT TEST');
   console.log('================================================================\n');
 
   let passed = 0;

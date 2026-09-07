@@ -280,7 +280,7 @@ export default function SubscribersDashboard() {
       excerpt: post.metaDescription || post.summary || '',
       desk: post.primarySection?.name || 'General',
       image: post.image || '',
-      url: `https://teachyblogs.com/blogs/${post.slug}`,
+      url: `https://techyblogs.com/blogs/${post.slug}`,
     };
     setCampaignForm((prev) => ({
       ...prev,
@@ -329,7 +329,7 @@ export default function SubscribersDashboard() {
   const handleOpenPreview = async (campaign) => {
     setSelectedCampaignForAction(campaign);
     try {
-      const res = await campaignAPI.test(campaign._id, 'preview@teachyblogs.com');
+      const res = await campaignAPI.test(campaign._id, 'preview@techyblogs.com');
       if (res.htmlPreview) {
         setPreviewHtml(res.htmlPreview);
         setPreviewOpen(true);
@@ -1331,7 +1331,7 @@ export default function SubscribersDashboard() {
                     type="email"
                     value={testEmailAddress}
                     onChange={(e) => setTestEmailAddress(e.target.value)}
-                    placeholder="editor@teachyblogs.com"
+                    placeholder="editor@techyblogs.com"
                     className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 outline-none"
                     required
                   />

@@ -178,7 +178,7 @@ export default function ArticleLivePreview({ formData, className = '' }) {
                   {formData?.author || 'Editorial Bureau'}
                 </p>
                 <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
-                  {formData?.primaryAuthor?.role || 'Senior Regional Correspondent'} · TeachyBlogs
+                  {formData?.primaryAuthor?.role || 'Senior Regional Correspondent'} · TechyBlogs
                 </p>
               </div>
             </div>

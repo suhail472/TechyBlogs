@@ -1,7 +1,7 @@
 import { parseMarkdownToHtml, extractHeadings } from '../src/utils/markdownEngine.js';
 
 console.log('======================================================================');
-console.log('TEACHYBLOGS — FULL LIFECYCLE ROUND-TRIP & RENDERING PARITY TEST');
+console.log('TECHYBLOGS — FULL LIFECYCLE ROUND-TRIP & RENDERING PARITY TEST');
 console.log('======================================================================\n');
 
 // 1. Authoring complex editorial story

@@ -3,7 +3,7 @@ import { analyticsService } from '../src/lib/services/analytics.service.js';
 
 async function runHostileAnalyticsRedTeam() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — HOSTILE ANALYTICS & INTELLIGENCE RED-TEAM AUDIT');
+  console.log('TECHYBLOGS — HOSTILE ANALYTICS & INTELLIGENCE RED-TEAM AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;

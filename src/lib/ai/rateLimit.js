@@ -1,5 +1,5 @@
 /**
- * TeachyBlogs AI — In-Memory Rate Limiter
+ * TechyBlogs AI — In-Memory Rate Limiter
  * Enforces per-client request limits (default: 10 requests / 60 seconds).
  */
 

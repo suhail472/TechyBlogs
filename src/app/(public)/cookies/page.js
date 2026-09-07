@@ -1,21 +1,21 @@
 import CookiesClient from '@/components/pages/CookiesClient';
 
 export const metadata = {
-  title: 'Cookies Policy | TeachyBlogs - Web Dev & Design Creator',
+  title: 'Cookies Policy | TechyBlogs - Web Dev & Design Creator',
   description: 'Read the Cookies and LocalStorage Policy for TechyBlogs. Understand how we utilize local storage parameters to persist your visual theme.',
   keywords: 'Cookies Policy, LocalStorage settings, TechyBlogs theme state, visual preferences data',
   alternates: {
-    canonical: 'https://teachyblogs.com/cookies',
+    canonical: 'https://techyblogs.com/cookies',
   },
   openGraph: {
-    title: 'Cookies Policy | TeachyBlogs',
+    title: 'Cookies Policy | TechyBlogs',
     description: 'Read the Cookies and LocalStorage Policy for TechyBlogs. Understand how we utilize local storage parameters to persist your visual theme.',
-    url: 'https://teachyblogs.com/cookies',
+    url: 'https://techyblogs.com/cookies',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cookies Policy | TeachyBlogs',
+    title: 'Cookies Policy | TechyBlogs',
     description: 'TechyBlogs Cookies and LocalStorage usage description.',
   }
 };
@@ -26,7 +26,7 @@ export default function CookiesPage() {
     "@type": "WebPage",
     "name": "Cookies Policy - TechyBlogs",
     "description": "TechyBlogs Cookies and LocalStorage Policy. Read how preferences are stored in the client browser.",
-    "url": "https://teachyblogs.com/cookies"
+    "url": "https://techyblogs.com/cookies"
   };
 
   return (

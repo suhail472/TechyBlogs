@@ -104,7 +104,7 @@ export default function AboutClient() {
                     I build high-performance, SEO-optimized web applications using React, Next.js, and modern CSS/Tailwind architecture. Every project I build focuses on clean code, fast load times, and beautiful user experiences.
                   </p>
                   <p>
-                    <strong className="text-zinc-900 dark:text-white">TeachyBlogs</strong> is my personal hub where I share tutorials on frontend optimization, clean coding practices, and core system architectures. Writing search-engine optimized, high-speed code is at the heart of everything I build.
+                    <strong className="text-zinc-900 dark:text-white">TechyBlogs</strong> is my personal hub where I share tutorials on frontend optimization, clean coding practices, and core system architectures. Writing search-engine optimized, high-speed code is at the heart of everything I build.
                   </p>
                   
                   {/* Portfolio Link Button */}

@@ -16,7 +16,7 @@ export default function AiFloatingButton({ isOpen, onToggle, articleTitle = '' }
     <button
       type="button"
       onClick={onToggle}
-      aria-label="Open TeachyBlogs AI Reader Assistant"
+      aria-label="Open TechyBlogs AI Reader Assistant"
       aria-expanded={isOpen}
       className={`fixed bottom-6 left-6 z-40 touch-target flex items-center gap-2.5 px-4 py-2.5 rounded-full font-display font-bold text-xs shadow-lg transition-all duration-300 ${
         isOpen
@@ -31,7 +31,7 @@ export default function AiFloatingButton({ isOpen, onToggle, articleTitle = '' }
       </div>
 
       <span className="hidden sm:inline tracking-tight font-black">
-        TeachyBlogs <span className={isOpen ? 'text-white' : 'text-red-600 dark:text-red-400'}>AI</span>
+        TechyBlogs <span className={isOpen ? 'text-white' : 'text-red-600 dark:text-red-400'}>AI</span>
       </span>
       <span className="sm:hidden font-black">AI</span>
 

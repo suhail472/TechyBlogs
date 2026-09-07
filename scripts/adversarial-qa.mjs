@@ -1,7 +1,7 @@
 import { parseMarkdownToHtml, extractHeadings, slugify, isRTL, sanitizeHtml } from '../src/utils/markdownEngine.js';
 
 console.log('==================================================================================');
-console.log('TEACHYBLOGS — HOSTILE ADVERSARIAL QA & EXTREME EDGE CASE VERIFICATION BATTERY');
+console.log('TECHYBLOGS — HOSTILE ADVERSARIAL QA & EXTREME EDGE CASE VERIFICATION BATTERY');
 console.log('==================================================================================\n');
 
 let passCount = 0;

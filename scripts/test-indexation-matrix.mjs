@@ -25,8 +25,8 @@ console.log('🧪 Starting Sitemaps, Robots & Indexation Matrix Test Suite...\n'
     console.log('👉 [1/3] Testing robots.js Crawl Directives...');
     const robotsConfig = robots();
     assert.ok(robotsConfig.rules, 'Robots should export rules');
-    assert.ok(robotsConfig.sitemap.includes('https://teachyblogs.com/sitemap.xml'), 'Should include main sitemap');
-    assert.ok(robotsConfig.sitemap.includes('https://teachyblogs.com/news-sitemap.xml'), 'Should include Google News sitemap');
+    assert.ok(robotsConfig.sitemap.includes('https://techyblogs.com/sitemap.xml'), 'Should include main sitemap');
+    assert.ok(robotsConfig.sitemap.includes('https://techyblogs.com/news-sitemap.xml'), 'Should include Google News sitemap');
     const defaultRule = robotsConfig.rules[0];
     assert.ok(defaultRule.disallow.includes('/admin/'), 'Must disallow /admin/');
     assert.ok(defaultRule.disallow.includes('/api/'), 'Must disallow /api/');
@@ -39,8 +39,8 @@ console.log('🧪 Starting Sitemaps, Robots & Indexation Matrix Test Suite...\n'
     assert.ok(sitemapEntries.length >= 10, 'Sitemap should contain static and dynamic pages');
 
     const urls = sitemapEntries.map((e) => e.url);
-    assert.ok(urls.some((u) => u === 'https://teachyblogs.com'), 'Should include home URL');
-    assert.ok(urls.some((u) => u === 'https://teachyblogs.com/kashmir'), 'Should include /kashmir hub');
+    assert.ok(urls.some((u) => u === 'https://techyblogs.com'), 'Should include home URL');
+    assert.ok(urls.some((u) => u === 'https://techyblogs.com/kashmir'), 'Should include /kashmir hub');
     assert.ok(urls.some((u) => u.includes('/blog/')), 'Should include blog entries');
     console.log(`   ✓ Sitemap successfully generated ${sitemapEntries.length} canonical URLs`);
 

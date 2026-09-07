@@ -1,5 +1,5 @@
 /**
- * Layout Strategy & Editorial Intelligence Engine for TeachyBlogs
+ * Layout Strategy & Editorial Intelligence Engine for TechyBlogs
  * Determines intelligent layout compositions and semantic badges based on article volume,
  * content types, importance, and engagement metrics.
  */

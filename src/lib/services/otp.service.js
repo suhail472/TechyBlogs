@@ -3,7 +3,7 @@ import Otp, { OTP_PURPOSES } from '../models/otp.model.js';
 import emailService from './email.service.js';
 
 function getOtpPepper() {
-  return process.env.JWT_SECRET || 'teachyblogs_otp_pepper_2026';
+  return process.env.JWT_SECRET || 'techyblogs_otp_pepper_2026';
 }
 
 const MAX_ATTEMPTS_PER_OTP = 5;

@@ -33,12 +33,12 @@ function assert(condition, message) {
 
 async function runSecurityAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — NEWSROOM AUTHENTICATION & SECURITY RED-TEAM SUITE');
+  console.log('TECHYBLOGS — NEWSROOM AUTHENTICATION & SECURITY RED-TEAM SUITE');
   console.log('================================================================\n');
 
   await connectToDatabase();
 
-  const auditEmail = `audit_sec_${Date.now()}@teachyblogs.com`;
+  const auditEmail = `audit_sec_${Date.now()}@techyblogs.com`;
   const auditPassword = 'SecurePassword2026!';
   const auditToken = `TB-AUDIT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
@@ -137,7 +137,7 @@ async function runSecurityAudit() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: 'No Token Staff',
-      email: 'notoken@teachyblogs.com',
+      email: 'notoken@techyblogs.com',
       password: 'password123',
       role: 'editor',
       registrationSecret: MASTER_SECRET,
@@ -153,7 +153,7 @@ async function runSecurityAudit() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: 'Short Token Staff',
-      email: 'shorttoken@teachyblogs.com',
+      email: 'shorttoken@techyblogs.com',
       password: 'password123',
       role: 'editor',
       registrationSecret: MASTER_SECRET,
@@ -169,7 +169,7 @@ async function runSecurityAudit() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       name: 'Weak Pass Staff',
-      email: 'weakpass@teachyblogs.com',
+      email: 'weakpass@techyblogs.com',
       password: '12345',
       role: 'editor',
       registrationSecret: MASTER_SECRET,
@@ -337,7 +337,7 @@ async function runSecurityAudit() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: 'nonexistent_ghost@teachyblogs.com',
+      email: 'nonexistent_ghost@techyblogs.com',
       password: 'password123',
       token: 'TB-NONEXISTENT',
     }),

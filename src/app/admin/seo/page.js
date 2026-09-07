@@ -72,9 +72,9 @@ export default function AdminSeoPage() {
       const isEntity = cleanPath.startsWith('/entity/');
 
       setUrlInspectResult({
-        url: `https://teachyblogs.com${cleanPath}`,
+        url: `https://techyblogs.com${cleanPath}`,
         path: cleanPath,
-        canonical: `https://teachyblogs.com${cleanPath}`,
+        canonical: `https://techyblogs.com${cleanPath}`,
         indexable: true,
         detectedType: isBlog ? 'NewsArticle / Article' : isRegion ? 'Regional Hub (CollectionPage)' : isTopic ? 'Topic Cluster' : isEntity ? 'Entity Page' : 'General Page',
         robots: 'index, follow',

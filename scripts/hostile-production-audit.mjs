@@ -10,7 +10,7 @@ import { editorialService } from '../src/lib/services/editorial.service.js';
 import { runMigration } from './migrate-content-taxonomy.mjs';
 
 console.log('==================================================================================');
-console.log('TEACHYBLOGS — HOSTILE PRODUCTION-READINESS AUDIT BATTERY');
+console.log('TECHYBLOGS — HOSTILE PRODUCTION-READINESS AUDIT BATTERY');
 console.log('==================================================================================\n');
 
 async function runHostileAudit() {

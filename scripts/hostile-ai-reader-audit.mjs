@@ -27,7 +27,7 @@ function assert(condition, message) {
 
 async function runHostileAudit() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — HOSTILE RED-TEAM SECURITY AUDIT');
+  console.log('TECHYBLOGS AI — HOSTILE RED-TEAM SECURITY AUDIT');
   console.log('======================================================\n');
 
   // Attack 1: System Prompt Extraction via Direct Prompt Injection

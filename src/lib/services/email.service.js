@@ -47,7 +47,7 @@ class EmailService {
   getFromEmail() {
     return getLiveEnv(
       'RESEND_FROM_EMAIL',
-      'TeachyBlogs Newsroom <onboarding@resend.dev>'
+      'TechyBlogs Newsroom <onboarding@resend.dev>'
     );
   }
 
@@ -61,7 +61,7 @@ class EmailService {
   generateMessageId() {
     const randomHex = crypto.randomBytes(16).toString('hex');
     const timestamp = Date.now();
-    return `<${timestamp}.${randomHex}@teachyblogs.com>`;
+    return `<${timestamp}.${randomHex}@techyblogs.com>`;
   }
 
   /**
@@ -228,7 +228,7 @@ class EmailService {
     try {
       const fromMatch = fromAddress.match(/^(?:(.*?)<)?([^>]+)>?$/);
       const fromObj = {
-        name: fromMatch && fromMatch[1] ? fromMatch[1].trim() : 'TeachyBlogs Newsroom',
+        name: fromMatch && fromMatch[1] ? fromMatch[1].trim() : 'TechyBlogs Newsroom',
         email: fromMatch && fromMatch[2] ? fromMatch[2].trim() : fromAddress,
       };
 
@@ -677,27 +677,27 @@ class EmailService {
 
   async sendOtpEmail({ to, otp, purpose, expiryMinutes = 10, recipientName }) {
     let purposeLabel = 'Verification Code';
-    let subject = `${otp} is your TeachyBlogs verification code`;
+    let subject = `${otp} is your TechyBlogs verification code`;
 
     if (purpose === 'PASSWORD_RESET') {
       purposeLabel = 'Reset Your Newsroom Password';
-      subject = `${otp} is your TeachyBlogs password reset code`;
+      subject = `${otp} is your TechyBlogs password reset code`;
     } else if (purpose === 'SECURITY_TOKEN_RECOVERY') {
       purposeLabel = 'Recover Your Security Token';
-      subject = `${otp} is your TeachyBlogs security token recovery code`;
+      subject = `${otp} is your TechyBlogs security token recovery code`;
     } else if (purpose === 'EMAIL_VERIFICATION') {
       purposeLabel = 'Verify Your Email Address';
-      subject = `${otp} is your TeachyBlogs email verification code`;
+      subject = `${otp} is your TechyBlogs email verification code`;
     } else if (purpose === 'LOGIN_VERIFICATION') {
       purposeLabel = 'Confirm Your Newsroom Sign In';
-      subject = `${otp} is your TeachyBlogs sign-in code`;
+      subject = `${otp} is your TechyBlogs sign-in code`;
     }
 
     writeLog('OTP_DISPATCH_REQUEST', { to, purpose, otp, expiryMinutes });
 
     console.log(`
 ┌──────────────────────────────────────────────────────────┐
-│  TEACHYBLOGS SECURITY OTP DISPATCH                       │
+│  TECHYBLOGS SECURITY OTP DISPATCH                       │
 │  To:      ${(to || '').padEnd(45)}  │
 │  Purpose: ${(purpose || '').padEnd(45)}  │
 │  CODE:    >>> ${otp} <<<                                 │
@@ -728,10 +728,10 @@ class EmailService {
 
     if (eventType === 'PASSWORD_CHANGED') {
       eventTitle = 'Your Password Was Changed';
-      eventDescription = 'The password for your TeachyBlogs account was recently updated.';
+      eventDescription = 'The password for your TechyBlogs account was recently updated.';
     } else if (eventType === 'SECURITY_TOKEN_CHANGED') {
       eventTitle = 'Your Security Token Was Updated';
-      eventDescription = 'The personal security token for your TeachyBlogs newsroom account was updated.';
+      eventDescription = 'The personal security token for your TechyBlogs newsroom account was updated.';
     }
 
     const subject = `[Security Alert] ${eventTitle}`;
@@ -769,7 +769,7 @@ class EmailService {
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="logo">Teachy<span class="logo-sub">Blogs</span></h1>
+      <h1 class="logo">Techy<span class="logo-sub">Blogs</span></h1>
     </div>
     <div class="body">
       <h2 class="title">${purposeLabel}</h2>
@@ -785,7 +785,7 @@ class EmailService {
       </p>
     </div>
     <div class="footer">
-      <p>© ${new Date().getFullYear()} TeachyBlogs Publication Group · Digital Publishing & Journal</p>
+      <p>© ${new Date().getFullYear()} TechyBlogs Publication Group · Digital Publishing & Journal</p>
       <p>This is an automated administrative notification. Please do not reply to this email.</p>
     </div>
   </div>
@@ -816,7 +816,7 @@ class EmailService {
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="logo">Teachy<span class="logo-sub">Blogs</span></h1>
+      <h1 class="logo">Techy<span class="logo-sub">Blogs</span></h1>
     </div>
     <div class="body">
       <span class="alert-badge">Security Event</span>
@@ -833,7 +833,7 @@ class EmailService {
       </p>
     </div>
     <div class="footer">
-      © ${new Date().getFullYear()} TeachyBlogs Publication Group · Security Notification
+      © ${new Date().getFullYear()} TechyBlogs Publication Group · Security Notification
     </div>
   </div>
 </body>

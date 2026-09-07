@@ -12,7 +12,7 @@ function hashCommentText(text) {
 }
 
 /**
- * TeachyBlogs AI — Comment Moderation Intelligence Service
+ * TechyBlogs AI — Comment Moderation Intelligence Service
  */
 export async function analyzeCommentContent({
   text,

@@ -9,7 +9,7 @@ import AnalyticsEvent from '../src/lib/models/analyticsEvent.model.js';
 
 async function runPlatformIntegrityAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — FULL-PLATFORM DATABASE & RELATIONAL INTEGRITY AUDIT');
+  console.log('TECHYBLOGS — FULL-PLATFORM DATABASE & RELATIONAL INTEGRITY AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;

@@ -4,7 +4,7 @@ import { buildNewsletterHTML } from '../src/lib/services/newsletter.template.js'
 
 async function runSubscriberEngineAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — AUDIENCE & NEWSLETTER PLATFORM AUDIT');
+  console.log('TECHYBLOGS — AUDIENCE & NEWSLETTER PLATFORM AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -55,7 +55,7 @@ async function runSubscriberEngineAudit() {
     // When an existing email subscribes again, response does not leak internal document IDs
     const mockResponse = {
       success: true,
-      message: 'Subscription confirmed! Thank you for joining TeachyBlogs Briefings.',
+      message: 'Subscription confirmed! Thank you for joining TechyBlogs Briefings.',
     };
     if (mockResponse.success && !mockResponse._id && !mockResponse.email) {
       console.log('✅ Public subscribe response does not expose internal subscriber existence or database fields.');
@@ -112,7 +112,7 @@ async function runSubscriberEngineAudit() {
           headline: 'Next.js 15 in Kashmir Tech Ecosystem',
           excerpt: 'How local developers are building high-speed applications.',
           desk: 'Technology',
-          url: 'https://teachyblogs.com/blogs/nextjs-15-kashmir',
+          url: 'https://techyblogs.com/blogs/nextjs-15-kashmir',
         },
       ],
       utmCampaign: 'morning-brief-kashmir',

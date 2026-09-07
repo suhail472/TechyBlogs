@@ -2,7 +2,7 @@ import { validatePublicationIntegrity } from '../src/lib/services/editorial.serv
 
 async function runCommandCenterTests() {
   console.log('=====================================================');
-  console.log('TEACHYBLOGS — NEWSROOM COMMAND CENTER INTEGRATION TESTS');
+  console.log('TECHYBLOGS — NEWSROOM COMMAND CENTER INTEGRATION TESTS');
   console.log('=====================================================\n');
 
   try {

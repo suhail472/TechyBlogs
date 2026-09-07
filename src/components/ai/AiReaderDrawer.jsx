@@ -66,7 +66,7 @@ export default function AiReaderDrawer({
   const textareaRef = useRef(null);
   const { addToast } = useToastStore();
 
-  const storageKey = `teachyblogs-ai-chat-${articleSlug || 'site'}`;
+  const storageKey = `techyblogs-ai-chat-${articleSlug || 'site'}`;
 
   // Fetch eager article context when drawer opens
   useEffect(() => {
@@ -325,7 +325,7 @@ export default function AiReaderDrawer({
           ...updatedMessages,
           {
             role: 'assistant',
-            content: `**TeachyBlogs AI is temporarily unavailable.**\n\n*Error: ${err.message || 'Please check your connection and try again.'}*`,
+            content: `**TechyBlogs AI is temporarily unavailable.**\n\n*Error: ${err.message || 'Please check your connection and try again.'}*`,
           },
         ]);
       }
@@ -377,7 +377,7 @@ export default function AiReaderDrawer({
             }`}
             role="dialog"
             aria-modal="true"
-            aria-label="TeachyBlogs AI Editorial Assistant"
+            aria-label="TechyBlogs AI Editorial Assistant"
           >
             {/* Backdrop Overlay */}
             <motion.div
@@ -409,7 +409,7 @@ export default function AiReaderDrawer({
                   <div>
                     <div className="flex items-center gap-1.5">
                       <h3 className="font-display font-black text-sm text-zinc-900 dark:text-zinc-100">
-                        TeachyBlogs <span className="text-red-600 dark:text-red-400">AI</span>
+                        TechyBlogs <span className="text-red-600 dark:text-red-400">AI</span>
                       </h3>
                       <span className="px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 text-[9px] font-bold font-mono">
                         EDITORIAL
@@ -504,7 +504,7 @@ export default function AiReaderDrawer({
                       </div>
 
                       <h4 className="font-display font-black text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-3">
-                        {activeTitle || 'TeachyBlogs Story'}
+                        {activeTitle || 'TechyBlogs Story'}
                       </h4>
 
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono pt-0.5 border-t border-slate-100 dark:border-white/5">
@@ -575,7 +575,7 @@ export default function AiReaderDrawer({
 
                           <div className="space-y-2 max-w-md">
                             <h4 className="font-display font-black text-lg sm:text-xl text-zinc-900 dark:text-zinc-100">
-                              TeachyBlogs <span className="text-red-600 dark:text-red-400">AI</span>
+                              TechyBlogs <span className="text-red-600 dark:text-red-400">AI</span>
                             </h4>
                             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed font-medium">
                               Your editorial reading companion. Ask questions about this article, understand complex sections, or discover related stories.

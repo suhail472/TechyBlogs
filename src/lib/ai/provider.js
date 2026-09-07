@@ -1,7 +1,7 @@
 import { buildPromptPayload } from './prompts.js';
 
 /**
- * TeachyBlogs AI — Provider Abstraction & Streaming Engine
+ * TechyBlogs AI — Provider Abstraction & Streaming Engine
  * High-performance streaming with automatic model failover (120B -> 20B)
  * to prevent TPM throttling while maintaining world-class reasoning.
  */

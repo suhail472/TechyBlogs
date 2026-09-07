@@ -18,7 +18,7 @@ const BASE_URL = 'http://localhost:3000';
 
 async function runModerationTestSuite() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — COMMUNITY SAFETY & MODERATION TEST SUITE');
+  console.log('TECHYBLOGS AI — COMMUNITY SAFETY & MODERATION TEST SUITE');
   console.log('======================================================\n');
 
   let passed = 0;
@@ -35,7 +35,7 @@ async function runModerationTestSuite() {
   }
 
   // Connect to DB
-  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/teachyblogs');
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/techyblogs');
   const Comment = (await import('../src/lib/models/comment.model.js')).default;
   const { analyzeCommentContent } = await import('../src/lib/ai/moderation.service.js');
   const { validateModerationOutput } = await import('../src/lib/ai/moderation.schema.js');

@@ -189,7 +189,7 @@ class AuthorService {
       ...data,
       email: data.email.toLowerCase().trim(),
       slug: cleanSlug,
-      password: data.password || 'TeachyBlogs2026!',
+      password: data.password || 'TechyBlogs2026!',
       role: data.role || 'author',
       editorialRole: data.editorialRole || 'staff_writer',
       status: data.status || 'active',

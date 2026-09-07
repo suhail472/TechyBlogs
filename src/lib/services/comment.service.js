@@ -12,7 +12,7 @@ function escapeRegex(string) {
 
 function hashIp(ip) {
   if (!ip) return 'anonymous';
-  return crypto.createHash('sha256').update(ip + 'teachy_salt_2026').digest('hex').slice(0, 16);
+  return crypto.createHash('sha256').update(ip + 'techy_salt_2026').digest('hex').slice(0, 16);
 }
 
 function sanitizeCommentText(text) {

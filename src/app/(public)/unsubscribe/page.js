@@ -60,14 +60,14 @@ function UnsubscribeContent() {
             Unsubscribed Successfully
           </h2>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-sans">
-            {message} You will no longer receive editorial briefings from TeachyBlogs.
+            {message} You will no longer receive editorial briefings from TechyBlogs.
           </p>
           <div className="pt-4">
             <Link
               href="/"
               className="inline-block px-5 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold"
             >
-              Return to TeachyBlogs Home
+              Return to TechyBlogs Home
             </Link>
           </div>
         </div>

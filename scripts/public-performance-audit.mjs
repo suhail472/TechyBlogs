@@ -3,7 +3,7 @@ import Post from '../src/lib/models/post.model.js';
 
 async function runPublicPerformanceAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — PUBLIC PERFORMANCE, ACCESSIBILITY & PAYLOAD AUDIT');
+  console.log('TECHYBLOGS — PUBLIC PERFORMANCE, ACCESSIBILITY & PAYLOAD AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;

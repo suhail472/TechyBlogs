@@ -43,7 +43,7 @@ export default function Login() {
     try {
       const success = await login(email.trim(), password, token.trim());
       if (success) {
-        addToast('Welcome back to TeachyBlogs Newsroom', 'success');
+        addToast('Welcome back to TechyBlogs Newsroom', 'success');
         router.push('/admin');
       } else {
         setError('Invalid credentials or security key. Please check your email, password, and security token.');
@@ -248,7 +248,7 @@ export default function Login() {
 
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
-        <p>© {new Date().getFullYear()} TeachyBlogs Publication Group · Security Protected</p>
+        <p>© {new Date().getFullYear()} TechyBlogs Publication Group · Security Protected</p>
       </footer>
     </div>
   );

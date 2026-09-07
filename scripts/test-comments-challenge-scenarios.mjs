@@ -4,7 +4,7 @@ import { commentService } from '../src/lib/services/comment.service.js';
 
 async function run20ChallengeScenariosAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — 20 ULTIMATE COMMUNITY MODERATION CHALLENGES AUDIT');
+  console.log('TECHYBLOGS — 20 ULTIMATE COMMUNITY MODERATION CHALLENGES AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -50,7 +50,7 @@ async function run20ChallengeScenariosAudit() {
   console.log('\n--- Challenge 3: Report Flood & IP Deduplication Guard ---');
   try {
     const mockReports = [];
-    const reporterHash = crypto.createHash('sha256').update('192.168.1.1' + 'teachy_salt_2026').digest('hex').slice(0, 16);
+    const reporterHash = crypto.createHash('sha256').update('192.168.1.1' + 'techy_salt_2026').digest('hex').slice(0, 16);
     
     // Simulate first report
     mockReports.push({ reason: 'Spam', reporterHash, createdAt: new Date() });

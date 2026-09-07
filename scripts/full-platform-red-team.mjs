@@ -9,7 +9,7 @@ import { buildNewsletterHTML } from '../src/lib/services/newsletter.template.js'
 
 async function runFullPlatformHostileAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — ULTIMATE FULL-PLATFORM HOSTILE RED-TEAM AUDIT');
+  console.log('TECHYBLOGS — ULTIMATE FULL-PLATFORM HOSTILE RED-TEAM AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -77,7 +77,7 @@ async function runFullPlatformHostileAudit() {
           headline: article.title,
           excerpt: article.metaDescription,
           desk: article.desk,
-          url: `https://teachyblogs.com/blogs/${article.slug}`,
+          url: `https://techyblogs.com/blogs/${article.slug}`,
         },
       ],
       utmCampaign: 'morning-brief-kashmir',
@@ -382,7 +382,7 @@ async function runFullPlatformHostileAudit() {
   try {
     const uniformResponse = {
       success: true,
-      message: 'Subscription confirmed! Thank you for joining TeachyBlogs Briefings.',
+      message: 'Subscription confirmed! Thank you for joining TechyBlogs Briefings.',
     };
     if (!uniformResponse.id && !uniformResponse.email) {
       console.log('✅ Public subscriber responses prevent address enumeration attacks.');

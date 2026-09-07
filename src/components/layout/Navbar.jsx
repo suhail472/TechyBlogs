@@ -229,7 +229,7 @@ export default function Navbar() {
               TB
             </div>
             <span className="text-lg sm:text-xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
-              Teachy<span className="text-red-600 dark:text-red-500">Blogs</span>
+              Techy<span className="text-red-600 dark:text-red-500">Blogs</span>
             </span>
           </Link>
 
@@ -335,7 +335,7 @@ export default function Navbar() {
                     TB
                   </div>
                   <span className="text-lg font-black font-display tracking-tight text-zinc-900 dark:text-white">
-                    Teachy<span className="text-red-600 dark:text-red-500">Blogs</span>
+                    Techy<span className="text-red-600 dark:text-red-500">Blogs</span>
                   </span>
                 </Link>
                 <button

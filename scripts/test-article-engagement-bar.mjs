@@ -14,7 +14,7 @@ import Post from '../src/lib/models/post.model.js';
 
 async function runArticleEngagementBarTest() {
   console.log('\n================================================================');
-  console.log('TEACHYBLOGS — ARTICLE ENGAGEMENT BAR & LIKES VERIFICATION');
+  console.log('TECHYBLOGS — ARTICLE ENGAGEMENT BAR & LIKES VERIFICATION');
   console.log('================================================================\n');
 
   await connectToDatabase();

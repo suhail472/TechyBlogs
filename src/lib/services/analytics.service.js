@@ -434,7 +434,7 @@ class AnalyticsService {
 
     const dateStr = new Date().toISOString().slice(0, 10);
     const sessionHash = clientMeta.ip
-      ? crypto.createHash('sha256').update(clientMeta.ip + dateStr + 'teachy_analytics_salt').digest('hex').slice(0, 16)
+      ? crypto.createHash('sha256').update(clientMeta.ip + dateStr + 'techy_analytics_salt').digest('hex').slice(0, 16)
       : 'anon';
 
     await AnalyticsEvent.create({

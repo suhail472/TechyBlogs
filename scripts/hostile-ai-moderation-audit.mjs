@@ -17,7 +17,7 @@ const BASE_URL = 'http://localhost:3000';
 
 async function runHostileSecurityAudit() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — HOSTILE & PROMPT INJECTION AUDIT');
+  console.log('TECHYBLOGS AI — HOSTILE & PROMPT INJECTION AUDIT');
   console.log('======================================================\n');
 
   let passed = 0;

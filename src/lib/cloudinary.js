@@ -34,7 +34,7 @@ export async function uploadToCloudinary(base64Image) {
 
   try {
     const uploadResponse = await client.uploader.upload(base64Image, {
-      folder: 'teachyblogs',
+      folder: 'techyblogs',
       resource_type: 'auto',
       transformation: [
         { width: 1200, height: 630, crop: 'limit', quality: 'auto', fetch_format: 'auto' }

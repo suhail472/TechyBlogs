@@ -504,7 +504,7 @@ export default function AdminRegister() {
 
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
-        <p>© {new Date().getFullYear()} TeachyBlogs Publication Group · Protected by Multi-Factor Gate</p>
+        <p>© {new Date().getFullYear()} TechyBlogs Publication Group · Protected by Multi-Factor Gate</p>
       </footer>
     </div>
   );

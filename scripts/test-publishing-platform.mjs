@@ -9,7 +9,7 @@ import { editorialService } from '../src/lib/services/editorial.service.js';
 import { runMigration } from './migrate-content-taxonomy.mjs';
 
 console.log('==================================================================================');
-console.log('TEACHYBLOGS — COMPREHENSIVE PUBLISHING PLATFORM TEST SUITE');
+console.log('TECHYBLOGS — COMPREHENSIVE PUBLISHING PLATFORM TEST SUITE');
 console.log('==================================================================================\n');
 
 async function runTests() {

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 async function clean() {
-  await mongoose.connect('mongodb://localhost:27017/teachyblogs');
+  await mongoose.connect('mongodb://localhost:27017/techyblogs');
   const res = await mongoose.connection.collection('subscribers').deleteMany({
     email: { $regex: 'test_' }
   });

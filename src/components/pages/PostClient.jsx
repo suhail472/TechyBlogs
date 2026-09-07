@@ -75,12 +75,12 @@ export default function PostClient({ blog: propBlog, post: propPost, relatedPost
   // Typography customizer and Focus Mode listener
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
-      const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-loose';
+      const savedFamily = localStorage.getItem('techyblogs-font-family') || 'font-sans';
+      const savedSize = localStorage.getItem('techyblogs-font-size') || 'prose-lg';
+      const savedHeight = localStorage.getItem('techyblogs-line-height') || 'leading-loose';
       setTypography({ fontFamily: savedFamily, fontSize: savedSize, lineHeight: savedHeight });
 
-      const savedFocus = localStorage.getItem('teachyblogs-reader-focus-mode');
+      const savedFocus = localStorage.getItem('techyblogs-reader-focus-mode');
       if (savedFocus === 'true') {
         setFocusMode(true);
       }
@@ -91,16 +91,16 @@ export default function PostClient({ blog: propBlog, post: propPost, relatedPost
       const handleFocusToggleEvent = () => {
         setFocusMode((prev) => {
           const next = !prev;
-          localStorage.setItem('teachyblogs-reader-focus-mode', String(next));
+          localStorage.setItem('techyblogs-reader-focus-mode', String(next));
           return next;
         });
       };
 
-      window.addEventListener('teachyblogs-typography-change', handleTypeChange);
-      window.addEventListener('teachyblogs-focus-mode-toggle', handleFocusToggleEvent);
+      window.addEventListener('techyblogs-typography-change', handleTypeChange);
+      window.addEventListener('techyblogs-focus-mode-toggle', handleFocusToggleEvent);
       return () => {
-        window.removeEventListener('teachyblogs-typography-change', handleTypeChange);
-        window.removeEventListener('teachyblogs-focus-mode-toggle', handleFocusToggleEvent);
+        window.removeEventListener('techyblogs-typography-change', handleTypeChange);
+        window.removeEventListener('techyblogs-focus-mode-toggle', handleFocusToggleEvent);
       };
     }
   }, []);
@@ -180,7 +180,7 @@ export default function PostClient({ blog: propBlog, post: propPost, relatedPost
     const next = !focusMode;
     setFocusMode(next);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('teachyblogs-reader-focus-mode', String(next));
+      localStorage.setItem('techyblogs-reader-focus-mode', String(next));
     }
     addToast(next ? 'Zen Focus Mode active — distraction-free reading canvas' : 'Focus Mode exited — standard layout restored', 'info');
   };
@@ -410,7 +410,7 @@ export default function PostClient({ blog: propBlog, post: propPost, relatedPost
                   {blog.author || 'Editorial Bureau'}
                 </p>
                 <p className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium">
-                  {blog.primaryAuthor?.role || 'Senior Regional Correspondent'} · TeachyBlogs
+                  {blog.primaryAuthor?.role || 'Senior Regional Correspondent'} · TechyBlogs
                 </p>
               </div>
             </div>
@@ -958,7 +958,7 @@ export default function PostClient({ blog: propBlog, post: propPost, relatedPost
         )}
       </AnimatePresence>
 
-      {/* TeachyBlogs AI Editorial Reader Assistant */}
+      {/* TechyBlogs AI Editorial Reader Assistant */}
       <AiReaderDrawer
         articleSlug={blog.slug}
         articleTitle={blog.title}

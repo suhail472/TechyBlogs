@@ -4,7 +4,7 @@ import Taxonomy from '@/lib/models/taxonomy.model';
 import TaxonomyLanding from '@/components/pages/TaxonomyLanding';
 import { notFound } from 'next/navigation';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 const KNOWN_STATIC_ENTITIES = {
   'university-of-kashmir': {
@@ -115,7 +115,7 @@ async function getEntityData(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const { item, posts } = await getEntityData(slug);
-  const title = `${item.name} News, Coverage & Analysis | TeachyBlogs`;
+  const title = `${item.name} News, Coverage & Analysis | TechyBlogs`;
 
   return {
     title,
@@ -126,7 +126,7 @@ export async function generateMetadata({ params }) {
       title,
       description: item.description,
       url: `${SITE_URL}/entity/${slug}`,
-      siteName: 'TeachyBlogs',
+      siteName: 'TechyBlogs',
       type: 'website',
     },
   };

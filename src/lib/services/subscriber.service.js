@@ -203,7 +203,7 @@ class SubscriberService {
       // Anti-enumeration return format
       return {
         success: true,
-        message: 'Subscription confirmed! Thank you for joining TeachyBlogs Briefings.',
+        message: 'Subscription confirmed! Thank you for joining TechyBlogs Briefings.',
       };
     }
 
@@ -232,7 +232,7 @@ class SubscriberService {
 
     return {
       success: true,
-      message: 'Subscription confirmed! Thank you for joining TeachyBlogs Briefings.',
+      message: 'Subscription confirmed! Thank you for joining TechyBlogs Briefings.',
     };
   }
 
@@ -259,7 +259,7 @@ class SubscriberService {
 
     return {
       success: true,
-      message: 'You have been successfully unsubscribed from TeachyBlogs email briefings.',
+      message: 'You have been successfully unsubscribed from TechyBlogs email briefings.',
       email: sub.email,
     };
   }

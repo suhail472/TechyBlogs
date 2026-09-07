@@ -1,5 +1,5 @@
 /**
- * Phase 3 Content-Matrix QA Test Suite for TeachyBlogs
+ * Phase 3 Content-Matrix QA Test Suite for TechyBlogs
  * Validates editorial layout strategies, content density adaptation,
  * missing-image fallback integrity, and semantic badge resolution across 12 scenarios.
  */
@@ -21,7 +21,7 @@ function assert(condition, message) {
 }
 
 console.log('\n======================================================');
-console.log('  TEACHYBLOGS — PHASE 3 CONTENT-MATRIX TEST SUITE');
+console.log('  TECHYBLOGS — PHASE 3 CONTENT-MATRIX TEST SUITE');
 console.log('======================================================\n');
 
 // 1. Scenario A: 0 Stories (Empty Desk handling)

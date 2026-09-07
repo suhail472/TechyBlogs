@@ -15,7 +15,7 @@ if (fs.existsSync('.env.local')) {
 
 async function runLanguageAudit() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — MULTILINGUAL & CODE-SWITCHING AUDIT');
+  console.log('TECHYBLOGS AI — MULTILINGUAL & CODE-SWITCHING AUDIT');
   console.log('======================================================\n');
 
   const { analyzeCommentContent } = await import('../src/lib/ai/moderation.service.js');

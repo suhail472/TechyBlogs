@@ -12,7 +12,7 @@ async function startLocalMongo() {
     const mongod = await MongoMemoryServer.create({
       instance: {
         port: 27017,
-        dbName: 'teachyblogs',
+        dbName: 'techyblogs',
       },
       spawn: {
         timeout: 60000,

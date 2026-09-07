@@ -12,7 +12,7 @@ import crypto from 'crypto';
 
 async function runFinalLaunchHardening() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — FINAL LAUNCH EXECUTION & PRODUCTION HARDENING');
+  console.log('TECHYBLOGS — FINAL LAUNCH EXECUTION & PRODUCTION HARDENING');
   console.log('================================================================\n');
 
   let passed = 0;

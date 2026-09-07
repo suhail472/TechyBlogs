@@ -2,8 +2,8 @@ import SearchClient from '@/components/pages/SearchClient';
 import { Suspense } from 'react';
 
 export const metadata = {
-  title: 'Search Stories & Archives | TeachyBlogs',
-  description: 'Search across news, tutorials, guides, reviews, and regional reporting on TeachyBlogs.',
+  title: 'Search Stories & Archives | TechyBlogs',
+  description: 'Search across news, tutorials, guides, reviews, and regional reporting on TechyBlogs.',
 };
 
 export default function SearchPage() {

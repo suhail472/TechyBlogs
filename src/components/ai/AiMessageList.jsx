@@ -53,7 +53,7 @@ export default function AiMessageList({
                   <div className="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center text-white">
                     <Bot className="w-2.5 h-2.5" />
                   </div>
-                  <span className="font-bold text-zinc-800 dark:text-zinc-200">TeachyBlogs AI</span>
+                  <span className="font-bold text-zinc-800 dark:text-zinc-200">TechyBlogs AI</span>
                 </>
               )}
             </div>
@@ -162,7 +162,7 @@ export default function AiMessageList({
             <div className="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center text-white">
               <Bot className="w-2.5 h-2.5" />
             </div>
-            <span className="font-bold text-zinc-800 dark:text-zinc-200">TeachyBlogs AI</span>
+            <span className="font-bold text-zinc-800 dark:text-zinc-200">TechyBlogs AI</span>
             <span className="text-red-500 font-bold flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping inline-block" />
               Thinking...

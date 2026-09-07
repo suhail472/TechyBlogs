@@ -8,7 +8,7 @@ import crypto from 'crypto';
 
 async function runProductionValidationAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — FINAL PRODUCTION VALIDATION & DEPLOYMENT AUDIT');
+  console.log('TECHYBLOGS — FINAL PRODUCTION VALIDATION & DEPLOYMENT AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -27,7 +27,7 @@ async function runProductionValidationAudit() {
     }
 
     // Verify JWT Secret strength & no default leak in production
-    const isDevSecret = process.env.JWT_SECRET === 'supersecret_teachyblogs_jwt_key_2026' || !process.env.JWT_SECRET;
+    const isDevSecret = process.env.JWT_SECRET === 'supersecret_techyblogs_jwt_key_2026' || !process.env.JWT_SECRET;
     if (isDevSecret) {
       observations.push('JWT_SECRET is using local development secret — must be rotated in live cloud production deployment.');
     }
@@ -97,15 +97,15 @@ async function runProductionValidationAudit() {
       author: {
         '@type': 'Person',
         name: testArticle.author,
-        url: `https://teachyblogs.com/author/${testArticle.primaryAuthor.slug}`,
+        url: `https://techyblogs.com/author/${testArticle.primaryAuthor.slug}`,
       },
       publisher: {
         '@type': 'Organization',
-        name: 'TeachyBlogs',
+        name: 'TechyBlogs',
       },
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://teachyblogs.com/blog/${testArticle.slug}`,
+        '@id': `https://techyblogs.com/blog/${testArticle.slug}`,
       }
     };
 
@@ -122,7 +122,7 @@ async function runProductionValidationAudit() {
     if (
       newsSchema['@type'] === 'NewsArticle' &&
       faqSchema.mainEntity.length === 1 &&
-      newsSchema.mainEntityOfPage['@id'] === 'https://teachyblogs.com/blog/kashmir-saffron-harvest'
+      newsSchema.mainEntityOfPage['@id'] === 'https://techyblogs.com/blog/kashmir-saffron-harvest'
     ) {
       console.log('✅ NewsArticle and FAQPage schemas match semantic schema.org standards with zero synthetic filler.');
       passed++;
@@ -138,21 +138,21 @@ async function runProductionValidationAudit() {
   console.log('\n--- Phase 4: Email Newsletter Engine & RFC-8058 Unsubscribe Compliance ---');
   try {
     const html = buildNewsletterHTML({
-      campaignTitle: 'TeachyBlogs Weekly Briefing',
+      campaignTitle: 'TechyBlogs Weekly Briefing',
       edition: 'Global',
       previewText: 'This week in tech, education and Kashmir.',
       intro: 'Welcome to this week’s editorial briefing.',
       featuredStories: [
         { headline: 'Story 1', excerpt: 'Excerpt 1', slug: 'story-1', readTime: '5 min read' }
       ],
-      unsubscribeUrl: 'https://teachyblogs.com/unsubscribe?token=test_unsub_token_777',
-      preferencesUrl: 'https://teachyblogs.com/preferences?token=test_unsub_token_777',
+      unsubscribeUrl: 'https://techyblogs.com/unsubscribe?token=test_unsub_token_777',
+      preferencesUrl: 'https://techyblogs.com/preferences?token=test_unsub_token_777',
     });
 
     if (
-      html.includes('https://teachyblogs.com/unsubscribe?token=test_unsub_token_777') &&
-      html.includes('https://teachyblogs.com/preferences?token=test_unsub_token_777') &&
-      html.includes('TeachyBlogs Weekly Briefing')
+      html.includes('https://techyblogs.com/unsubscribe?token=test_unsub_token_777') &&
+      html.includes('https://techyblogs.com/preferences?token=test_unsub_token_777') &&
+      html.includes('TechyBlogs Weekly Briefing')
     ) {
       console.log('✅ Newsletter HTML template compiles responsive email with valid tokenized unsubscribe and preferences links.');
       passed++;
@@ -171,7 +171,7 @@ async function runProductionValidationAudit() {
   try {
     const rawIp = '203.0.113.195';
     const userAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)';
-    const ipHash = crypto.createHash('sha256').update(rawIp + 'teachyblogs_telemetry_salt').digest('hex');
+    const ipHash = crypto.createHash('sha256').update(rawIp + 'techyblogs_telemetry_salt').digest('hex');
     const sessionHash = crypto.createHash('sha256').update(rawIp + userAgent + 'daily_salt').digest('hex');
 
     if (ipHash !== rawIp && sessionHash.length === 64) {
@@ -200,8 +200,8 @@ async function runProductionValidationAudit() {
       { path: '/unsubscribe', type: 'utility', indexable: false },
     ];
 
-    const publicUrls = routes.filter(r => r.indexable).map(r => `https://teachyblogs.com${r.path}`);
-    const privateUrls = routes.filter(r => !r.indexable).map(r => `https://teachyblogs.com${r.path}`);
+    const publicUrls = routes.filter(r => r.indexable).map(r => `https://techyblogs.com${r.path}`);
+    const privateUrls = routes.filter(r => !r.indexable).map(r => `https://techyblogs.com${r.path}`);
 
     if (publicUrls.length === 7 && privateUrls.length === 2) {
       console.log('✅ Googlebot discovery path cleanly differentiates public crawl targets from noindex administration tools.');

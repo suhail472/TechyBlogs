@@ -3,7 +3,7 @@ import { taxonomyService } from '../src/lib/services/taxonomy.service.js';
 
 async function runTaxonomyEngineTests() {
   console.log('=====================================================');
-  console.log('TEACHYBLOGS — TAXONOMY & IA ENGINE INTEGRATION TESTS');
+  console.log('TECHYBLOGS — TAXONOMY & IA ENGINE INTEGRATION TESTS');
   console.log('=====================================================\n');
 
   try {

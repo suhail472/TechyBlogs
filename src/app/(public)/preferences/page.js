@@ -98,7 +98,7 @@ function PreferenceContent() {
         <h3 className="font-bold text-base text-zinc-900 dark:text-white">Link Expired</h3>
         <p className="text-xs text-zinc-500">{error}</p>
         <Link href="/" className="inline-block pt-2 text-xs font-bold text-red-600 hover:underline">
-          Return to TeachyBlogs
+          Return to TechyBlogs
         </Link>
       </div>
     );

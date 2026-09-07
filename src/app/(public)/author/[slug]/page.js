@@ -7,7 +7,7 @@ import BlogCard from '@/components/shared/BlogCard';
 import { notFound } from 'next/navigation';
 import { DEFAULT_AUTHORS, DEFAULT_STORIES } from '@/data/defaultStories';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 async function getAuthor(slug) {
   try {
@@ -59,21 +59,21 @@ async function getAuthor(slug) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const result = await getAuthor(slug);
-  if (!result) return { title: 'Author | TeachyBlogs', robots: { index: false } };
+  if (!result) return { title: 'Author | TechyBlogs', robots: { index: false } };
   const { author } = result;
 
   const isIndexable = author.status === 'active' && author.seo?.indexable !== false;
 
   return {
-    title: author.seo?.title || `${author.name} — ${author.title || 'Staff Writer'} | TeachyBlogs`,
-    description: author.seo?.description || author.bio || `Read the latest journalism and analysis by ${author.name} on TeachyBlogs.`,
+    title: author.seo?.title || `${author.name} — ${author.title || 'Staff Writer'} | TechyBlogs`,
+    description: author.seo?.description || author.bio || `Read the latest journalism and analysis by ${author.name} on TechyBlogs.`,
     alternates: { canonical: `${SITE_URL}/author/${slug}` },
     robots: {
       index: isIndexable,
       follow: true,
     },
     openGraph: {
-      title: `${author.name} | TeachyBlogs`,
+      title: `${author.name} | TechyBlogs`,
       description: author.bio || `Read articles by ${author.name}`,
       url: `${SITE_URL}/author/${slug}`,
       images: author.avatar ? [{ url: author.avatar }] : [],
@@ -102,7 +102,7 @@ export default async function AuthorPage({ params }) {
     url: `${SITE_URL}/author/${slug}`,
     worksFor: {
       '@type': 'NewsMediaOrganization',
-      name: 'TeachyBlogs',
+      name: 'TechyBlogs',
       url: SITE_URL,
     },
     ...(author.expertise?.length ? { knowsAbout: author.expertise } : {}),

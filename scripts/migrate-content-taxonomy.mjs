@@ -6,7 +6,7 @@ import Admin from '../src/lib/models/admin.model.js';
 import { DEFAULT_STORIES } from '../src/data/defaultStories.js';
 
 console.log('==================================================================================');
-console.log('TEACHYBLOGS — TAXONOMY MIGRATION & MULTI-DIMENSIONAL SEEDING ENGINE');
+console.log('TECHYBLOGS — TAXONOMY MIGRATION & MULTI-DIMENSIONAL SEEDING ENGINE');
 console.log('==================================================================================\n');
 
 export async function runMigration({ isDryRun = false, connectionUri = null } = {}) {
@@ -276,7 +276,7 @@ export async function runMigration({ isDryRun = false, connectionUri = null } = 
           order: node.order || 0,
           active: true,
           visibleInNavigation: ancestors.length === 0,
-          seo: { title: `${node.name} Articles & Analysis — TeachyBlogs`, description: node.description, indexable: true },
+          seo: { title: `${node.name} Articles & Analysis — TechyBlogs`, description: node.description, indexable: true },
         });
         report.topicsCreated++;
       }
@@ -406,7 +406,7 @@ export async function runMigration({ isDryRun = false, connectionUri = null } = 
           order: node.order || 0,
           active: true,
           visibleInNavigation: !!node.isHub,
-          seo: { title: `${node.name} News, Analysis & Stories — TeachyBlogs`, description: node.description, indexable: true },
+          seo: { title: `${node.name} News, Analysis & Stories — TechyBlogs`, description: node.description, indexable: true },
         });
         report.regionsCreated++;
       }
@@ -450,7 +450,7 @@ export async function runMigration({ isDryRun = false, connectionUri = null } = 
           type: ent.type,
           description: ent.description,
           active: true,
-          seo: { title: `${ent.name} Articles & Dossiers — TeachyBlogs`, description: ent.description, indexable: true },
+          seo: { title: `${ent.name} Articles & Dossiers — TechyBlogs`, description: ent.description, indexable: true },
         });
         report.entitiesCreated++;
       }
@@ -461,16 +461,16 @@ export async function runMigration({ isDryRun = false, connectionUri = null } = 
     // -----------------------------------------------------------------------------
     // 5. SEED EDITORIAL ADMIN AUTHORS
     // -----------------------------------------------------------------------------
-    let adminAuthor = await Admin.findOne({ email: 'suhail@teachyblogs.com' });
+    let adminAuthor = await Admin.findOne({ email: 'suhail@techyblogs.com' });
     if (!adminAuthor && !isDryRun) {
       adminAuthor = await Admin.create({
         name: 'Suheel Hilal',
-        email: 'suhail@teachyblogs.com',
+        email: 'suhail@techyblogs.com',
         password: '$2a$10$hashedPlaceholderPasswordForLocalSeed1234567890',
         role: 'superadmin',
         username: 'suheelhilal',
         slug: 'suheel-hilal',
-        bio: 'Editor-in-Chief and Principal Software Architect at TeachyBlogs.',
+        bio: 'Editor-in-Chief and Principal Software Architect at TechyBlogs.',
         expertise: ['Full-Stack Systems', 'Next.js', 'AI & Cloud Infrastructure', 'Editorial Journalism'],
       });
     }

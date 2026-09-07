@@ -4,7 +4,7 @@ import Taxonomy from '../src/lib/models/taxonomy.model.js';
 
 async function runPublicSeoAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — PUBLIC SEO, DISCOVERY & METADATA AUDIT');
+  console.log('TECHYBLOGS — PUBLIC SEO, DISCOVERY & METADATA AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -44,7 +44,7 @@ async function runPublicSeoAudit() {
       publishedAt: new Date('2026-08-18T10:00:00Z'),
     };
 
-    const canonicalUrl = `https://teachyblogs.com/blog/${samplePost.slug}`;
+    const canonicalUrl = `https://techyblogs.com/blog/${samplePost.slug}`;
     const schemaType = samplePost.contentType === 'tutorial' ? 'TechArticle' : 'NewsArticle';
 
     const articleJsonLd = {
@@ -57,7 +57,7 @@ async function runPublicSeoAudit() {
     };
 
     if (
-      canonicalUrl.startsWith('https://teachyblogs.com/blog/') &&
+      canonicalUrl.startsWith('https://techyblogs.com/blog/') &&
       articleJsonLd['@type'] === 'TechArticle' &&
       articleJsonLd.headline === samplePost.title
     ) {
@@ -75,9 +75,9 @@ async function runPublicSeoAudit() {
   console.log('\n--- 3. Testing BreadcrumbList Hierarchical Navigation Schema ---');
   try {
     const breadcrumbs = [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://teachyblogs.com' },
-      { '@type': 'ListItem', position: 2, name: 'Technology', item: 'https://teachyblogs.com/section/technology' },
-      { '@type': 'ListItem', position: 3, name: 'AI Guides', item: 'https://teachyblogs.com/blog/ai-guides' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://techyblogs.com' },
+      { '@type': 'ListItem', position: 2, name: 'Technology', item: 'https://techyblogs.com/section/technology' },
+      { '@type': 'ListItem', position: 3, name: 'AI Guides', item: 'https://techyblogs.com/blog/ai-guides' },
     ];
 
     if (breadcrumbs.length === 3 && breadcrumbs[1].name === 'Technology') {

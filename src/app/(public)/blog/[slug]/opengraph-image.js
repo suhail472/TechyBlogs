@@ -4,7 +4,7 @@ import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 
 export const runtime = 'nodejs';
 
-export const alt = 'TeachyBlogs Article';
+export const alt = 'TechyBlogs Article';
 export const size = {
   width: 1200,
   height: 630,

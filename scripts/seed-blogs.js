@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load env variables manually from .env.local if present
-let MONGODB_URI = 'mongodb://localhost:27017/teachyblogs';
+let MONGODB_URI = 'mongodb://localhost:27017/techyblogs';
 try {
   const envPath = path.join(__dirname, '../.env.local');
   if (fs.existsSync(envPath)) {
@@ -142,58 +142,58 @@ async function seed() {
     const authorsData = [
       {
         name: 'Suheel Hilal',
-        email: 'suheel@teachyblogs.com',
+        email: 'suheel@techyblogs.com',
         role: 'Editor-in-Chief & Principal Architect',
         username: 'suheel',
         slug: 'suheel-hilal',
         avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400&h=400',
-        bio: 'Principal Software Architect and Lead Editor at TeachyBlogs. Specializes in distributed systems, Next.js, and web standards.',
+        bio: 'Principal Software Architect and Lead Editor at TechyBlogs. Specializes in distributed systems, Next.js, and web standards.',
         expertise: ['Next.js 15', 'React Server Components', 'Distributed Systems', 'Cloud Architecture'],
-        website: 'https://teachyblogs.com/about',
+        website: 'https://techyblogs.com/about',
       },
       {
         name: 'Zehra Mir',
-        email: 'zehra@teachyblogs.com',
+        email: 'zehra@techyblogs.com',
         role: 'Senior Regional Correspondent',
         username: 'zehra',
         slug: 'zehra-mir',
         avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Senior Regional Correspondent covering Jammu & Kashmir education, regional development, and cultural heritage.',
         expertise: ['Higher Education', 'Kashmir Affairs', 'Policy Analysis', 'Cultural Heritage'],
-        website: 'https://teachyblogs.com/about',
+        website: 'https://techyblogs.com/about',
       },
       {
         name: 'Aarav Sharma',
-        email: 'aarav@teachyblogs.com',
+        email: 'aarav@techyblogs.com',
         role: 'Hardware & Tech Reviewer',
         username: 'aarav',
         slug: 'aarav-sharma',
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Hardware and Consumer Technology reviewer with a decade of benchmarking experience across laptops, phones, and silicon.',
         expertise: ['Apple Silicon', 'Hardware Benchmarks', 'Product Reviews', 'Developer Workflows'],
-        website: 'https://teachyblogs.com/about',
+        website: 'https://techyblogs.com/about',
       },
       {
         name: 'Priya Narang',
-        email: 'priya@teachyblogs.com',
+        email: 'priya@techyblogs.com',
         role: 'Financial & Startup Analyst',
         username: 'priya',
         slug: 'priya-narang',
         avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Financial markets and venture capital analyst tracking deeptech, AI infrastructure, and macroeconomic trends.',
         expertise: ['Venture Capital', 'DeepTech', 'Indian Economy', 'Micro-SaaS'],
-        website: 'https://teachyblogs.com/about',
+        website: 'https://techyblogs.com/about',
       },
       {
         name: 'Dr. Tariq Lone',
-        email: 'tariq@teachyblogs.com',
+        email: 'tariq@techyblogs.com',
         role: 'Academician & Alpine Guide',
         username: 'tariqlone',
         slug: 'dr-tariq-lone',
         avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=400&h=400',
         bio: 'Education researcher, mountaineer, and certified ski guide documenting Himalayan biodiversity and entrance preparation.',
         expertise: ['GATE / Academic Strategy', 'Alpine Expeditions', 'Himalayan Ecology', 'Adventure Sports'],
-        website: 'https://teachyblogs.com/about',
+        website: 'https://techyblogs.com/about',
       },
     ];
 

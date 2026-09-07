@@ -1,5 +1,5 @@
 /**
- * TeachyBlogs AI — Safety & Prompt Injection Defense
+ * TechyBlogs AI — Safety & Prompt Injection Defense
  * Sanitizes input, enforces bounds, and protects system instructions from adversarial tampering.
  */
 

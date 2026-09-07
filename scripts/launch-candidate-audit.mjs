@@ -6,7 +6,7 @@ import { DEFAULT_STORIES, DEFAULT_AUTHORS } from '../src/data/defaultStories.js'
 
 async function runLaunchCandidateAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — FINAL LAUNCH CANDIDATE AUDIT (THE LAUNCH TOMORROW CHALLENGE)');
+  console.log('TECHYBLOGS — FINAL LAUNCH CANDIDATE AUDIT (THE LAUNCH TOMORROW CHALLENGE)');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -115,10 +115,10 @@ async function runLaunchCandidateAudit() {
   console.log('\n--- Test 10 & 11: Indexability Matrix Verification ---');
   try {
     const indexabilityMatrix = {
-      homepage: { index: true, follow: true, canonical: 'https://teachyblogs.com' },
-      article: { index: true, follow: true, canonical: 'https://teachyblogs.com/blog/:slug' },
-      author: { index: true, follow: true, canonical: 'https://teachyblogs.com/author/:slug' },
-      section: { index: true, follow: true, canonical: 'https://teachyblogs.com/section/:slug' },
+      homepage: { index: true, follow: true, canonical: 'https://techyblogs.com' },
+      article: { index: true, follow: true, canonical: 'https://techyblogs.com/blog/:slug' },
+      author: { index: true, follow: true, canonical: 'https://techyblogs.com/author/:slug' },
+      section: { index: true, follow: true, canonical: 'https://techyblogs.com/section/:slug' },
       admin: { index: false, follow: false, canonical: null },
       preferences: { index: false, follow: false, canonical: null },
       unsubscribe: { index: false, follow: false, canonical: null },

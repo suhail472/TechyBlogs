@@ -35,8 +35,8 @@ const bodoniModa = Bodoni_Moda({
 });
 
 export const metadata = {
-  metadataBase: new URL('https://teachyblogs.com'),
-  title: "TeachyBlogs - Modern Digital Publishing Platform & Journal",
+  metadataBase: new URL('https://techyblogs.com'),
+  title: "TechyBlogs - Modern Digital Publishing Platform & Journal",
   description: "Independent reporting, technical guides, product reviews, and regional news across Technology, Education, Kashmir, and Culture.",
   icons: {
     icon: '/favicon.ico',
@@ -47,7 +47,7 @@ export const metadata = {
     },
   },
   openGraph: {
-    siteName: 'TeachyBlogs',
+    siteName: 'TechyBlogs',
     type: 'website',
   },
   twitter: {

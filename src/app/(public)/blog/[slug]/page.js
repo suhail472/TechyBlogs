@@ -28,26 +28,26 @@ export async function generateMetadata({ params }) {
 
   if (!blog) {
     return {
-      title: 'Story Not Found | TeachyBlogs',
+      title: 'Story Not Found | TechyBlogs',
       description: 'The requested story could not be found.',
     };
   }
 
-  const canonical = blog.seo?.canonicalUrl || `https://teachyblogs.com/blog/${slug}`;
+  const canonical = blog.seo?.canonicalUrl || `https://techyblogs.com/blog/${slug}`;
   const keywordsList = Array.isArray(blog.seo?.keywords) && blog.seo.keywords.length > 0
     ? blog.seo.keywords.join(', ')
     : (blog.keywords || (blog.tags ? blog.tags.join(', ') : 'digital publishing, journalism'));
 
-  const metaTitle = blog.seo?.title ? `${blog.seo.title} | TeachyBlogs` : `${blog.title} | TeachyBlogs`;
+  const metaTitle = blog.seo?.title ? `${blog.seo.title} | TechyBlogs` : `${blog.title} | TechyBlogs`;
   const metaDesc = blog.seo?.description || blog.metaDescription || blog.excerpt || blog.subtitle || '';
 
   const ogTitle = blog.seo?.socialTitle || blog.seo?.title || blog.title;
   const ogDesc = blog.seo?.socialDescription || blog.seo?.description || blog.excerpt || blog.subtitle || '';
-  const ogImage = blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico';
+  const ogImage = blog.seo?.socialImage || blog.image || 'https://techyblogs.com/favicon.ico';
 
   const twitterTitle = blog.seo?.twitterTitle || blog.seo?.socialTitle || blog.title;
   const twitterDesc = blog.seo?.twitterDescription || blog.seo?.socialDescription || blog.excerpt || '';
-  const twitterImage = blog.seo?.twitterImage || blog.seo?.socialImage || blog.image || 'https://teachyblogs.com/favicon.ico';
+  const twitterImage = blog.seo?.twitterImage || blog.seo?.socialImage || blog.image || 'https://techyblogs.com/favicon.ico';
 
   const robotsIndex = blog.seo?.robots?.index !== false && blog.seo?.indexable !== false;
   const robotsFollow = blog.seo?.robots?.follow !== false;
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: ogTitle,
       description: ogDesc,
-      url: `https://teachyblogs.com/blog/${slug}`,
+      url: `https://techyblogs.com/blog/${slug}`,
       type: 'article',
       publishedTime: blog.publishedAt || blog.createdAt,
       modifiedTime: blog.updatedAt || blog.publishedAt || blog.createdAt,
@@ -152,21 +152,21 @@ export default async function SingleBlogPage({ params }) {
     entityAbout.push({
       '@type': 'Thing',
       name: blog.primaryTopic.name,
-      url: `https://teachyblogs.com/topic/${blog.primaryTopic.slug}`,
+      url: `https://techyblogs.com/topic/${blog.primaryTopic.slug}`,
     });
   }
   if (blog.primaryRegion) {
     entityAbout.push({
       '@type': 'Place',
       name: blog.primaryRegion.name,
-      url: blog.primaryRegion.slug === 'kashmir' ? 'https://teachyblogs.com/kashmir' : `https://teachyblogs.com/region/${blog.primaryRegion.slug}`,
+      url: blog.primaryRegion.slug === 'kashmir' ? 'https://techyblogs.com/kashmir' : `https://techyblogs.com/region/${blog.primaryRegion.slug}`,
     });
   }
 
   const entityMentions = (blog.entities || []).map((ent) => ({
     '@type': ent.type === 'company' ? 'Organization' : ent.type === 'institution' ? 'EducationalOrganization' : 'Thing',
     name: ent.name,
-    url: `https://teachyblogs.com/entity/${ent.slug}`,
+    url: `https://techyblogs.com/entity/${ent.slug}`,
     sameAs: ent.sameAs || undefined,
   }));
 
@@ -175,7 +175,7 @@ export default async function SingleBlogPage({ params }) {
     '@type': schemaType,
     headline: blog.title,
     description: blog.excerpt || blog.metaDescription || '',
-    image: blog.image ? [blog.image] : ['https://teachyblogs.com/favicon.ico'],
+    image: blog.image ? [blog.image] : ['https://techyblogs.com/favicon.ico'],
     datePublished: blog.publishedAt || blog.createdAt,
     dateModified: blog.updatedAt || blog.publishedAt || blog.createdAt,
     inLanguage: blog.language || 'en',
@@ -183,20 +183,20 @@ export default async function SingleBlogPage({ params }) {
     author: {
       '@type': 'Person',
       name: blog.author || 'Suheel Hilal',
-      url: `https://teachyblogs.com/author/${blog.primaryAuthor?.slug || 'suheel-hilal'}`,
+      url: `https://techyblogs.com/author/${blog.primaryAuthor?.slug || 'suheel-hilal'}`,
     },
     publisher: {
       '@type': 'NewsMediaOrganization',
-      name: 'TeachyBlogs',
-      url: 'https://teachyblogs.com',
+      name: 'TechyBlogs',
+      url: 'https://techyblogs.com',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://teachyblogs.com/favicon.ico',
+        url: 'https://techyblogs.com/favicon.ico',
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://teachyblogs.com/blog/${slug}`,
+      '@id': `https://techyblogs.com/blog/${slug}`,
     },
     about: entityAbout.length ? entityAbout : undefined,
     mentions: entityMentions.length ? entityMentions : undefined,
@@ -216,13 +216,13 @@ export default async function SingleBlogPage({ params }) {
     articleSchema.isPartOf = {
       '@type': 'CreativeWorkSeries',
       name: blog.series.name,
-      url: `https://teachyblogs.com/series/${blog.series.slug}`,
+      url: `https://techyblogs.com/series/${blog.series.slug}`,
     };
   }
 
   // Breadcrumb List Schema
   const breadcrumbItems = [
-    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://teachyblogs.com' },
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://techyblogs.com' },
   ];
   let currentPos = 2;
   if (blog.primaryRegion) {
@@ -230,7 +230,7 @@ export default async function SingleBlogPage({ params }) {
       '@type': 'ListItem',
       position: currentPos++,
       name: blog.primaryRegion.name,
-      item: blog.primaryRegion.slug === 'kashmir' ? 'https://teachyblogs.com/kashmir' : `https://teachyblogs.com/region/${blog.primaryRegion.slug}`,
+      item: blog.primaryRegion.slug === 'kashmir' ? 'https://techyblogs.com/kashmir' : `https://techyblogs.com/region/${blog.primaryRegion.slug}`,
     });
   }
   if (blog.primaryTopic) {
@@ -238,14 +238,14 @@ export default async function SingleBlogPage({ params }) {
       '@type': 'ListItem',
       position: currentPos++,
       name: blog.primaryTopic.name,
-      item: `https://teachyblogs.com/topic/${blog.primaryTopic.slug}`,
+      item: `https://techyblogs.com/topic/${blog.primaryTopic.slug}`,
     });
   }
   breadcrumbItems.push({
     '@type': 'ListItem',
     position: currentPos,
     name: blog.title,
-    item: `https://teachyblogs.com/blog/${slug}`,
+    item: `https://techyblogs.com/blog/${slug}`,
   });
 
   const breadcrumbSchema = {

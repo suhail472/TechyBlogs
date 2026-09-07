@@ -30,16 +30,16 @@ export default function BlogPreview({ formData }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
-      const savedSize = localStorage.getItem('teachyblogs-font-size') || 'prose-lg';
-      const savedHeight = localStorage.getItem('teachyblogs-line-height') || 'leading-relaxed';
+      const savedFamily = localStorage.getItem('techyblogs-font-family') || 'font-sans';
+      const savedSize = localStorage.getItem('techyblogs-font-size') || 'prose-lg';
+      const savedHeight = localStorage.getItem('techyblogs-line-height') || 'leading-relaxed';
       setTypography({ fontFamily: savedFamily, fontSize: savedSize, lineHeight: savedHeight });
 
       const handleTypeChange = (e) => {
         setTypography(e.detail);
       };
-      window.addEventListener('teachyblogs-typography-change', handleTypeChange);
-      return () => window.removeEventListener('teachyblogs-typography-change', handleTypeChange);
+      window.addEventListener('techyblogs-typography-change', handleTypeChange);
+      return () => window.removeEventListener('techyblogs-typography-change', handleTypeChange);
     }
   }, []);
 

@@ -3,15 +3,15 @@ import Post, { getPublicPostFilter } from '@/lib/models/post.model';
 import TagsClient from '@/components/pages/TagsClient';
 
 export const metadata = {
-  title: 'Tags & Topics | TeachyBlogs - Browse Stories by Keyword',
-  description: 'Explore all story tags on TeachyBlogs. Browse web development, React, CSS, AI, Kashmir, and more topics.',
+  title: 'Tags & Topics | TechyBlogs - Browse Stories by Keyword',
+  description: 'Explore all story tags on TechyBlogs. Browse web development, React, CSS, AI, Kashmir, and more topics.',
   alternates: {
-    canonical: 'https://teachyblogs.com/tags',
+    canonical: 'https://techyblogs.com/tags',
   },
   openGraph: {
-    title: 'Tags & Topics | TeachyBlogs',
-    description: 'Explore all story tags and categories on TeachyBlogs.',
-    url: 'https://teachyblogs.com/tags',
+    title: 'Tags & Topics | TechyBlogs',
+    description: 'Explore all story tags and categories on TechyBlogs.',
+    url: 'https://techyblogs.com/tags',
     type: 'website',
   },
 };

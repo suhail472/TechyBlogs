@@ -33,17 +33,17 @@ const campaignSchema = new mongoose.Schema(
     },
     fromName: {
       type: String,
-      default: 'TeachyBlogs Editorial',
+      default: 'TechyBlogs Editorial',
       maxlength: 100,
     },
     fromEmail: {
       type: String,
-      default: 'editorial@teachyblogs.com',
+      default: 'editorial@techyblogs.com',
       maxlength: 100,
     },
     replyTo: {
       type: String,
-      default: 'newsroom@teachyblogs.com',
+      default: 'newsroom@techyblogs.com',
       maxlength: 100,
     },
     status: {

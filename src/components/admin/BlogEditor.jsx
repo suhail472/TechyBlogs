@@ -383,7 +383,7 @@ export default function BlogEditor({ id }) {
   const debounceTimerRef = useRef(null);
   const maxIntervalTimerRef = useRef(null);
   const lastSyncTimeRef = useRef(Date.now());
-  const localDraftKey = useMemo(() => (id ? `teachyblogs:draft:${id}` : `teachyblogs:draft:new`), [id]);
+  const localDraftKey = useMemo(() => (id ? `techyblogs:draft:${id}` : `techyblogs:draft:new`), [id]);
 
   // Form Data State
   const [formData, setFormData] = useState({
@@ -1194,7 +1194,7 @@ export default function BlogEditor({ id }) {
           <TableIcon className="w-3 h-3 text-purple-500" /> Table
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('```javascript\n// Code snippet\nconsole.log("TeachyBlogs Editorial Workstation");\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Code Block" aria-label="Code Block">
+        <button type="button" onClick={() => insertTextAtCursor('```javascript\n// Code snippet\nconsole.log("TechyBlogs Editorial Workstation");\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert Code Block" aria-label="Code Block">
           <FileCode className="w-3 h-3 text-amber-500" /> Code Block
         </button>
 
@@ -1214,7 +1214,7 @@ export default function BlogEditor({ id }) {
           <HelpCircle className="w-3 h-3 text-cyan-500" /> Quiz
         </button>
 
-        <button type="button" onClick={() => insertTextAtCursor('```js playground\n// Interactive executable sandbox\nconst headline = "TeachyBlogs Engine";\nconsole.log(headline);\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert JavaScript Sandbox" aria-label="Playground Sandbox">
+        <button type="button" onClick={() => insertTextAtCursor('```js playground\n// Interactive executable sandbox\nconst headline = "TechyBlogs Engine";\nconsole.log(headline);\n```\n')} className="px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-1" title="Insert JavaScript Sandbox" aria-label="Playground Sandbox">
           <Play className="w-3 h-3 text-rose-500" /> Sandbox
         </button>
       </div>
@@ -1800,7 +1800,7 @@ export default function BlogEditor({ id }) {
                           type="text"
                           value={formData.seo?.canonicalUrl || ''}
                           onChange={(e) => updateForm({ seo: { ...formData.seo, canonicalUrl: e.target.value } })}
-                          placeholder="https://www.teachyblogs.com/blog/..."
+                          placeholder="https://www.techyblogs.com/blog/..."
                           className="w-full p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-white/10 text-xs outline-none font-mono"
                         />
                         <p className="text-[10px] text-zinc-400 mt-1">Use this when the article's primary URL differs from this page.</p>
@@ -1953,10 +1953,10 @@ export default function BlogEditor({ id }) {
                         </span>
                         <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 space-y-1 shadow-xs">
                           <div className="text-[11px] text-zinc-500 font-sans truncate">
-                            teachyblogs.com › blog › {formData.slug || 'article-slug'}
+                            techyblogs.com › blog › {formData.slug || 'article-slug'}
                           </div>
                           <div className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline line-clamp-1">
-                            {formData.seo?.title || formData.title || 'Untitled Article'} | TeachyBlogs
+                            {formData.seo?.title || formData.title || 'Untitled Article'} | TechyBlogs
                           </div>
                           <div className="text-xs text-zinc-600 dark:text-zinc-300 line-clamp-2 leading-relaxed font-sans">
                             {formData.seo?.description || formData.subtitle || formData.content?.substring(0, 140) || 'Article summary snippet for search results...'}
@@ -2024,7 +2024,7 @@ export default function BlogEditor({ id }) {
                                 )}
                               </div>
                               <div className="p-3 space-y-1">
-                                <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block">TEACHYBLOGS.COM</span>
+                                <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block">TECHYBLOGS.COM</span>
                                 <h4 className="font-bold text-xs text-zinc-900 dark:text-white truncate">
                                   {formData.seo?.socialTitle || formData.seo?.title || formData.title || 'Article Title'}
                                 </h4>
@@ -2823,7 +2823,7 @@ export default function BlogEditor({ id }) {
                   Ready to Publish
                 </span>
                 <h3 id="publish-modal-title" className="font-display text-xl font-bold text-zinc-900 dark:text-white">
-                  Publish Story to TeachyBlogs?
+                  Publish Story to TechyBlogs?
                 </h3>
                 <p className="text-xs text-zinc-500 leading-relaxed font-sans">
                   This article is validated and ready. Publishing makes it immediately accessible across public editorial feeds, search indexes, and RSS.

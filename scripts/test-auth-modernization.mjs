@@ -37,12 +37,12 @@ function assert(condition, message) {
 
 async function runAuthModernizationSuite() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — MODERN AUTHENTICATION & RECOVERY RED-TEAM SUITE');
+  console.log('TECHYBLOGS — MODERN AUTHENTICATION & RECOVERY RED-TEAM SUITE');
   console.log('================================================================\n');
 
   await connectToDatabase();
 
-  const testEmail = `mod_test_${Date.now()}@teachyblogs.com`;
+  const testEmail = `mod_test_${Date.now()}@techyblogs.com`;
   const initialPassword = 'InitialSecretPass2026!';
   const updatedPassword = 'BrandNewSecretPass2026!';
   const initialToken = 'TB-INIT777';

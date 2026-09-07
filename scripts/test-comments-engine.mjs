@@ -3,7 +3,7 @@ import { commentService } from '../src/lib/services/comment.service.js';
 
 async function runCommentsRedTeamAudit() {
   console.log('=====================================================');
-  console.log('TEACHYBLOGS — COMMUNITY MODERATION ENGINE AUDIT');
+  console.log('TECHYBLOGS — COMMUNITY MODERATION ENGINE AUDIT');
   console.log('=====================================================\n');
 
   try {

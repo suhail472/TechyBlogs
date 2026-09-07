@@ -109,14 +109,14 @@ export default function SavedClient() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedFamily = localStorage.getItem('teachyblogs-font-family') || 'font-sans';
+      const savedFamily = localStorage.getItem('techyblogs-font-family') || 'font-sans';
       setFontFamily(savedFamily);
     }
   }, []);
 
   const handleFontFamilyChange = (val) => {
     setFontFamily(val);
-    localStorage.setItem('teachyblogs-font-family', val);
+    localStorage.setItem('techyblogs-font-family', val);
   };
 
   // Audiobook Playlist States
@@ -144,7 +144,7 @@ export default function SavedClient() {
       const vList = window.speechSynthesis.getVoices();
       setVoices(vList);
       if (vList.length > 0) {
-        const savedVoice = localStorage.getItem('teachyblogs-reader-voice');
+        const savedVoice = localStorage.getItem('techyblogs-reader-voice');
         const isValid = vList.some(v => v.name === savedVoice);
         if (savedVoice && isValid) {
           setSelectedVoiceName(savedVoice);

@@ -39,7 +39,7 @@ export async function GET() {
     {
       success: true,
       status: 'active',
-      service: 'TeachyBlogs Resend Inbound Email Webhook',
+      service: 'TechyBlogs Resend Inbound Email Webhook',
       timestamp: new Date().toISOString(),
       supportedInboxes: [
         'support@techyblogging.in',

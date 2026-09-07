@@ -344,7 +344,7 @@ export default function ForgotPasswordAndToken() {
                   <input
                     type="email"
                     required
-                    placeholder="admin@teachyblogs.com"
+                    placeholder="admin@techyblogs.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={inputClasses}
@@ -660,7 +660,7 @@ export default function ForgotPasswordAndToken() {
 
       {/* Footer */}
       <footer className="relative z-10 w-full max-w-6xl mx-auto px-6 pb-6 text-center text-xs text-zinc-400 dark:text-zinc-600">
-        <p>© {new Date().getFullYear()} TeachyBlogs Publication Group. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} TechyBlogs Publication Group. All rights reserved.</p>
       </footer>
     </div>
   );

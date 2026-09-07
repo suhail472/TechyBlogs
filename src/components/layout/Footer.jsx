@@ -112,7 +112,7 @@ export default function Footer() {
                 TB
               </div>
               <span className="text-xl font-black font-display tracking-tight text-zinc-900 dark:text-white">
-                Teachy<span className="text-red-600">Blogs</span>
+                Techy<span className="text-red-600">Blogs</span>
               </span>
             </Link>
 
@@ -211,7 +211,7 @@ export default function Footer() {
         {/* Bottom Masthead & Legal Bar */}
         <div className="pt-6 sm:pt-8 flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-4 text-xs text-zinc-400">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1">
-            <span>© {new Date().getFullYear()} TeachyBlogs. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} TechyBlogs. All rights reserved.</span>
             <span className="hidden sm:inline">·</span>
             <Link href="/about" className="hover:text-zinc-900 dark:hover:text-white py-1">About Masthead</Link>
             <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-white py-1">Privacy Policy</Link>

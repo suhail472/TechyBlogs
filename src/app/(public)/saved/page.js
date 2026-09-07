@@ -1,8 +1,8 @@
 import SavedClient from '@/components/pages/SavedClient';
 
 export const metadata = {
-  title: 'Saved Articles | TeachyBlogs',
-  description: 'View your saved and bookmarked articles on TeachyBlogs.',
+  title: 'Saved Articles | TechyBlogs',
+  description: 'View your saved and bookmarked articles on TechyBlogs.',
   robots: { index: false, follow: false },
 };
 

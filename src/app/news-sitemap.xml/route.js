@@ -1,7 +1,7 @@
 import connectToDatabase from '../../lib/db.js';
 import Post, { getPublicPostFilter } from '../../lib/models/post.model.js';
 
-const SITE_URL = 'https://teachyblogs.com';
+const SITE_URL = 'https://techyblogs.com';
 
 function escapeXml(unsafe) {
   return String(unsafe || '').replace(/[<>&'"]/g, (c) => {
@@ -46,7 +46,7 @@ export async function GET() {
     <loc>${SITE_URL}/blog/${article.slug}</loc>
     <news:news>
       <news:publication>
-        <news:name>TeachyBlogs</news:name>
+        <news:name>TechyBlogs</news:name>
         <news:language>${lang}</news:language>
       </news:publication>
       <news:publication_date>${pubDate}</news:publication_date>

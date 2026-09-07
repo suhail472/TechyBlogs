@@ -3,7 +3,7 @@ import { analyticsService } from '../src/lib/services/analytics.service.js';
 
 async function runAnalyticsEngineAudit() {
   console.log('================================================================');
-  console.log('TEACHYBLOGS — NEWSROOM INTELLIGENCE & ANALYTICS PLATFORM AUDIT');
+  console.log('TECHYBLOGS — NEWSROOM INTELLIGENCE & ANALYTICS PLATFORM AUDIT');
   console.log('================================================================\n');
 
   let passed = 0;

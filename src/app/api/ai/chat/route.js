@@ -87,7 +87,7 @@ export async function POST(req) {
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
         } catch (err) {
-          const errorEvent = `event: error\ndata: ${JSON.stringify({ error: err.message || 'TeachyBlogs AI is temporarily unavailable.' })}\n\n`;
+          const errorEvent = `event: error\ndata: ${JSON.stringify({ error: err.message || 'TechyBlogs AI is temporarily unavailable.' })}\n\n`;
           controller.enqueue(encoder.encode(errorEvent));
           controller.close();
         }
@@ -111,7 +111,7 @@ export async function POST(req) {
 
 export async function GET() {
   return NextResponse.json({
-    name: 'TeachyBlogs AI Editorial Assistant API',
+    name: 'TechyBlogs AI Editorial Assistant API',
     status: 'operational',
     version: '1.0.0',
   });

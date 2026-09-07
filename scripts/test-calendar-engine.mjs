@@ -4,7 +4,7 @@ import { validatePublicationIntegrity } from '../src/lib/services/editorial.serv
 
 async function runCalendarRedTeamAudit() {
   console.log('=====================================================');
-  console.log('TEACHYBLOGS — EDITORIAL CALENDAR RED-TEAM ATTACK AUDIT');
+  console.log('TECHYBLOGS — EDITORIAL CALENDAR RED-TEAM ATTACK AUDIT');
   console.log('=====================================================\n');
 
   try {

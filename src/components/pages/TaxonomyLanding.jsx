@@ -45,7 +45,7 @@ export default function TaxonomyLanding({ kind, item, posts = [], isKashmirHub =
   const title = item?.name || 'Stories';
   const description =
     item?.description ||
-    `The latest ${title.toLowerCase()} journalism, analysis, deep-dives, and guides from TeachyBlogs.`;
+    `The latest ${title.toLowerCase()} journalism, analysis, deep-dives, and guides from TechyBlogs.`;
 
   const [selectedDistrict, setSelectedDistrict] = useState('');
 

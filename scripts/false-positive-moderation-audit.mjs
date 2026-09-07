@@ -15,7 +15,7 @@ if (fs.existsSync('.env.local')) {
 
 async function runFalsePositiveAudit() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — FALSE POSITIVE & OVER-CENSORSHIP AUDIT');
+  console.log('TECHYBLOGS AI — FALSE POSITIVE & OVER-CENSORSHIP AUDIT');
   console.log('======================================================\n');
 
   const { analyzeCommentContent } = await import('../src/lib/ai/moderation.service.js');

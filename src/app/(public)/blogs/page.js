@@ -4,16 +4,16 @@ import BlogsClient from '@/components/pages/BlogsClient';
 import { DEFAULT_STORIES } from '@/data/defaultStories';
 
 export const metadata = {
-  title: 'All Stories & Archives | TeachyBlogs',
-  description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TeachyBlogs.',
+  title: 'All Stories & Archives | TechyBlogs',
+  description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TechyBlogs.',
   keywords: 'Web Development Blog, News, Education, Tech Reviews, Kashmir Guides, Coding Tutorials',
   alternates: {
-    canonical: 'https://teachyblogs.com/blogs',
+    canonical: 'https://techyblogs.com/blogs',
   },
   openGraph: {
-    title: 'All Stories & Archives | TeachyBlogs',
-    description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TeachyBlogs.',
-    url: 'https://teachyblogs.com/blogs',
+    title: 'All Stories & Archives | TechyBlogs',
+    description: 'Explore comprehensive coverage across Technology, News, Education, Travel, and Analysis on TechyBlogs.',
+    url: 'https://techyblogs.com/blogs',
     type: 'website',
   },
 };
@@ -46,9 +46,9 @@ export default async function BlogsPage(props) {
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "name": "Story Archives - TeachyBlogs",
-    "description": "Explore all essays, tutorials, and regional insights published on TeachyBlogs.",
-    "url": "https://teachyblogs.com/blogs"
+    "name": "Story Archives - TechyBlogs",
+    "description": "Explore all essays, tutorials, and regional insights published on TechyBlogs.",
+    "url": "https://techyblogs.com/blogs"
   };
 
   return (

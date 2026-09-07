@@ -28,7 +28,7 @@ function assert(condition, message) {
 
 async function runTests() {
   console.log('\n======================================================');
-  console.log('TEACHYBLOGS AI — CORE ENGINE & SECURITY TEST SUITE');
+  console.log('TECHYBLOGS AI — CORE ENGINE & SECURITY TEST SUITE');
   console.log('======================================================\n');
 
   // Test 1: Public Visibility Invariant

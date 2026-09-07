@@ -1,7 +1,7 @@
 import { parseMarkdownToHtml, extractHeadings, isRTL } from '../src/utils/markdownEngine.js';
 
 console.log('======================================================================');
-console.log('TEACHYBLOGS — WORLD-CLASS MARKDOWN CONFORMANCE & STRESS BENCHMARK SUITE');
+console.log('TECHYBLOGS — WORLD-CLASS MARKDOWN CONFORMANCE & STRESS BENCHMARK SUITE');
 console.log('======================================================================\n');
 
 let passCount = 0;
@@ -27,7 +27,7 @@ const gfmDoc = `
 
 ## Second Header with *Italics* & **Bold**
 
-A regular paragraph with ~~strikethrough~~, \`inline code\`, and a [link](https://teachyblogs.com "TeachyBlogs").
+A regular paragraph with ~~strikethrough~~, \`inline code\`, and a [link](https://techyblogs.com "TechyBlogs").
 
 | Column A | Column B | Column C |
 | :--- | :---: | ---: |

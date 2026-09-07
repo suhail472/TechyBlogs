@@ -63,7 +63,7 @@ async function main() {
   console.log('--- STARTING IN-MEMORY LOCAL DATABASE & TEST SEED SUITE ---');
   const mongod = await MongoMemoryServer.create({
     instance: {
-      dbName: 'teachyblogs',
+      dbName: 'techyblogs',
     },
     spawn: {
       timeout: 60000,

@@ -107,7 +107,7 @@ export default function EditorialImage({
 
         {/* Bottom subtle masthead rule */}
         <div className="flex items-center justify-between pt-2 border-t border-zinc-200/80 dark:border-white/5 text-[9px] text-zinc-400 dark:text-zinc-500 z-10 font-mono">
-          <span>TeachyBlogs</span>
+          <span>TechyBlogs</span>
           <span>Editorial Bureau</span>
         </div>
       </div>

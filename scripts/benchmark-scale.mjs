@@ -8,7 +8,7 @@ import taxonomyService from '../src/lib/services/taxonomy.service.js';
 import { runMigration } from './migrate-content-taxonomy.mjs';
 
 console.log('==================================================================================');
-console.log('TEACHYBLOGS — ACTUAL SCALE & PERFORMANCE BENCHMARK SUITE');
+console.log('TECHYBLOGS — ACTUAL SCALE & PERFORMANCE BENCHMARK SUITE');
 console.log('==================================================================================\n');
 
 async function runBenchmark() {
@@ -76,7 +76,7 @@ async function runBenchmark() {
           locationName: region.name,
           correction: { hasCorrection: false },
         },
-        sources: [{ name: 'Technical Docs', url: 'https://teachyblogs.com/docs' }],
+        sources: [{ name: 'Technical Docs', url: 'https://techyblogs.com/docs' }],
         revisions: [
           {
             version: 1,
