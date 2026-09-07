@@ -330,38 +330,6 @@ export default function EditorialHome({ posts = [] }) {
           </section>
         )}
 
-        {/* 5. Live Publication Quick Intelligence Ribbon */}
-        <section className="py-6 border-b border-zinc-200/80 dark:border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-600 dark:text-red-400 block font-mono">
-              Active Desks
-            </span>
-            <p className="font-display font-black text-xl text-zinc-900 dark:text-white">18 Desks</p>
-            <span className="text-[10px] text-zinc-400">Global & Regional Coverage</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400 block font-mono">
-              Monthly Readership
-            </span>
-            <p className="font-display font-black text-xl text-zinc-900 dark:text-white">140,000+</p>
-            <span className="text-[10px] text-zinc-400">Software Engineers & Scholars</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 block font-mono">
-              Regional Hub
-            </span>
-            <p className="font-display font-black text-xl text-zinc-900 dark:text-white">Kashmir Bureau</p>
-            <span className="text-[10px] text-zinc-400">Srinagar · Gulmarg · Pampore</span>
-          </div>
-          <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/60 dark:border-white/5 space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400 block font-mono">
-              Gear Lab Scorecards
-            </span>
-            <p className="font-display font-black text-xl text-zinc-900 dark:text-white">4.9 / 5.0 Avg</p>
-            <span className="text-[10px] text-zinc-400">Independent Hardware Benchmarks</span>
-          </div>
-        </section>
-
         {/* 6. Secondary Horizontal Stories Row */}
         {secondaryLead.length > 5 && (
           <section className="py-10 border-b border-zinc-200/80 dark:border-white/10">
